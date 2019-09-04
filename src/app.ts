@@ -1,12 +1,35 @@
-import { Game } from "./Game";
-import { Network } from "./Network";
 
-const steamDev = "wss://game.airmash.steamroller.tk/dev";
-const steamFfa = "wss://game.airmash.steamroller.tk/ffa";
-const wightFfa = "wss://game-eu-s1.airbattle.xyz/ffa";
-const wightCtf = "wss://game-eu-s1.airbattle.xyz/ctf";
-const frCtf = "wss://lags.win/ctf";
+import { argv } from 'yargs';
+import { AirmashBot } from './bot/airmash-bot';
+import { Grid, Util, AStarFinder } from "pathfinding";
+import { PathFindingFacade } from './bot/instructions/pathfinding-facade';
+import { AirmashApiFacade } from "./bot/airmash/airmash-api";
+import { BotCharacter } from './bot/bot-character';
 
-var network = new Network(steamDev);
-var game = new Game(network);
-game.start("Kees Rundvlees", "sk");
+PathFindingFacade.Grid = Grid;
+PathFindingFacade.Util = Util;
+PathFindingFacade.AStarFinder = AStarFinder;
+
+const urls = {
+    steamDev: "wss://game.airmash.steamroller.tk/dev",
+    steamFfa: "wss://game.airmash.steamroller.tk/ffa",
+    wightFfa: "wss://game-eu-s1.airbattle.xyz/ffa",
+    wightCtf: "wss://game-eu-s1.airbattle.xyz/ctf",
+    frCtf: "wss://lags.win/ctf",
+    fooDev1: "ws://eu-airmash1-foo.westeurope.cloudapp.azure.com/dev?1",
+    fooDev2: "ws://eu-airmash1-foo.westeurope.cloudapp.azure.com/dev?2"
+};
+
+let ws = <string>argv.ws;
+if (ws && !ws.startsWith('ws') && !ws.startsWith('http')) {
+    ws = urls[ws];
+}
+ws = ws || urls.wightFfa;
+
+const name = <string>argv.name || 'Poopbot';
+const type = <number>argv.type || 1;
+const flag = <string>argv.flag || 'sk';
+
+var env = new AirmashApiFacade(ws);
+const bot = new AirmashBot(env, BotCharacter.CrateStealer);
+bot.start(name, flag, type);

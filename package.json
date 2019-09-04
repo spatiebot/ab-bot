@@ -2,6 +2,11 @@
     "name": "ab-bot",
     "version": "0.1.0",
     "dependencies": {
-        "ws": "^7.1.2"
+        "pathfinding": "^0.4.18",
+        "ws": "^7.1.2",
+        "yargs": "^14.0.0"
+    },
+    "devDependencies": {
+        "@types/yargs": "^13.0.2"
     }
 }

@@ -14,6 +14,7 @@ export class Mob {
     stationary: boolean;
     speedX: number;
     speedY: number;
+    rot: number;
     lastUpdate: number;
 
     isStale(): boolean {
@@ -21,7 +22,8 @@ export class Mob {
     }
 
     copyFrom(m: Mob) {
-        //id & stationary don't change
+        this.id = m.id;
+        this.stationary = m.stationary;
 
         this.ownerID = m.ownerID || this.ownerID;
         this.type = m.type || this.type;
@@ -30,6 +32,7 @@ export class Mob {
         this.posY = m.posY;
         this.speedX = m.speedX;
         this.speedY = m.speedY;
+        this.rot = m.rot;
 
         this.lastUpdate = Date.now();
     }

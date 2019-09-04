@@ -1,13 +1,16 @@
-import * as marshaling from '../ab-protocol/src/marshaling';
-import * as unmarshaling from '../ab-protocol/src/unmarshaling';
-import CLIENT_PACKETS from '../ab-protocol/src/packets/client';
-import SERVER_PACKETS from '../ab-protocol/src/packets/server';
-import { KEY_CODES } from '../ab-protocol/src/types/client';
+import * as marshaling from '../../ab-protocol/src/marshaling';
+import * as unmarshaling from '../../ab-protocol/src/unmarshaling';
+import CLIENT_PACKETS from '../../ab-protocol/src/packets/client';
+import SERVER_PACKETS from '../../ab-protocol/src/packets/server';
+import { KEY_CODES } from '../../ab-protocol/src/types/client';
+import { decodeMinimapCoords } from '../../ab-protocol/src/decoding/index';
 import WebSocket from 'ws';
-import { ProtocolPacket } from '../ab-protocol/src/packets';
+import { ProtocolPacket } from '../../ab-protocol/src/packets';
 import { Game } from './Game';
 import { Mob } from './Mob';
 import { CHAT_TYPE } from './chat-type';
+import { Player } from './Player';
+import { Pos } from '../bot/pos';
 
 export class Network {
     private client: WebSocket;
@@ -34,8 +37,12 @@ export class Network {
             });
         };
         this.client.onmessage = (msg: { data: ArrayBuffer; }) => {
-            const result = unmarshaling.unmarshalServerMessage(msg.data);
-            this.onServerMessage(result);
+            try {
+                const result = unmarshaling.unmarshalServerMessage(msg.data);
+                this.onServerMessage(result);
+            } catch (error) {
+                this.game.onError(error);
+            }
         };
     }
 
@@ -99,8 +106,12 @@ export class Network {
 
             case SERVER_PACKETS.PLAYER_NEW:
             case SERVER_PACKETS.PLAYER_UPDATE:
+                this.game.onPlayerInfo(msg as any);
+                break;
+
             case SERVER_PACKETS.PLAYER_RESPAWN:
                 this.game.onPlayerInfo(msg as any);
+                this.game.onRespawn(msg.id as number);
                 break;
 
             case SERVER_PACKETS.PLAYER_TYPE:
@@ -129,6 +140,41 @@ export class Network {
                 for (const missile of missiles) {
                     missile.ownerID = playerID;
                     this.game.onMob(missile);
+                }
+                const firingPlayer = this.game.getPlayer(playerID);
+                if (firingPlayer) {
+                    firingPlayer.energy = msg.energy as number;
+                    firingPlayer.energyRegen = msg.energyRegen as number;
+                }
+                break;
+
+            case SERVER_PACKETS.PLAYER_HIT:
+                const hitPlayers = msg.players as Player[];
+                for (const hit of hitPlayers) {
+                    const hitPlayer = this.game.getPlayer(hit.id);
+                    hitPlayer.health = hit.health;
+                    hitPlayer.healthRegen = hit.healthRegen;
+                }
+                break;
+
+            case SERVER_PACKETS.EVENT_BOOST:
+                const boostingPlayer = this.game.getPlayer(msg.id as number);
+                if (boostingPlayer) {
+                    boostingPlayer.energy = msg.energy as number;
+                    boostingPlayer.energyRegen = msg.energyRegen as number;
+                }
+                break;
+
+            case SERVER_PACKETS.SCORE_BOARD:
+                const minimapData = msg.rankings as any[];
+                for (let i = 0; i < minimapData.length; i++) {
+                    const playerMinimapData = minimapData[i];
+                    const minimapPlayer = this.game.getPlayer(playerMinimapData.id);
+                    if (minimapPlayer) {
+                        const coords = decodeMinimapCoords(playerMinimapData.x, playerMinimapData.y);
+                        minimapPlayer.lowResPos = new Pos(coords);
+                        minimapPlayer.lowResPos.isAccurate = false;
+                    }
                 }
                 break;
 
@@ -174,10 +220,8 @@ export class Network {
             //ignore
             case SERVER_PACKETS.PING:
             case SERVER_PACKETS.SCORE_BOARD:
-            case SERVER_PACKETS.EVENT_BOOST:
             case SERVER_PACKETS.EVENT_BOUNCE:
             case SERVER_PACKETS.EVENT_LEAVEHORIZON:
-            case SERVER_PACKETS.PLAYER_HIT:
                 break;
 
             // todo
