@@ -1,0 +1,3 @@
+[submodule "ab-protocol"]
+	path = ab-protocol
+	url = https://github.com/wight-airmash/ab-protocol.git
