@@ -1,0 +1,7 @@
+{
+    "name": "ab-bot",
+    "version": "0.1.0",
+    "dependencies": {
+        "ws": "^7.1.2"
+    }
+}
