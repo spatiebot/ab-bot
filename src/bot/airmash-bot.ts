@@ -9,6 +9,7 @@ import { Score } from "./airmash/score";
 import { DropCratesTarget } from "./targets/drop-crates-target";
 import { PoopState } from "./targets/poop-state";
 import { FleeTarget } from "./targets/flee-target";
+import { Debug } from "../helper/debug";
 
 export class AirmashBot {
 
@@ -60,6 +61,7 @@ export class AirmashBot {
 
                 const myType = this.env.me().type;
                 if (!this.character || this.character.type !== 0 && this.character.type !== myType) {
+                    console.log('new char selected because this character is not my type');
                     this.character = BotCharacter.get(myType);
                 }
                 this.steeringInstallation.start();
@@ -81,15 +83,22 @@ export class AirmashBot {
 
         this.selectTarget();
 
-        if (this.target && this.target.isValid()) {
-            if (this.lastLoggedTarget !== this.target.goal) {
-                this.lastLoggedTarget = this.target.goal;
-                console.log("Target: " + this.target.goal);
+        let goal = "(no target selected)";
+        if (this.target) {
+            goal = this.target.goal;
+            if (this.target.isValid()) {
+                const instructions = this.target.getInstructions();
+                for (let i of instructions) {
+                    this.steeringInstallation.add(i.getSteeringInstruction());
+                }
+            } else {
+                goal += " (invalid)";
             }
-            const instructions = this.target.getInstructions();
-            for (let i of instructions) {
-                this.steeringInstallation.add(i.getSteeringInstruction());
-            }
+        }
+
+        if (this.lastLoggedTarget !== goal) {
+            this.lastLoggedTarget = goal;
+            console.log("Target: " + goal);
         }
     }
 

@@ -14,29 +14,53 @@ import { Pos } from '../bot/pos';
 
 export class Network {
     private client: WebSocket;
+    private backupClient: WebSocket;
+    private backupClientIsConnected: boolean;
+    private ackToBackup: boolean;
+    private ackInterval: any;
     private game: Game;
     private keyCount: number = 0;
+    private token: string;
 
     constructor(private ws: string) {
     }
 
     start(game: Game, name: string, flag: string) {
         this.game = game;
-        this.client = new WebSocket(this.ws);
-        this.client.binaryType = "arraybuffer";
+        this.client = this.initWebSocket({
+            isPrimary: true,
+            name,
+            flag
+        });
+    }
 
-        this.client.onopen = () => {
-            this.send({
-                c: CLIENT_PACKETS.LOGIN,
-                protocol: 5,
-                name,
-                session: "none",
-                horizonX: Math.ceil(640),
-                horizonY: Math.ceil(480),
-                flag
-            });
+    private initWebSocket(config: any, tries = 1) {
+        const ws = new WebSocket(this.ws);
+        ws.binaryType = "arraybuffer";
+
+        ws.onopen = () => {
+            tries -= 1;
+            if (config.isPrimary) {
+                console.log("Primary socket connecting");
+                this.send({
+                    c: CLIENT_PACKETS.LOGIN,
+                    protocol: 5,
+                    name: config.name,
+                    session: "none",
+                    horizonX: Math.ceil(640),
+                    horizonY: Math.ceil(480),
+                    flag: config.flag
+                });
+            } else {
+                console.log("Backup socket connecting");
+                this.backupClientIsConnected = true;
+                this.send({
+                    c: CLIENT_PACKETS.BACKUP,
+                    token: this.token
+                }, true);
+            }
         };
-        this.client.onmessage = (msg: { data: ArrayBuffer; }) => {
+        ws.onmessage = (msg: { data: ArrayBuffer; }) => {
             try {
                 const result = unmarshaling.unmarshalServerMessage(msg.data);
                 this.onServerMessage(result);
@@ -44,6 +68,19 @@ export class Network {
                 this.game.onError(error);
             }
         };
+        ws.onerror = (ev) => {
+            console.log(ev);
+            this.game.onError(new Error((config.isPrimary ? 'primary' : 'backup') + ' socket error' + ev));
+
+            if (tries <= 3 && config.isPrimary) {
+                this.client = this.initWebSocket(config, tries + 1);
+            }
+        };
+        ws.onclose = () => {
+            console.log('socket closed');
+            this.game.onError(new Error((config.isPrimary ? 'primary' : 'backup') + ' socket closed'));
+        };
+        return ws;
     }
 
     sendKey(key: KEY_CODES, value: boolean) {
@@ -55,17 +92,18 @@ export class Network {
             state: value
         };
         this.send(msg);
+        if (this.backupClientIsConnected) {
+            this.send(msg, true);
+        }
     }
 
     sendCommand(command: string, params: string) {
-        {
-            var msg = {
-                c: CLIENT_PACKETS.COMMAND,
-                com: command,
-                data: params
-            };
-            this.send(msg);
-        }
+        var msg = {
+            c: CLIENT_PACKETS.COMMAND,
+            com: command,
+            data: params
+        };
+        this.send(msg);
     }
 
     chat(type: CHAT_TYPE, text: string, targetPlayerID: number = null) {
@@ -95,6 +133,11 @@ export class Network {
 
     private onServerMessage(msg: ProtocolPacket) {
         switch (msg.c) {
+            case SERVER_PACKETS.BACKUP:
+                console.log("backup client connected");
+                this.backupClientIsConnected = true;
+                break;
+
             case SERVER_PACKETS.LOGIN:
                 this.initialize(msg);
                 break;
@@ -154,6 +197,7 @@ export class Network {
                     const hitPlayer = this.game.getPlayer(hit.id);
                     hitPlayer.health = hit.health;
                     hitPlayer.healthRegen = hit.healthRegen;
+                    this.game.onHit(hit.id);
                 }
                 break;
 
@@ -236,7 +280,19 @@ export class Network {
 
     private initialize(msg: ProtocolPacket) {
         // send regular ack messages to keep the connection alive
-        setInterval(() => this.send({ c: CLIENT_PACKETS.ACK }), 50);
+        clearInterval(this.ackInterval);
+        this.ackInterval = setInterval(() => {
+            this.send({ c: CLIENT_PACKETS.ACK }, this.ackToBackup);
+            this.ackToBackup = !this.ackToBackup;
+        }, 50);
+
+        this.token = msg.token as string;
+
+        if (this.backupClientIsConnected) {
+            this.backupClient.close();
+            this.backupClientIsConnected = false;
+        }
+        this.backupClient = this.initWebSocket({ isPrimary: false });
 
         // send start info to game
         const players = msg.players as [];
@@ -246,8 +302,15 @@ export class Network {
         this.game.onStart(msg.id as number);
     }
 
-    private send(msg: ProtocolPacket) {
-        this.client.send(marshaling.marshalClientMessage(msg));
+    private send(msg: ProtocolPacket, sendToBackup: boolean = false) {
+        const clientMgs = marshaling.marshalClientMessage(msg);
+        if (sendToBackup) {
+            if (this.backupClientIsConnected) {
+                this.backupClient.send(clientMgs);
+            }
+        } else {
+            this.client.send(clientMgs);
+        }
     }
 
 }

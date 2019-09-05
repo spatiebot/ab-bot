@@ -8,16 +8,10 @@ import { BackOffInstruction } from "../instructions/back-off-instruction";
 export class FleeTarget implements ITarget {
     goal = 'flee';
 
-    private static lastTime = 0;
-
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
     }
 
     isValid(): boolean {
-        if (Date.now() - FleeTarget.lastTime > 1000) {
-            FleeTarget.lastTime = Date.now();
-        }
-
         return this.env.me().health < this.character.fleeHealth;
     }
 

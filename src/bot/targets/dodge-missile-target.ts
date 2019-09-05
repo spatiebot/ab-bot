@@ -9,19 +9,20 @@ import { Debug } from "../../helper/debug";
 export class DodgeMissileTarget implements ITarget {
     goal = 'dodge';
 
-    private objectToAvoidID: number;
+    objectToAvoidID: number;
     private distanceToKeep: number;
-    // private lastTime: number = 0;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
 
-        const missiles = env.getMissiles().filter(x => x.playerID !== env.myId());
+        const allMissiles = env.getMissiles();
+        const missiles = allMissiles.filter(x => !x.playerID || x.playerID !== env.myId());
         const otherAircrafts = env.getPlayers().filter(x => x.id !== env.myId());
 
         let closestObject: {
             distance: number,
             object: any,
-            distanceToKeep: number
+            distanceToKeep: number,
+            isMissile: boolean;
         };
         const myPos = env.me().pos;
         for (var i = 0; i < missiles.length; i++) {
@@ -30,29 +31,32 @@ export class DodgeMissileTarget implements ITarget {
                 closestObject = {
                     object: missiles[i],
                     distance: delta.distance,
-                    distanceToKeep: character.missileDistance
+                    distanceToKeep: character.missileDistance,
+                    isMissile: true,
                 };
             }
         }
         for (var i = 0; i < otherAircrafts.length; i++) {
-            const p  = otherAircrafts[i];
+            const p = otherAircrafts[i];
             if (p.isHidden || !p.isInView || p.isStealthed) {
-                return;
+                continue;
             }
             const delta = Calculations.getDelta(myPos, p.pos);
             if (!closestObject || delta.distance < closestObject.distance) {
                 closestObject = {
                     object: p,
                     distance: delta.distance,
-                    distanceToKeep: character.otherAircraftDistance
+                    distanceToKeep: character.otherAircraftDistance,
+                    isMissile: false
                 };
             }
         }
 
-        Debug.addLog('dodge', [closestObject.object.id, closestObject.object.pos, closestObject.distance]);
-        if (closestObject && closestObject.distance < closestObject.distanceToKeep) {
-            this.objectToAvoidID = closestObject.object.id;
-            this.distanceToKeep = closestObject.distanceToKeep;
+        if (closestObject) {
+            if (closestObject.distance < closestObject.distanceToKeep) {
+                this.objectToAvoidID = closestObject.object.id;
+                this.distanceToKeep = closestObject.distanceToKeep;
+            }
         }
     }
 
@@ -84,10 +88,6 @@ export class DodgeMissileTarget implements ITarget {
         }
 
         var me = this.env.me();
-        // if (Date.now() - this.lastTime > 1000) {
-        //     console.log(me.pos, me.rot, obj.pos, obj.rot);
-        //     this.lastTime = Date.now();
-        // }
 
         var instruction = new BackOffInstruction(me.pos, me.rot, obj.pos, obj.rot);
         result.push(instruction);

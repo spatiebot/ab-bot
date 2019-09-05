@@ -13,6 +13,8 @@ export class Game {
     private previousTickTime: number;
     private readonly subscribers = {};
 
+    private debugConfig: any;
+
     constructor(private readonly network: Network) {
 
     }
@@ -108,6 +110,10 @@ export class Game {
         delete this.players[playerID];
     }
 
+    onHit(playerID: number) {
+        this.trigger("playerhit", {playerID});
+    }
+
     onKill(playerID: number, killerID: number) {
         this.trigger("playerkilled", {killerID, killedID: playerID});
     }
@@ -148,4 +154,8 @@ export class Game {
         delete this.mobs[id];
     }
 
+    setDebugProperties(config: any) {
+        // use for random debug stuff
+        this.debugConfig = config;
+    }
 }

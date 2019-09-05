@@ -112,7 +112,9 @@ export class AirmashApiFacade implements IAirmashEnvironment {
     getMissiles(): Missile[] {
         const mobs = this.game.getMobs();
         const missiles = mobs.filter(x => !x.stationary);
-        return missiles.map(x => this.getMissileFrom(x));
+        
+        const mapped = missiles.map(x => this.getMissileFrom(x));
+        return mapped;
     }
 
     private getMissileFrom(m: Mob): Missile {
@@ -181,5 +183,9 @@ export class AirmashApiFacade implements IAirmashEnvironment {
         this.sendCommand(command, args);
     }
 
+    setDebugProperties(config: any) {
+        // use for random debugging stuff
+        this.game.setDebugProperties(config);
+    }
 
 }

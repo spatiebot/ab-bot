@@ -31,4 +31,6 @@ export interface IAirmashEnvironment {
     sendChat(msg: string);
     sendSay(msg: string);
     sendCommand(command: string, args: string);
+
+    setDebugProperties(config: any);
 }

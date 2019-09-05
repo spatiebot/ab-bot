@@ -21,7 +21,7 @@ export class BotCharacter {
     }
 
     static CrateStealer: BotCharacter = {
-        ...BotCharacter.Mohawk,
+        ...BotCharacter.Default,
         goal: 'stealCrates'
     }
 
