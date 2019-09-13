@@ -149,6 +149,8 @@ export class Network {
 
             case SERVER_PACKETS.PLAYER_NEW:
             case SERVER_PACKETS.PLAYER_UPDATE:
+            case SERVER_PACKETS.EVENT_BOOST:
+            case SERVER_PACKETS.EVENT_BOUNCE:
                 this.game.onPlayerInfo(msg as any);
                 break;
 
@@ -184,28 +186,15 @@ export class Network {
                     missile.ownerID = playerID;
                     this.game.onMob(missile);
                 }
-                const firingPlayer = this.game.getPlayer(playerID);
-                if (firingPlayer) {
-                    firingPlayer.energy = msg.energy as number;
-                    firingPlayer.energyRegen = msg.energyRegen as number;
-                }
+
+                this.game.onPlayerInfo(msg as any);
                 break;
 
             case SERVER_PACKETS.PLAYER_HIT:
                 const hitPlayers = msg.players as Player[];
                 for (const hit of hitPlayers) {
-                    const hitPlayer = this.game.getPlayer(hit.id);
-                    hitPlayer.health = hit.health;
-                    hitPlayer.healthRegen = hit.healthRegen;
+                    this.game.onPlayerInfo(hit as any);
                     this.game.onHit(hit.id);
-                }
-                break;
-
-            case SERVER_PACKETS.EVENT_BOOST:
-                const boostingPlayer = this.game.getPlayer(msg.id as number);
-                if (boostingPlayer) {
-                    boostingPlayer.energy = msg.energy as number;
-                    boostingPlayer.energyRegen = msg.energyRegen as number;
                 }
                 break;
 
@@ -213,12 +202,10 @@ export class Network {
                 const minimapData = msg.rankings as any[];
                 for (let i = 0; i < minimapData.length; i++) {
                     const playerMinimapData = minimapData[i];
-                    const minimapPlayer = this.game.getPlayer(playerMinimapData.id);
-                    if (minimapPlayer) {
-                        const coords = decodeMinimapCoords(playerMinimapData.x, playerMinimapData.y);
-                        minimapPlayer.lowResPos = new Pos(coords);
-                        minimapPlayer.lowResPos.isAccurate = false;
-                    }
+                    const coords = decodeMinimapCoords(playerMinimapData.x, playerMinimapData.y);
+                    playerMinimapData.lowResPos = new Pos(coords);
+                    playerMinimapData.lowResPos.isAccurate = false;
+                    this.game.onPlayerInfo(playerMinimapData as any);
                 }
                 break;
 
@@ -263,8 +250,6 @@ export class Network {
 
             //ignore
             case SERVER_PACKETS.PING:
-            case SERVER_PACKETS.SCORE_BOARD:
-            case SERVER_PACKETS.EVENT_BOUNCE:
             case SERVER_PACKETS.EVENT_LEAVEHORIZON:
                 break;
 

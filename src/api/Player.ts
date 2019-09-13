@@ -37,15 +37,35 @@ export class Player extends Mob {
 
     copyFrom(p: Player) {
         super.copyFrom(p);
-        this.name = p.name || this.name;
-        this.team = p.team || this.team;
-        this.flag = p.flag || this.flag;
-        this.health = p.health || this.health || 1;
-        this.healthRegen = p.healthRegen || this.healthRegen;
-        this.energy = p.energy || this.energy || 1;
-        this.energyRegen = p.energyRegen || this.energyRegen;
-        this.lowResPos = p.lowResPos || this.lowResPos;
+        if (p.name != null) {
+            this.name = p.name;
+        }
+        if (p.team != null) {
+            this.team = p.team;
+        }
+        if (p.flag != null) {
+            this.flag = p.flag;
+        }
 
-        this.upgrades = p.upgrades || 0;
+        if (p.health != null) {
+            this.health = p.health;
+        }
+
+        if (p.healthRegen != null) {
+            this.healthRegen = p.healthRegen;
+        }
+        if (p.energy != null) {
+            this.energy = p.energy;
+        }
+        if (p.energyRegen != null) {
+            this.energyRegen = p.energyRegen;
+        }
+        if (p.lowResPos != null) {
+            this.lowResPos = p.lowResPos;
+        }
+
+        if (p.upgrades != null) {
+            this.upgrades = p.upgrades;
+        }
     }
 }

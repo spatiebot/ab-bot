@@ -23,16 +23,30 @@ export class Mob {
 
     copyFrom(m: Mob) {
         this.id = m.id;
-        this.stationary = m.stationary;
 
-        this.ownerID = m.ownerID || this.ownerID;
-        this.type = m.type || this.type;
-        
-        this.posX = m.posX;
-        this.posY = m.posY;
-        this.speedX = m.speedX;
-        this.speedY = m.speedY;
-        this.rot = m.rot;
+        if (m.stationary != null) {
+            this.stationary = m.stationary;
+        }
+
+        if (m.ownerID != null) {
+            this.ownerID = m.ownerID;
+        }
+
+        if (m.type != null) {
+            this.type = m.type;
+        }
+
+        if (m.posX != null) {
+            this.posX = m.posX;
+            this.posY = m.posY;
+        }
+        if (m.speedX != null) {
+            this.speedX = m.speedX;
+            this.speedY = m.speedY;
+        }
+        if (m.rot != null) {
+            this.rot = m.rot;
+        }
 
         this.lastUpdate = Date.now();
     }

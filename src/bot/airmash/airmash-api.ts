@@ -67,7 +67,7 @@ export class AirmashApiFacade implements IAirmashEnvironment {
             isStealthed: p.stealth,
             lowResPos: p.lowResPos,
             name: p.name,
-            pos: new Pos({ x: p.posX, y: p.posY }),
+            pos: { x: p.posX, y: p.posY, isAccurate: true },
             rot: p.rot,
             speed: new Pos({ x: p.speedX, y: p.speedY }),
             team: p.team,
