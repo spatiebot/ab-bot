@@ -1,13 +1,19 @@
 import { Mob } from "./Mob";
 import { Pos } from "../bot/pos";
+import { Keystate } from "../../ab-protocol/src/types/client";
+import { PlayerUpdate } from "./player-update";
 
 export class Player extends Mob {
+
+    private readonly updater: PlayerUpdate;
 
     constructor(p: Player = null) {
         super(p);
         if (p != null) {
             this.copyFrom(p);
         }
+
+        this.updater = new PlayerUpdate(this);
     }
 
     name: string;
@@ -21,12 +27,12 @@ export class Player extends Mob {
     health: number = 1;
     healthRegen: number = 0;
     lowResPos: Pos = null;
+    boost: boolean;
+    strafe: boolean;
+    keystate: Keystate;
 
     update(timeFactor: number) {
-        this.energy += timeFactor * this.energyRegen;
-        this.energy = Math.min(1, this.energy);
-        this.health += timeFactor * this.healthRegen;
-        this.health = Math.min(1, this.health);
+        this.updater.exec(timeFactor);
     }
 
     reset() {
@@ -66,6 +72,17 @@ export class Player extends Mob {
 
         if (p.upgrades != null) {
             this.upgrades = p.upgrades;
+        }
+
+        if (p.boost != null) {
+            this.boost = p.boost;
+        }
+        if (p.strafe != null) {
+            this.strafe = p.strafe;
+        }
+
+        if (p.keystate != null) {
+            this.keystate = p.keystate;
         }
     }
 }

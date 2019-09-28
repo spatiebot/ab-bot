@@ -118,8 +118,6 @@ export class OtherPlayerTarget implements ITarget {
             //     this.lastTime = Date.now();
             // }
 
-            console.log(pos);
-
             if (predictPositions && pos.isAccurate) {
                 pos = Calculations.predictPosition(100, pos, t.speed);
             }

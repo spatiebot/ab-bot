@@ -3,7 +3,7 @@ import * as unmarshaling from '../../ab-protocol/src/unmarshaling';
 import CLIENT_PACKETS from '../../ab-protocol/src/packets/client';
 import SERVER_PACKETS from '../../ab-protocol/src/packets/server';
 import { KEY_CODES } from '../../ab-protocol/src/types/client';
-import { decodeMinimapCoords } from '../../ab-protocol/src/decoding/index';
+import { decodeMinimapCoords, decodeKeystate } from '../../ab-protocol/src/decoding/index';
 import WebSocket from 'ws';
 import { ProtocolPacket } from '../../ab-protocol/src/packets';
 import { Game } from './Game';
@@ -11,6 +11,7 @@ import { Mob } from './Mob';
 import { CHAT_TYPE } from './chat-type';
 import { Player } from './Player';
 import { Pos } from '../bot/pos';
+import { PlayerInfo } from '../bot/airmash/player-info';
 
 export class Network {
     private client: WebSocket;
@@ -47,8 +48,8 @@ export class Network {
                     protocol: 5,
                     name: config.name,
                     session: "none",
-                    horizonX: Math.ceil(640),
-                    horizonY: Math.ceil(480),
+                    horizonX: Math.ceil(3000),
+                    horizonY: Math.ceil(3000),
                     flag: config.flag
                 });
             } else {
@@ -151,11 +152,12 @@ export class Network {
             case SERVER_PACKETS.PLAYER_UPDATE:
             case SERVER_PACKETS.EVENT_BOOST:
             case SERVER_PACKETS.EVENT_BOUNCE:
-                this.game.onPlayerInfo(msg as any);
+
+                this.game.onPlayerInfo(this.decodePlayer(msg));
                 break;
 
             case SERVER_PACKETS.PLAYER_RESPAWN:
-                this.game.onPlayerInfo(msg as any);
+                this.game.onPlayerInfo(this.decodePlayer(msg));
                 this.game.onRespawn(msg.id as number);
                 break;
 
@@ -187,13 +189,13 @@ export class Network {
                     this.game.onMob(missile);
                 }
 
-                this.game.onPlayerInfo(msg as any);
+                this.game.onPlayerInfo(this.decodePlayer(msg));
                 break;
 
             case SERVER_PACKETS.PLAYER_HIT:
                 const hitPlayers = msg.players as Player[];
                 for (const hit of hitPlayers) {
-                    this.game.onPlayerInfo(hit as any);
+                    this.game.onPlayerInfo(this.decodePlayer(hit));
                     this.game.onHit(hit.id);
                 }
                 break;
@@ -205,7 +207,7 @@ export class Network {
                     const coords = decodeMinimapCoords(playerMinimapData.x, playerMinimapData.y);
                     playerMinimapData.lowResPos = new Pos(coords);
                     playerMinimapData.lowResPos.isAccurate = false;
-                    this.game.onPlayerInfo(playerMinimapData as any);
+                    this.game.onPlayerInfo(playerMinimapData);
                 }
                 break;
 
@@ -261,6 +263,14 @@ export class Network {
                 console.log(msg);
                 break;
         }
+    }
+
+    private decodePlayer(msg: any): Player {
+        if (msg.keystate) {
+            msg.rawKeystate = msg.keystate;
+            msg.keystate = decodeKeystate(msg.keystate);
+        }
+        return msg;
     }
 
     private initialize(msg: ProtocolPacket) {

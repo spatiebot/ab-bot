@@ -11,6 +11,7 @@ PathFindingFacade.Util = Util;
 PathFindingFacade.AStarFinder = AStarFinder;
 
 const urls = {
+    local: "ws://127.0.0.1:3501/ffa",
     steamDev: "wss://game.airmash.steamroller.tk/dev",
     steamFfa: "wss://game.airmash.steamroller.tk/ffa",
     wightFfa: "wss://game-eu-s1.airbattle.xyz/ffa",
