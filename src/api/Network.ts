@@ -3,7 +3,7 @@ import * as unmarshaling from '../../ab-protocol/src/unmarshaling';
 import CLIENT_PACKETS from '../../ab-protocol/src/packets/client';
 import SERVER_PACKETS from '../../ab-protocol/src/packets/server';
 import { KEY_CODES } from '../../ab-protocol/src/types/client';
-import { decodeMinimapCoords, decodeKeystate } from '../../ab-protocol/src/decoding/index';
+import { decodeMinimapCoords, decodeKeystate, decodeUpgrades } from '../../ab-protocol/src/decoding/index';
 import WebSocket from 'ws';
 import { ProtocolPacket } from '../../ab-protocol/src/packets';
 import { Game } from './Game';
@@ -11,7 +11,7 @@ import { Mob } from './Mob';
 import { CHAT_TYPE } from './chat-type';
 import { Player } from './Player';
 import { Pos } from '../bot/pos';
-import { PlayerInfo } from '../bot/airmash/player-info';
+import { Debug } from '../helper/debug';
 
 export class Network {
     private client: WebSocket;
@@ -33,6 +33,19 @@ export class Network {
             name,
             flag
         });
+    }
+
+    stop() {
+        clearInterval(this.ackInterval);
+        if (!this.client.closed) {
+            this.client.close();
+        }
+        if (this.backupClientIsConnected) {
+            if (!this.backupClient.closed) {
+                this.backupClient.close();
+            }
+            this.backupClientIsConnected = false;
+        }
     }
 
     private initWebSocket(config: any, tries = 1) {
@@ -61,21 +74,21 @@ export class Network {
                 }, true);
             }
         };
-        ws.onmessage = (msg: { data: ArrayBuffer; }) => {
+        ws.onmessage = (msg: { data: ArrayBuffer }) => {
             try {
                 const result = unmarshaling.unmarshalServerMessage(msg.data);
-                this.onServerMessage(result);
+                if (!result) {
+                    console.log('no result', msg);
+                }
+                this.onServerMessage(result, config.isPrimary);
             } catch (error) {
+                console.log('erreur!!!!');
                 this.game.onError(error);
             }
         };
         ws.onerror = (ev) => {
             console.log(ev);
             this.game.onError(new Error((config.isPrimary ? 'primary' : 'backup') + ' socket error' + ev));
-
-            if (tries <= 3 && config.isPrimary) {
-                this.client = this.initWebSocket(config, tries + 1);
-            }
         };
         ws.onclose = () => {
             console.log('socket closed');
@@ -132,7 +145,7 @@ export class Network {
         this.send(msg);
     }
 
-    private onServerMessage(msg: ProtocolPacket) {
+    private onServerMessage(msg: ProtocolPacket, isPrimary: boolean) {
         switch (msg.c) {
             case SERVER_PACKETS.BACKUP:
                 console.log("backup client connected");
@@ -140,7 +153,7 @@ export class Network {
                 break;
 
             case SERVER_PACKETS.LOGIN:
-                this.initialize(msg);
+                this.afterLogin(msg);
                 break;
 
             case SERVER_PACKETS.SCORE_UPDATE:
@@ -152,7 +165,6 @@ export class Network {
             case SERVER_PACKETS.PLAYER_UPDATE:
             case SERVER_PACKETS.EVENT_BOOST:
             case SERVER_PACKETS.EVENT_BOUNCE:
-
                 this.game.onPlayerInfo(this.decodePlayer(msg));
                 break;
 
@@ -250,12 +262,16 @@ export class Network {
                 this.game.onChat(msg.id as number, msg.text as string);
                 break;
 
-            //ignore
             case SERVER_PACKETS.PING:
-            case SERVER_PACKETS.EVENT_LEAVEHORIZON:
+                this.send({ c: CLIENT_PACKETS.PONG, num: msg.num }, !isPrimary);
                 break;
 
-            // todo
+            case SERVER_PACKETS.PING_RESULT:
+                this.game.onPingPong(msg.ping as number);
+                break;
+
+            // ignore
+            case SERVER_PACKETS.EVENT_LEAVEHORIZON:
             case SERVER_PACKETS.PLAYER_POWERUP:
                 break;
 
@@ -266,20 +282,30 @@ export class Network {
     }
 
     private decodePlayer(msg: any): Player {
-        if (msg.keystate) {
+        if (msg.keystate || msg.keystate === 0) {
+            const decodedKeyState = decodeKeystate(msg.keystate);
             msg.rawKeystate = msg.keystate;
-            msg.keystate = decodeKeystate(msg.keystate);
+            msg.keystate = decodedKeyState.keystate;
+            msg.boost = decodedKeyState.boost;
+            msg.flagspeed = decodedKeyState.flagspeed;
+            msg.strafe = decodedKeyState.strafe;
+            msg.stealth = decodedKeyState.stealthed;
+        }
+        if (msg.upgrades || msg.upgrades === 0) {
+            const decodedUpgrades = decodeUpgrades(msg.upgrades);
+            msg.rawUpgrades = msg.upgrades;
+            msg.upgrades = decodedUpgrades;
         }
         return msg;
     }
 
-    private initialize(msg: ProtocolPacket) {
+    private afterLogin(msg: ProtocolPacket) {
         // send regular ack messages to keep the connection alive
         clearInterval(this.ackInterval);
         this.ackInterval = setInterval(() => {
             this.send({ c: CLIENT_PACKETS.ACK }, this.ackToBackup);
             this.ackToBackup = !this.ackToBackup;
-        }, 50);
+        }, 1000); // original airmash has 50ms, but wights server has a 10 second ack timeout. So.
 
         this.token = msg.token as string;
 
@@ -299,12 +325,16 @@ export class Network {
 
     private send(msg: ProtocolPacket, sendToBackup: boolean = false) {
         const clientMgs = marshaling.marshalClientMessage(msg);
-        if (sendToBackup) {
-            if (this.backupClientIsConnected) {
-                this.backupClient.send(clientMgs);
+        try {
+            if (sendToBackup) {
+                if (this.backupClientIsConnected) {
+                    this.backupClient.send(clientMgs);
+                }
+            } else {
+                this.client.send(clientMgs);
             }
-        } else {
-            this.client.send(clientMgs);
+        } catch (error) {
+            this.game.onError(error);
         }
     }
 

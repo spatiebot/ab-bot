@@ -16,9 +16,46 @@ export class Mob {
     speedY: number;
     rot: number;
     lastUpdate: number;
+    accelX: number;
+    accelY: number;
+    maxSpeed: number;
 
     isStale(): boolean {
         return Date.now() - this.lastUpdate > 2000;
+    }
+
+    update(timefrac: number): void {
+        let oldSpeedX: number;
+        let oldSpeedY: number;
+        const limit = timefrac > .51 ? Math.round(timefrac) : 1;
+        const timeFactor = timefrac / limit;
+
+        if (!this.accelX && this.accelX !== 0) {
+            return;
+        }
+        
+        for (let times = 0; times < limit; times++) {
+            oldSpeedX = this.speedX;
+            oldSpeedY = this.speedY;
+            this.speedX += this.accelX * timeFactor;
+            this.speedY += this.accelY * timeFactor;
+        }
+
+        const length = Math.sqrt(Math.pow(this.speedX, 2) + Math.pow(this.speedY, 2));
+        if (length > this.maxSpeed) { 
+            const factor = this.maxSpeed / length;
+            this.speedX *= factor;
+            this.speedY *= factor;
+        }
+
+        if (this.isStale()) {
+            const factor = 1 - .03 * timeFactor;
+            this.speedX *= factor;
+            this.speedY *= factor;
+        }
+
+        this.posX += timeFactor * oldSpeedX + .5 * (this.speedX - oldSpeedX) * timeFactor;
+        this.posY += timeFactor * oldSpeedY + .5 * (this.speedY - oldSpeedY) * timeFactor;        
     }
 
     copyFrom(m: Mob) {
@@ -46,6 +83,13 @@ export class Mob {
         }
         if (m.rot != null) {
             this.rot = m.rot;
+        }
+        if (m.accelX != null) {
+            this.accelX = m.accelX;
+            this.accelY = m.accelY;
+        }
+        if (m.maxSpeed != null) {
+            this.maxSpeed = m.maxSpeed;
         }
 
         this.lastUpdate = Date.now();

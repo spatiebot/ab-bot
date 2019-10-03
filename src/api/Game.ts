@@ -12,11 +12,11 @@ export class Game {
     private score: number;
     private previousTickTime: number;
     private readonly subscribers = {};
+    private ping: number = 30;
 
     private debugConfig: any;
 
     constructor(private readonly network: Network) {
-
     }
 
     on(eventName: string, subscriber: (x: any) => void) {
@@ -67,6 +67,10 @@ export class Game {
         return this.myID;
     }
 
+    getPing(): number {
+        return this.ping;
+    }
+
     onTick() {
         const now = Date.now();
         const prevTime = this.previousTickTime || now - 7;
@@ -78,11 +82,20 @@ export class Game {
             p.update(timeFactor);
         }
 
+        for (const m of this.getMobs()) {
+            m.update(timeFactor);
+        }
+
         this.trigger("tick", {});
     }
     
+    onPingPong(ping: number) {
+        this.ping = ping;
+    }
+
     onError(error: Error) {
         console.log(error.message, error.stack);
+        this.network.stop();
         this.trigger("error", error);
     }
 
@@ -98,6 +111,9 @@ export class Game {
     }
 
     onPlayerInfo(player: Player) {
+        if (player.status === 1) {
+            console.log("Player " + player.name + " is hiding");
+        }
         const p = this.getPlayer(player.id);
         if (!p) {
             this.players[player.id] = new Player(player);
@@ -116,6 +132,10 @@ export class Game {
 
     onKill(playerID: number, killerID: number) {
         this.trigger("playerkilled", {killerID, killedID: playerID});
+
+        if (playerID === this.myID) {
+            this.mobs = {}; // we don't get despawn messages if the mob is not in sight.
+        }
     }
 
     onUpgrades(numUpgrades: number) {

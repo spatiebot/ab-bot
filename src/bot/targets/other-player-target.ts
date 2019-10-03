@@ -21,9 +21,11 @@ export class OtherPlayerTarget implements ITarget {
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
 
         let victim: PlayerInfo;
+        const me = env.me();
 
         const players = getPlayersSortedByDistance(env, true);
-        const withinRange = players.filter(x => x.delta.distance < character.firingRange);
+        const enemies = players.filter(x=>x.player.team !== me.team);
+        const withinRange = enemies.filter(x => x.delta.distance < character.firingRange);
         if (withinRange.length > 0) {
             withinRange.sort((a, b) => {
                 if (a.player.health < b.player.health) {
@@ -36,8 +38,8 @@ export class OtherPlayerTarget implements ITarget {
             victim = withinRange[0].player;
         }
 
-        if (players.length > 0) {
-            victim = victim || players[0].player;
+        if (enemies.length > 0) {
+            victim = victim || enemies[0].player;
         }
 
         if (victim) {
@@ -109,17 +111,8 @@ export class OtherPlayerTarget implements ITarget {
         if (t) {
             let pos = PlayerInfo.getMostReliablePos(t);
 
-            // if (Date.now() - this.lastTime > 1000) {
-            //     var p = this.env.getNativePlayer(t.id);
-            //     // var delta = Calculations.getDelta(t.pos, t.lowResPos);
-            //     // var delta2 = Calculations.getDelta(this.env.me().pos, t.pos);
-            //     // var delta3 = Calculations.getDelta(this.env.me().pos, t.lowResPos);
-            //     console.log(p);
-            //     this.lastTime = Date.now();
-            // }
-
             if (predictPositions && pos.isAccurate) {
-                pos = Calculations.predictPosition(100, pos, t.speed);
+                pos = Calculations.predictPosition(this.env.getPing(), pos, t.speed);
             }
 
             return pos;

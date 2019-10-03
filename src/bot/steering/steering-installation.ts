@@ -4,7 +4,7 @@ import { Rotate } from "./rotate";
 import { Speed } from "./speed";
 import { Fire } from "./fire";
 
-export const steeringInstallationIntervalMs = 100;
+export const steeringInstallationIntervalMs = 180;
 export const longThrottleInterval = 3.5 * steeringInstallationIntervalMs;
 
 function isNullOrUndefined(obj: any): boolean {
@@ -42,8 +42,6 @@ export class SteeringInstallation {
         this.instructions.push(instruction);
     }
 
-    // private last = 0;
-
     private execute() {
         const instruction = this.compress(this.instructions);
         this.instructions = [];
@@ -53,11 +51,6 @@ export class SteeringInstallation {
         this.rotation.execute(me, instruction.rotDelta);
         this.speed.execute(me, instruction.targetSpeed, instruction.boost, instruction.fire);
         this.fire.execute(me, instruction.fire);
-
-        // if (Date.now() - this.last > 1000) {
-        //     console.log(instruction);
-        //     this.last = Date.now();
-        // }
     }
 
     private compress(instructions: SteeringInstruction[]): SteeringInstruction {

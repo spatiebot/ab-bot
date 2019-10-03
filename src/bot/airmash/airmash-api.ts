@@ -37,8 +37,12 @@ export class AirmashApiFacade implements IAirmashEnvironment {
         }
     }
 
-    joinGame(name: string, flag: string, aircraftType: number) {
+    joinGame(name: string, flag: string) {
         this.game.start(name, flag);
+    }
+
+    selectAircraft(type: number) {
+        this.network.sendCommand("respawn", type.toString());
     }
 
     on(what: string, subscriber: (e: any) => void) {
@@ -62,7 +66,7 @@ export class AirmashApiFacade implements IAirmashEnvironment {
             energy: p.energy,
             health: p.health,
             id: p.id,
-            isHidden: p.posX === 0 && p.posY === 0 || p.lowResPos && p.lowResPos.x === 0 && p.lowResPos.y === 0,
+            isHidden: p.status === 1,
             isInView: !p.isStale(),
             isStealthed: p.stealth,
             lowResPos: p.lowResPos,
@@ -71,10 +75,23 @@ export class AirmashApiFacade implements IAirmashEnvironment {
             rot: p.rot,
             speed: new Pos({ x: p.speedX, y: p.speedY }),
             team: p.team,
-            type: p.type
+            type: p.type,
         }
     }
 
+    getMyKeyState(): any {
+        const me = this.game.getPlayer(this.game.getMyId());
+        if (!me.keystate) {
+            return {};
+        }
+        return {
+            DOWN: me.keystate.DOWN,
+            LEFT: me.keystate.LEFT,
+            RIGHT: me.keystate.RIGHT,
+            UP: me.keystate.UP,
+            SPECIAL: me.boost || me.strafe,
+        }
+    }
 
     myId(): number {
         return this.game.getMyId();
@@ -168,7 +185,7 @@ export class AirmashApiFacade implements IAirmashEnvironment {
     }
 
     getPing(): number {
-        return 20;
+        return this.game.getPing();
     }
 
     sendChat(msg: string) {

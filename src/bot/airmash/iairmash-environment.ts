@@ -8,7 +8,8 @@ export interface IAirmashEnvironment {
     startMainLoop();
     stopMainLoop();
 
-    joinGame(name: string, flag: string, aircraftType: number);
+    joinGame(name: string, flag: string);
+    selectAircraft(type: number);
 
     on(what: string, subscriber: (e: any) => any);
 
@@ -16,6 +17,7 @@ export interface IAirmashEnvironment {
     myId(): number;
     getPlayers(): PlayerInfo[];
     getPlayer(id: number): PlayerInfo;
+    getMyKeyState(): any;
 
     getCrates(): Crate[];
     getCrate(id: number): Crate;

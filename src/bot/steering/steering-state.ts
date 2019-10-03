@@ -13,9 +13,17 @@ export class SteeringState {
     }
 
     send(env: IAirmashEnvironment, value: boolean) {
-        if (this.lastValue === value && Date.now() < this.sent + longThrottleInterval) {
+        var keystate = env.getMyKeyState();
+        if (keystate[this.key] === value) {
+            return;
+        }        
+
+        const timeOut = this.sent + longThrottleInterval;
+        const hasTimedOut = Date.now() > timeOut;
+        if (this.lastValue === value && !hasTimedOut) {
             return;
         }
+
         env.sendKey(this.key, !!value);
         this.sent = Date.now();
         this.lastValue = value;

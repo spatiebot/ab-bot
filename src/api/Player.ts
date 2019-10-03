@@ -2,6 +2,7 @@ import { Mob } from "./Mob";
 import { Pos } from "../bot/pos";
 import { Keystate } from "../../ab-protocol/src/types/client";
 import { PlayerUpdate } from "./player-update";
+import { Upgrades } from "./upgrades";
 
 export class Player extends Mob {
 
@@ -19,7 +20,7 @@ export class Player extends Mob {
     name: string;
     team: number;
     flag: number;
-    upgrades: number = 0;
+    upgrades: Upgrades = new Upgrades();
     stealth: boolean = false;
     dead: boolean = false;
     energy: number = 1;
@@ -30,6 +31,8 @@ export class Player extends Mob {
     boost: boolean;
     strafe: boolean;
     keystate: Keystate;
+    flagspeed: boolean;
+    status: number;
 
     update(timeFactor: number) {
         this.updater.exec(timeFactor);
@@ -83,6 +86,14 @@ export class Player extends Mob {
 
         if (p.keystate != null) {
             this.keystate = p.keystate;
+        }
+
+        if (p.status != null) {
+            this.status = p.status;
+        }
+
+        if (p.flagspeed != null) {
+            this.flagspeed = p.flagspeed;
         }
     }
 }

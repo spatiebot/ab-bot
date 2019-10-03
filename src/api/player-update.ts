@@ -1,6 +1,6 @@
 import { Player } from "./Player";
 import { ships } from "./ships";
-import { upgrades } from "./upgrades";
+import { upgradeConstants } from "./upgrades-constants";
 
 export class PlayerUpdate {
     constructor(private player: Player) {
@@ -17,7 +17,7 @@ export class PlayerUpdate {
         const limit = timeFrac > .51 ? Math.round(timeFrac) : 1;
         const timeFactor = timeFrac / limit;
 
-        if (!this.player.keystate) {
+        if (!this.player.keystate || !ships[this.player.type]) {
             return;
         }
 
@@ -67,15 +67,14 @@ export class PlayerUpdate {
             }
 
             const range =  Math.sqrt(Math.pow(this.player.speedX,2) + Math.pow(this.player.speedY,2));
-            let pathWidth = ships[this.player.type].maxSpeed * delta * 1 // TODO * upgrades.speed.factor[this.player.speedupgrade];
+            let pathWidth = ships[this.player.type].maxSpeed * delta * upgradeConstants.speed.factor[this.player.upgrades.speed || 0];
             const maxX = ships[this.player.type].minSpeed;
-            // TODO:
-            // if (this.player.powerups.rampage) {
-            //     pathWidth = pathWidth * .75;
-            // }
-            // if (this.player.flagspeed) {
-            //     pathWidth = 5;
-            // }
+            if (this.player.upgrades.inferno) {
+                pathWidth = pathWidth * .75;
+            }
+            if (this.player.flagspeed) {
+                pathWidth = 5;
+            }
             if (range > pathWidth) {
                 this.player.speedX *= pathWidth / range;
                 this.player.speedY *= pathWidth / range;

@@ -53,9 +53,11 @@ export class DodgeMissileTarget implements ITarget {
         }
 
         if (closestObject) {
-            if (closestObject.distance < closestObject.distanceToKeep) {
+            const distanceToKeep = closestObject.distanceToKeep * (2 - this.env.me().health);
+
+            if (closestObject.distance < distanceToKeep) {
                 this.objectToAvoidID = closestObject.object.id;
-                this.distanceToKeep = closestObject.distanceToKeep;
+                this.distanceToKeep = distanceToKeep;
             }
         }
     }
@@ -88,6 +90,14 @@ export class DodgeMissileTarget implements ITarget {
         }
 
         var me = this.env.me();
+
+        if (!obj.rot && obj.rot !== 0) {
+            let rot = Math.atan2(obj.speed.y, obj.speed.x) + (Math.PI / 2);
+            if (rot < 0) {
+                rot += Math.PI * 2;
+            }
+            obj.rot = rot;
+        }
 
         var instruction = new BackOffInstruction(me.pos, me.rot, obj.pos, obj.rot);
         result.push(instruction);

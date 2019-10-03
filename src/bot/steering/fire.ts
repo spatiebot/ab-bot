@@ -1,6 +1,7 @@
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { SteeringState } from "./steering-state";
 import { PlayerInfo } from "../airmash/player-info";
+import { steeringInstallationIntervalMs } from "./steering-installation";
 
 export class Fire {
 
@@ -35,14 +36,12 @@ export class Fire {
         } else {
             stateToUse.send(this.env, true);
 
-            // in case of mohawk, don't turn it off, 
-            // but send a new command each second or so
-            // to keep firing
+            // in case of mohawk, don't turn it off 
             if (!isMohawk) {
                 this.fireTimeout = setTimeout(() => {
                     stateToUse.send(this.env, false);
                     this.fireTimeout = setTimeout(() => this.fireTimeout = null, 100);
-                }, 50);
+                }, 200);
             }
         }
     }
