@@ -66,8 +66,8 @@ export class AirmashApiFacade implements IAirmashEnvironment {
             energy: p.energy,
             health: p.health,
             id: p.id,
-            isHidden: p.status === 1,
-            isInView: !p.isStale(),
+            isHidden: p.status === 1 || p.dead || p.hidden,
+            isInView: !p.isStale() && !p.leftHorizon,
             isStealthed: p.stealth,
             lowResPos: p.lowResPos,
             name: p.name,
@@ -76,6 +76,8 @@ export class AirmashApiFacade implements IAirmashEnvironment {
             speed: new Pos({ x: p.speedX, y: p.speedY }),
             team: p.team,
             type: p.type,
+            hasInferno: p.upgrades && p.upgrades.inferno,
+            hasShield: p.upgrades && p.upgrades.shield
         }
     }
 

@@ -1,7 +1,6 @@
 import { IAirmashEnvironment } from "./airmash/iairmash-environment";
 import { SteeringInstallation } from "./steering/steering-installation";
 import { BotCharacter } from "./bot-character";
-import { Score } from "./airmash/score";
 import { TargetSelection } from "./targets/target-selection";
 
 export class AirmashBot {
@@ -12,6 +11,7 @@ export class AirmashBot {
     private readonly targetSelection: TargetSelection;
     private aircraftType: number;
     private isSpawned: boolean;
+    private lastTick = Date.now();
     
     constructor(private env: IAirmashEnvironment, private character: BotCharacter = null) {
 
@@ -67,7 +67,19 @@ export class AirmashBot {
         console.log("Chat: " + name + ": " + msg.text);
     }
 
+    private reset() {
+        this.steeringInstallation.reset();
+        this.targetSelection.reset();
+    }
+
     private onTick() {
+        const msBetweenTicks = Date.now() - this.lastTick;
+        if (msBetweenTicks > 200) {
+            console.log("Panicking: delay between ticks too long: " + msBetweenTicks);
+            this.reset();
+        }
+        this.lastTick = Date.now();
+
         if (!this.isSpawned) {
             return;
         }

@@ -23,8 +23,10 @@ export class OtherPlayerTarget implements ITarget {
         let victim: PlayerInfo;
         const me = env.me();
 
-        const players = getPlayersSortedByDistance(env, true);
-        const enemies = players.filter(x=>x.player.team !== me.team);
+        const enemies = getPlayersSortedByDistance(env, true)
+            .filter(x => x.player.team !== me.team)
+            .filter(x => this.isTargetValid(x.player));
+
         const withinRange = enemies.filter(x => x.delta.distance < character.firingRange);
         if (withinRange.length > 0) {
             withinRange.sort((a, b) => {
@@ -53,11 +55,6 @@ export class OtherPlayerTarget implements ITarget {
             var p = this.env.getPlayer(this.targetID);
             if (!p) {
                 console.log("Target disappeared");
-                return null;
-            }
-            if (p.isStealthed || p.isHidden) {
-                console.log("Target is hidden or prowling");
-                return null;
             }
             return p;
         }
@@ -76,11 +73,6 @@ export class OtherPlayerTarget implements ITarget {
 
     getInstructions(): IInstruction[] {
         const result = [];
-
-        if (this.gotoLocationConfig.pathFindingFailures > 10) {
-            this.shouldRecycle = true;
-            return result;
-        }
 
         const targetPos = this.getTargetPos(this.character.predictPositions);
         if (!targetPos) {
@@ -105,7 +97,6 @@ export class OtherPlayerTarget implements ITarget {
         return result;
     }
 
-    // private lastTime = 0;
     private getTargetPos(predictPositions: boolean): Pos {
         var t = this.getTarget();
         if (t) {
@@ -120,7 +111,21 @@ export class OtherPlayerTarget implements ITarget {
         return null;
     }
 
+    private isTargetValid(t: PlayerInfo) {
+        return t && !t.isStealthed && !t.isHidden && !t.hasInferno && !t.hasShield;
+    }
+
     isValid(): boolean {
-        return !this.shouldRecycle && !!this.getTarget();
+        if (this.shouldRecycle) {
+            return false;
+        }
+
+        const target = this.getTarget();
+        if (!this.isTargetValid(target)) {
+            console.log("Dropped target");
+            return false;
+        }
+
+        return true;
     }
 }

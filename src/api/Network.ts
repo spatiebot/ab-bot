@@ -162,10 +162,17 @@ export class Network {
                 break;
 
             case SERVER_PACKETS.PLAYER_NEW:
-            case SERVER_PACKETS.PLAYER_UPDATE:
             case SERVER_PACKETS.EVENT_BOOST:
             case SERVER_PACKETS.EVENT_BOUNCE:
                 this.game.onPlayerInfo(this.decodePlayer(msg));
+                break;
+
+            case SERVER_PACKETS.PLAYER_UPDATE:
+                this.game.onPlayerInfo(this.decodePlayer(msg));
+                const activePlayer = this.game.getPlayer(msg.id as number);
+                if (activePlayer) {
+                    activePlayer.activity();
+                }
                 break;
 
             case SERVER_PACKETS.PLAYER_RESPAWN:
@@ -216,9 +223,14 @@ export class Network {
                 const minimapData = msg.rankings as any[];
                 for (let i = 0; i < minimapData.length; i++) {
                     const playerMinimapData = minimapData[i];
-                    const coords = decodeMinimapCoords(playerMinimapData.x, playerMinimapData.y);
-                    playerMinimapData.lowResPos = new Pos(coords);
-                    playerMinimapData.lowResPos.isAccurate = false;
+
+                    if (playerMinimapData.x === 0 && playerMinimapData.y === 0) {
+                        playerMinimapData.hidden = true;
+                    } else {
+                        const coords = decodeMinimapCoords(playerMinimapData.x, playerMinimapData.y);
+                        playerMinimapData.lowResPos = new Pos(coords);
+                        playerMinimapData.lowResPos.isAccurate = false;
+                    }
                     this.game.onPlayerInfo(playerMinimapData);
                 }
                 break;
@@ -270,9 +282,21 @@ export class Network {
                 this.game.onPingPong(msg.ping as number);
                 break;
 
-            // ignore
             case SERVER_PACKETS.EVENT_LEAVEHORIZON:
+                const isMob = msg.type !== 0;
+                if (isMob) {
+                    this.game.onMobDespawned(msg.id as number);
+                } else {
+                    const playerLeavingHor = this.game.getPlayer(msg.id as number);
+                    if (playerLeavingHor) {
+                        playerLeavingHor.leaveHorizon();
+                    }
+                }
+                break;
+
+            // ignore
             case SERVER_PACKETS.PLAYER_POWERUP:
+
                 break;
 
             default:

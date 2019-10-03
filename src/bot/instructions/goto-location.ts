@@ -32,16 +32,13 @@ export class GotoLocationInstruction implements IInstruction {
 
         let myPos = me.pos;
         if (this.character && this.character.predictPositions) {
-            myPos = Calculations.predictPosition(100, myPos, me.speed);
+            myPos = Calculations.predictPosition(this.env.getPing(), myPos, me.speed);
         }
         var path = pathFinding.findPath(me.pos, this.config.targetPos);
 
         if (path.length > 1) {
-            this.config.pathFindingFailures = Math.max(0, this.config.pathFindingFailures - 1);
             this.config.path = path;
             return path[1]; // the first pos is my own position
-        } else {
-            this.config.pathFindingFailures += 1;
         }
 
         return null;

@@ -1,6 +1,7 @@
 import { Player } from "./Player";
 import { ships } from "./ships";
 import { upgradeConstants } from "./upgrades-constants";
+import { Upgrades } from "./upgrades";
 
 export class PlayerUpdate {
     constructor(private player: Player) {
@@ -11,16 +12,28 @@ export class PlayerUpdate {
      * @param timeFrac 
      */
     exec(timeFrac: number) {
+        if (!this.player.keystate || !ships[this.player.type]) {
+            return;
+        }
+
+        if (this.player.hidden) {
+            return;
+        }
+
+        if (this.player.leftHorizon) {
+            this.player.health += timeFrac * this.player.healthRegen;
+            this.player.health = Math.min(1, this.player.health);
+            this.player.upgrades = new Upgrades();
+            return;
+        }
+
         const circle = 2 * Math.PI;
         const delta = this.player.boost ? 1.5 : 1;
 
         const limit = timeFrac > .51 ? Math.round(timeFrac) : 1;
         const timeFactor = timeFrac / limit;
 
-        if (!this.player.keystate || !ships[this.player.type]) {
-            return;
-        }
-
+        
         for (let times = 0; times < limit; times++) {
             this.player.energy += timeFactor * this.player.energyRegen;
             this.player.energy = Math.min(1, this.player.energy);

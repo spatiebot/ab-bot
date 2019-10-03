@@ -36,6 +36,12 @@ export class SteeringInstallation {
     stop() {
         clearInterval(this.steeringInterval);
         this.steeringInterval = null;
+        this.instructions = [];
+    }
+
+    reset() {
+        this.stop();
+        this.start();
     }
 
     add(instruction: SteeringInstruction) {

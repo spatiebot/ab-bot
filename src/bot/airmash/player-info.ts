@@ -16,6 +16,8 @@ export class PlayerInfo {
     energy: number;
     health: number;
     isInView: boolean;
+    hasInferno: boolean;
+    hasShield: boolean;
 
     static getMostReliablePos(p: PlayerInfo) {
         if (p.isInView) {

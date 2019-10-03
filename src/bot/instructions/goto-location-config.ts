@@ -5,7 +5,6 @@ export class GotoLocationConfig {
     desiredDistanceToTarget: number; 
     prevTargetPos: Pos;
     path: Pos[];
-    pathFindingFailures: number = 0;
     lastPathTime: number;
     backwards: boolean;
 }

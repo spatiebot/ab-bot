@@ -50,10 +50,6 @@ export class DropCratesTarget implements ITarget {
     getInstructions(): IInstruction[] {
         const result = [];
 
-        if (this.gotoLocationConfig.pathFindingFailures > 10) {
-            this.shouldRecycle = true; // it's a lie but ok
-        }
-
         if (!this.isValid()) {
             this.shouldRecycle = true;
             this.poopState.reset();

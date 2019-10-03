@@ -29,8 +29,8 @@ export class BotCharacter {
         intimateRange: 300,
         predictPositions: false,
         goal: 'nothing',
-        missileDistance: 200,
-        otherAircraftDistance: 150,
+        missileDistance: 300,
+        otherAircraftDistance: 300,
         fleeHealth: 0.7,
     }
 
@@ -47,6 +47,8 @@ export class BotCharacter {
 
     static CrateStealer: BotCharacter = {
         ...BotCharacter.Shy,
+        missileDistance: 200,
+        otherAircraftDistance: 150,
         name: 'CrateStealer',
         goal: 'stealCrates'
     }
