@@ -7,7 +7,7 @@ export class ApplyUpgrades {
     }
 
     execute(score: Score): void {
-        if (score.upgrades > 0) {
+        if (score && score.upgrades > 0) {
             const me = this.env.me();
             const current = [0, me.upgrades.speed, me.upgrades.defense, me.upgrades.energy, me.upgrades.missile];
             const getUpgradeToApply = (ix = 0) => {
@@ -25,6 +25,8 @@ export class ApplyUpgrades {
             if (upgradeToApply > 0) {
                 console.log("apply upgrade " + upgradeToApply);
                 this.env.sendCommand("upgrade", upgradeToApply.toString());
+
+                score.upgrades -= 1;
             }
         }
     }

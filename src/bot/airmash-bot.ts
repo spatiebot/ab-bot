@@ -84,8 +84,6 @@ export class AirmashBot {
 
     private onScore(score: Score) {
         this.score = score;
-        const applyUpgrades = new ApplyUpgrades(this.env, this.character);
-        applyUpgrades.execute(score);
     }
 
     private reset() {
@@ -121,6 +119,9 @@ export class AirmashBot {
 
         const msSinceLastState = Date.now() - this.lastState;
         if (msSinceLastState > 5000) {
+            const applyUpgrades = new ApplyUpgrades(this.env, this.character);
+            applyUpgrades.execute(this.score);
+
             this.logState();
             this.lastState = Date.now();
         }
