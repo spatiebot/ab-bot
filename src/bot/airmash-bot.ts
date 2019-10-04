@@ -2,6 +2,9 @@ import { IAirmashEnvironment } from "./airmash/iairmash-environment";
 import { SteeringInstallation } from "./steering/steering-installation";
 import { BotCharacter } from "./bot-character";
 import { TargetSelection } from "./targets/target-selection";
+import { Score } from "./airmash/score";
+import { ApplyUpgrades } from "./apply-upgrades";
+import { SteeringInstruction } from "./steering/steering-instruction";
 
 export class AirmashBot {
 
@@ -12,7 +15,9 @@ export class AirmashBot {
     private aircraftType: number;
     private isSpawned: boolean;
     private lastTick = Date.now();
-    
+    private score: Score;
+    private lastState = Date.now();
+
     constructor(private env: IAirmashEnvironment, private character: BotCharacter = null) {
 
         this.env.on('spawned', (x) => this.onSpawned(x));
@@ -20,6 +25,7 @@ export class AirmashBot {
         this.env.on('error', (x) => this.onError(x));
         this.env.on('tick', () => this.onTick());
         this.env.on('chat', (msg) => this.onChat(msg));
+        this.env.on('score', (score: Score) => this.onScore(score));
 
         this.steeringInstallation = new SteeringInstallation(this.env);
         this.targetSelection = new TargetSelection(this.env, this.character);
@@ -34,7 +40,7 @@ export class AirmashBot {
     }
 
     private onSpawned(data: any) {
-        setTimeout(()=>this.onEnvironmentReady(data), 100);
+        setTimeout(() => this.onEnvironmentReady(data), 100);
     }
 
     private onEnvironmentReady(data): void {
@@ -67,6 +73,21 @@ export class AirmashBot {
         console.log("Chat: " + name + ": " + msg.text);
     }
 
+    private logState() {
+        const me = this.env.me();
+        console.log(`Ping: ${this.env.getPing()}, upgrades: ${this.score.upgrades}`);
+        console.log(`Score: ${this.score.score}, energy: ${me.energy}, health: ${me.health}`);
+        if (me.upgrades) {
+            console.log(`Applied upgrades: speed ${me.upgrades.speed}, defense ${me.upgrades.defense}, energy ${me.upgrades.energy}, missile ${me.upgrades.missile}`);
+        }
+    }
+
+    private onScore(score: Score) {
+        this.score = score;
+        const applyUpgrades = new ApplyUpgrades(this.env, this.character);
+        applyUpgrades.execute(score);
+    }
+
     private reset() {
         this.steeringInstallation.reset();
         this.targetSelection.reset();
@@ -88,6 +109,20 @@ export class AirmashBot {
         const instructions = target.getInstructions();
         for (let i of instructions) {
             this.steeringInstallation.add(i.getSteeringInstruction());
+        }
+
+        //prowler should be as stealthed as possible
+        const me = this.env.me();
+        if (me.type === 5 && me.energy > 0.6 && !me.isStealthed) {
+            const stealthInstruction = new SteeringInstruction();
+            stealthInstruction.stealth = true;
+            this.steeringInstallation.add(stealthInstruction);
+        }
+
+        const msSinceLastState = Date.now() - this.lastState;
+        if (msSinceLastState > 5000) {
+            this.logState();
+            this.lastState = Date.now();
         }
     }
 

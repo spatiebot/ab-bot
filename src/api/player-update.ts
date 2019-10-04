@@ -1,7 +1,7 @@
 import { Player } from "./Player";
 import { ships } from "./ships";
 import { upgradeConstants } from "./upgrades-constants";
-import { Upgrades } from "./upgrades";
+import { PowerUps } from "./powerups";
 
 export class PlayerUpdate {
     constructor(private player: Player) {
@@ -23,7 +23,7 @@ export class PlayerUpdate {
         if (this.player.leftHorizon) {
             this.player.health += timeFrac * this.player.healthRegen;
             this.player.health = Math.min(1, this.player.health);
-            this.player.upgrades = new Upgrades();
+            this.player.powerUps = new PowerUps();
             return;
         }
 
@@ -80,9 +80,9 @@ export class PlayerUpdate {
             }
 
             const range =  Math.sqrt(Math.pow(this.player.speedX,2) + Math.pow(this.player.speedY,2));
-            let pathWidth = ships[this.player.type].maxSpeed * delta * upgradeConstants.speed.factor[this.player.upgrades.speed || 0];
+            let pathWidth = ships[this.player.type].maxSpeed * delta * upgradeConstants.speed.factor[this.player.powerUps.speed || 0];
             const maxX = ships[this.player.type].minSpeed;
-            if (this.player.upgrades.inferno) {
+            if (this.player.powerUps.inferno) {
                 pathWidth = pathWidth * .75;
             }
             if (this.player.flagspeed) {

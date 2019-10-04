@@ -76,8 +76,9 @@ export class AirmashApiFacade implements IAirmashEnvironment {
             speed: new Pos({ x: p.speedX, y: p.speedY }),
             team: p.team,
             type: p.type,
-            hasInferno: p.upgrades && p.upgrades.inferno,
-            hasShield: p.upgrades && p.upgrades.shield
+            hasInferno: p.powerUps && p.powerUps.inferno,
+            hasShield: p.powerUps && p.powerUps.shield,
+            upgrades: p.appliedUpgrades
         }
     }
 

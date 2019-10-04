@@ -1,4 +1,5 @@
 import { Pos } from "../pos";
+import { Upgrades } from "../../api/upgrades";
 
 export class PlayerInfo {
 
@@ -8,7 +9,6 @@ export class PlayerInfo {
     id: number;
     team: number;
     name: string;
-    // maxRotationSpeed: number;
     rot: number;
     type: number;
     isHidden: boolean;
@@ -18,6 +18,7 @@ export class PlayerInfo {
     isInView: boolean;
     hasInferno: boolean;
     hasShield: boolean;
+    upgrades: Upgrades;
 
     static getMostReliablePos(p: PlayerInfo) {
         if (p.isInView) {

@@ -4,6 +4,7 @@ import { Rotate } from "./rotate";
 import { Speed } from "./speed";
 import { Fire } from "./fire";
 import { Fart } from "./fart";
+import { Stealth } from "./stealth";
 
 export const steeringInstallationIntervalMs = 180;
 export const longThrottleInterval = 3.5 * steeringInstallationIntervalMs;
@@ -21,12 +22,14 @@ export class SteeringInstallation {
     private speed: Speed;
     private fire: Fire;
     private fart: Fart;
+    private stealth: Stealth;
 
     constructor(private env: IAirmashEnvironment) {
         this.rotation = new Rotate(env);
         this.speed = new Speed(env);
         this.fire = new Fire(env);
         this.fart = new Fart(env);
+        this.stealth = new Stealth(env);
     }
 
     start() {
@@ -59,6 +62,7 @@ export class SteeringInstallation {
 
         this.rotation.execute(me, instruction.rotDelta);
         this.speed.execute(me, instruction.targetSpeed, instruction.boost, instruction.fire);
+        this.stealth.execute(instruction.stealth);
         this.fart.execute(instruction.fart);
         this.fire.execute(me, instruction.fire);
     }
@@ -72,6 +76,7 @@ export class SteeringInstallation {
             result.fire = instr.fire || instr.fire;
             result.boost = result.boost || instr.boost;
             result.fart = instr.fart || instr.fart;
+            result.stealth = instr.stealth || instr.stealth;
         }
 
         return result;

@@ -12,6 +12,7 @@ import { CHAT_TYPE } from './chat-type';
 import { Player } from './Player';
 import { Pos } from '../bot/pos';
 import { Debug } from '../helper/debug';
+import { Upgrades } from './upgrades';
 
 export class Network {
     private client: WebSocket;
@@ -82,7 +83,6 @@ export class Network {
                 }
                 this.onServerMessage(result, config.isPrimary);
             } catch (error) {
-                console.log('erreur!!!!');
                 this.game.onError(error);
             }
         };
@@ -173,6 +173,11 @@ export class Network {
                 if (activePlayer) {
                     activePlayer.activity();
                 }
+                break;
+
+            case SERVER_PACKETS.PLAYER_UPGRADE:
+                const me = this.game.getPlayer(this.game.getMyId());
+                me.appliedUpgrades = <Upgrades>(msg as any);
                 break;
 
             case SERVER_PACKETS.PLAYER_RESPAWN:
@@ -296,7 +301,6 @@ export class Network {
 
             // ignore
             case SERVER_PACKETS.PLAYER_POWERUP:
-
                 break;
 
             default:
@@ -316,9 +320,8 @@ export class Network {
             msg.stealth = decodedKeyState.stealthed;
         }
         if (msg.upgrades || msg.upgrades === 0) {
-            const decodedUpgrades = decodeUpgrades(msg.upgrades);
-            msg.rawUpgrades = msg.upgrades;
-            msg.upgrades = decodedUpgrades;
+            const powerUps = decodeUpgrades(msg.upgrades);
+            msg.powerUps = powerUps;
         }
         return msg;
     }

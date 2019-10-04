@@ -1,5 +1,6 @@
 export class Upgrades {
-    inferno: boolean;
-    shield: boolean;
     speed: number;
+    defense: number;
+    energy: number;
+    missile: number;
 }

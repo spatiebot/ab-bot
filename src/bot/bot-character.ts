@@ -8,6 +8,7 @@ export class BotCharacter {
         missileDistance: 100,
         otherAircraftDistance: 10,
         fleeHealth: 0.7,
+        upgradePriority: [2, 4, 1, 3],
         type: 0 // any
     };
 
@@ -19,6 +20,7 @@ export class BotCharacter {
         missileDistance: 100,
         otherAircraftDistance: 10,
         fleeHealth: 0.4,
+        upgradePriority: [4, 3, 2, 1],
         type: 0 // any
     };
 
@@ -30,7 +32,8 @@ export class BotCharacter {
         predictPositions: false,
         goal: 'nothing',
         missileDistance: 300,
-        otherAircraftDistance: 300
+        otherAircraftDistance: 300,
+        upgradePriority: [2, 1, 3, 4],
     }
 
     static Mohawk: BotCharacter = {
@@ -41,6 +44,7 @@ export class BotCharacter {
         missileDistance: 400,
         otherAircraftDistance: 200,
         fleeHealth: 0.8,
+        upgradePriority: [2, 3, 4, 1],
         type: 3
     }
 
@@ -50,15 +54,23 @@ export class BotCharacter {
         intimateRange: 500,
         otherAircraftDistance: 200,
         fleeHealth: 0.8, // it takes some time to turn
+        upgradePriority: [1, 3, 4, 2],
         type: 2
     }
 
-    static CrateStealer: BotCharacter = {
-        ...BotCharacter.Shy,
-        missileDistance: 200,
-        otherAircraftDistance: 150,
-        name: 'CrateStealer',
-        goal: 'stealCrates'
+    static Tornado: BotCharacter = {
+        ...BotCharacter.Default,
+        name: 'Tornado',
+        upgradePriority: [1, 4, 2, 3],
+        type: 4
+    }
+
+    
+    static Prowler: BotCharacter = {
+        ...BotCharacter.Default,
+        name: 'Prowler',
+        upgradePriority: [3, 1, 2, 4],
+        type: 5 
     }
 
     static get(type: number): BotCharacter {
@@ -67,6 +79,10 @@ export class BotCharacter {
                 return BotCharacter.Goli;
             case 3:
                 return BotCharacter.Mohawk;
+            case 4:
+                return BotCharacter.Tornado;
+            case 5:
+                return BotCharacter.Prowler;
             default:
                 return BotCharacter.Default;
         }
@@ -81,4 +97,5 @@ export class BotCharacter {
     missileDistance: number;
     otherAircraftDistance: number;
     fleeHealth: number;
+    upgradePriority: number[];
 }

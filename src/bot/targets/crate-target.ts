@@ -5,7 +5,6 @@ import { Calculations } from "../calculations";
 import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { Crate } from "../airmash/crate";
-import { PoopState } from "./poop-state";
 import { Debug } from "../../helper/debug";
 
 export class CrateTarget implements ITarget {
@@ -14,11 +13,7 @@ export class CrateTarget implements ITarget {
 
     goal = "stealCrates";
     
-    constructor(private env: IAirmashEnvironment, interactivity: PoopState) {
-        if (interactivity.upgradesDroppedTime && Date.now() - interactivity.upgradesDroppedTime < 3000) {
-            return;
-        }
-
+    constructor(private env: IAirmashEnvironment) {
         const crates = env.getCrates();
         const myPos = env.me().pos;
 

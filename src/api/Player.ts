@@ -2,6 +2,7 @@ import { Mob } from "./Mob";
 import { Pos } from "../bot/pos";
 import { Keystate } from "../../ab-protocol/src/types/client";
 import { PlayerUpdate } from "./player-update";
+import { PowerUps } from "./powerups";
 import { Upgrades } from "./upgrades";
 
 export class Player extends Mob {
@@ -20,7 +21,8 @@ export class Player extends Mob {
     name: string;
     team: number;
     flag: number;
-    upgrades: Upgrades = new Upgrades();
+    powerUps: PowerUps = new PowerUps();
+    appliedUpgrades: Upgrades = new Upgrades();
     stealth: boolean = false;
     hidden: boolean = false;
     dead: boolean = false;
@@ -51,7 +53,7 @@ export class Player extends Mob {
         this.keystate = {} as Keystate;
         this.speedX = 0;
         this.speedY = 0;
-        this.upgrades = new Upgrades();
+        this.powerUps = new PowerUps();
         this.strafe = false;
         this.flagspeed = false;
         this.leftHorizon = true;
@@ -90,8 +92,8 @@ export class Player extends Mob {
             this.lowResPos = p.lowResPos;
         }
 
-        if (p.upgrades != null) {
-            this.upgrades = p.upgrades;
+        if (p.powerUps != null) {
+            this.powerUps = p.powerUps;
         }
   
         if (p.boost != null) {
@@ -111,6 +113,10 @@ export class Player extends Mob {
 
         if (p.hidden != null) {
             this.hidden = p.hidden;
+        }
+
+        if (p.appliedUpgrades != null) {
+            this.appliedUpgrades = p.appliedUpgrades;
         }
     }
 }

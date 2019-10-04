@@ -2,9 +2,6 @@ import { ITarget } from "./itarget";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { DodgeMissileTarget } from "./dodge-missile-target";
 import { BotCharacter } from "../bot-character";
-import { DropCratesTarget } from "./drop-crates-target";
-import { PoopState } from "./poop-state";
-import { Score } from "../airmash/score";
 import { CrateTarget } from "./crate-target";
 import { OtherPlayerTarget } from "./other-player-target";
 import { DoNothingTarget } from "./do-nothing.target";
@@ -15,29 +12,16 @@ const TIME_OUT = 60 * 1000; // 1 min
 export class TargetSelection {
     private target: ITarget;
     private lastLoggedTarget: string;
-    private poopState: PoopState;
-    private score: Score;
     private lastSelectedTime: number = 0;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
-        this.poopState = new PoopState();
-        this.env.on('chat', (msg) => this.onChat(msg));
         this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
-        this.env.on('score', (score: Score) => {
-            this.score = score;
-            console.log(`Score: ${score.score}, upgrades: ${score.upgrades}`);
-        });
     }
 
     reset() {
         this.target = null;
         this.lastSelectedTime = 0;
         this.lastLoggedTarget = "";
-        this.poopState.reset();
-    }
-
-    private onChat(msg) {
-        this.poopState.onChat(msg.id, msg.text);
     }
 
     private onPlayerKilled(data: any) {
@@ -95,10 +79,7 @@ export class TargetSelection {
 
         let potentialNewTarget: ITarget;
         if (this.character.goal === 'stealCrates') {
-            potentialNewTarget = new DropCratesTarget(this.env, this.score, this.poopState);
-            if (!potentialNewTarget.isValid()) {
-                potentialNewTarget = new CrateTarget(this.env, this.poopState);
-            }
+            potentialNewTarget = new CrateTarget(this.env);
         } else if (this.character.goal === 'fight') {
             potentialNewTarget = new OtherPlayerTarget(this.env, this.character);
         } else if (this.character.goal === "nothing") {
