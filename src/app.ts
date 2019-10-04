@@ -28,7 +28,7 @@ if (ws && !ws.startsWith('ws') && !ws.startsWith('http')) {
 }
 ws = ws || urls.euFfa;
 
-const name = <string>argv.name || 'Poopybot';
+const name = <string>argv.name || 'Botsy';
 const type = <string>argv.type || '1';
 const flag = <string>argv.flag || 'eu';
 const character = <string>argv.character;
