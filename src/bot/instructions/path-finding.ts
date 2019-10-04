@@ -9,7 +9,7 @@ class ScaledPos extends Pos {
     scale: number;
 
     static fromPos(pos: Pos): ScaledPos {
-        return { ...pos, scale: null};
+        return { ...pos, scale: null };
     }
 }
 
@@ -25,7 +25,7 @@ export class PathFinding {
         marginStep: 1000,
         scale: 0.1
     };
-    
+
     constructor(walls: number[][], missiles: any[], playersToAvoid: PlayerInfo[]) {
 
         if (!mountains) {
@@ -43,7 +43,7 @@ export class PathFinding {
             return {
                 x: pos.x,
                 y: pos.y,
-                size: 50    
+                size: 50
             };
         });
 
@@ -118,6 +118,23 @@ export class PathFinding {
             scale: this.navConfig.scale,
             isAccurate: pos.isAccurate
         };
+    }
+
+    public makeWalkable(pos: Pos, suggestedDeltaX: number, suggestedDeltaY: number) {
+        if (pos.x < this.navConfig.mapProperties.left || pos.x > this.navConfig.mapProperties.right
+            || pos.y < this.navConfig.mapProperties.top || pos.y > this.navConfig.mapProperties.bottom) {
+            return { x: 0, y: 0 };
+        }
+
+        const scaled = this.scale(ScaledPos.fromPos(pos));
+        if (this.isValid(scaled)) {
+            return pos;
+        }
+        const newPos = new Pos({
+            x: pos.x + suggestedDeltaX,
+            y: pos.y + suggestedDeltaY
+        });
+        return this.makeWalkable(newPos, suggestedDeltaX, suggestedDeltaY);
     }
 
     public findPath(myPos: Pos, otherPos: Pos): Pos[] {

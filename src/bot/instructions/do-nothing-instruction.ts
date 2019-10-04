@@ -7,7 +7,6 @@ export class DoNothingInstruction implements IInstruction {
             boost: false,
             fart: false,
             fire: false,
-            fireThree: false,
             rotDelta: 0,
             targetSpeed: 0
         };

@@ -3,7 +3,7 @@ import { IInstruction } from "../instructions/iinstruction";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { BotCharacter } from "../bot-character";
 import { getClosestPlayer } from "./get-closest-player";
-import { BackOffInstruction } from "../instructions/back-off-instruction";
+import { AvoidObjectInstruction } from "../instructions/avoid-object-instruction";
 
 export class FleeTarget implements ITarget {
     goal = 'flee';
@@ -19,7 +19,7 @@ export class FleeTarget implements ITarget {
         // find the closest aircraft and flee from it
         const closest = getClosestPlayer(this.env);
         const me = this.env.me();
-        const instr = new BackOffInstruction(me.pos, me.rot, closest.player.pos, closest.player.rot);;
+        const instr = new AvoidObjectInstruction(me.pos, me.rot, closest.player.pos, closest.player.rot);;
         return [instr];
     }
 

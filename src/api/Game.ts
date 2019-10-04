@@ -111,10 +111,8 @@ export class Game {
     }
 
     onPlayerInfo(player: Player) {
-        if (player.status === 1) {
-            console.log("Player " + player.name + " is hiding");
-        }
         const p = this.getPlayer(player.id);
+    
         if (!p) {
             this.players[player.id] = new Player(player);
         } else {

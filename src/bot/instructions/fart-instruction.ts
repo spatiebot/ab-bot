@@ -1,10 +1,10 @@
 import { IInstruction } from "./iinstruction";
 import { SteeringInstruction } from "../steering/steering-instruction";
 
-export class BoostInstruction implements IInstruction {
+export class FartInstruction implements IInstruction {
     getSteeringInstruction(): SteeringInstruction {
         const result = new SteeringInstruction();
-        result.boost = true;
+        result.fart = true;
         return result;
     }
 

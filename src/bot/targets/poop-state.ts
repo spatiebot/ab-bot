@@ -25,6 +25,7 @@ export class PoopState {
         this.openForPoopCommandsSince = null;
         this.confirmedPlayerSince = null;
     }
+    
     droppedPoop() {
         const id = this.poopyPlayerID;
         this.reset();

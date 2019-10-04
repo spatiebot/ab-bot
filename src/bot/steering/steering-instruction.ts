@@ -2,7 +2,6 @@ export class SteeringInstruction {
     rotDelta: number;
     targetSpeed: number;
     fire: boolean;
-    fireThree: boolean;
     fart: boolean;
     boost: boolean;
 
@@ -22,9 +21,6 @@ export class SteeringInstruction {
         }
         if (this.fart) {
             results.push(`Fart: ${this.fart};`);
-        }
-        if (this.fireThree) {
-            results.push(`Firethree: yes`);
         }
 
         return results.reduce((prev, current) => prev + '\n' + current);

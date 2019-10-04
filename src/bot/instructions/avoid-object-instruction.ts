@@ -3,7 +3,7 @@ import { SteeringInstruction } from "../steering/steering-instruction";
 import { Pos } from "../pos";
 import { Calculations } from "../calculations";
 
-export class BackOffInstruction implements IInstruction {
+export class AvoidObjectInstruction implements IInstruction {
     // private lastTime: number = 0;
 
     constructor(private myPos: Pos, private myRot: number, private objectPos, private objectRot) {
@@ -38,11 +38,6 @@ export class BackOffInstruction implements IInstruction {
             instruction.rotDelta = rotDiff;
         }
 
-        // if (Date.now() - this.lastTime > 1000) {
-        //     console.log(this.objectRot, perpendicular, instruction.rotDelta, instruction.targetSpeed)
-        //     this.lastTime = Date.now();
-        // }
-        
         instruction.boost = true;
         return instruction;
     }

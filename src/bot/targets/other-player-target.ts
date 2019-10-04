@@ -46,7 +46,7 @@ export class OtherPlayerTarget implements ITarget {
 
         if (victim) {
             this.targetID = victim.id;
-            console.log(`selected other player '${victim.name}' with health '${victim.health}`);
+            console.log(`selected other player '${victim.name}' with health ${victim.health}`);
         }
     }
 
@@ -122,7 +122,6 @@ export class OtherPlayerTarget implements ITarget {
 
         const target = this.getTarget();
         if (!this.isTargetValid(target)) {
-            console.log("Dropped target");
             return false;
         }
 

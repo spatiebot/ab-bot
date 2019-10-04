@@ -1,7 +1,6 @@
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { SteeringState } from "./steering-state";
 import { PlayerInfo } from "../airmash/player-info";
-import { steeringInstallationIntervalMs } from "./steering-installation";
 
 export class Fire {
 

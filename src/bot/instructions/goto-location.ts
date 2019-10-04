@@ -15,7 +15,7 @@ export class GotoLocationInstruction implements IInstruction {
     constructor(private env: IAirmashEnvironment, private character: BotCharacter, private targetPlayerId = null) {
     }
 
-    private getNextPos(me: PlayerInfo, shouldCalcPath: boolean) {
+    private getNextPos(me: PlayerInfo, shouldCalcPath: boolean, deltaToTarget: { diffX: number, diffY: number, distance: number }) {
         // prevent one-time inaccurate readings to disturb the path
         const isDisturbingPos = this.config.prevTargetPos && this.config.prevTargetPos.isAccurate && !this.config.targetPos.isAccurate;
         shouldCalcPath = shouldCalcPath && !isDisturbingPos;
@@ -27,14 +27,30 @@ export class GotoLocationInstruction implements IInstruction {
             return null;
         }
 
-        const players = this.env.getPlayers().filter(x=> x.id !== me.id && x.id !== this.targetPlayerId);
+        const players = this.env.getPlayers().filter(x => x.id !== me.id && x.id !== this.targetPlayerId);
         const pathFinding = new PathFinding(this.env.getWalls(), this.env.getMissiles(), players);
 
         let myPos = me.pos;
         if (this.character && this.character.predictPositions) {
             myPos = Calculations.predictPosition(this.env.getPing(), myPos, me.speed);
         }
-        var path = pathFinding.findPath(me.pos, this.config.targetPos);
+
+        let targetPos: Pos;
+        if (this.config.backwards) {
+            // we need to flee from this target actually
+            // draw a line from target trough me, and fly to that point
+            targetPos = new Pos({
+                x: myPos.x - deltaToTarget.diffX,
+                y: myPos.y - deltaToTarget.diffY
+            });
+            targetPos = pathFinding.makeWalkable(targetPos, -deltaToTarget.diffX, -deltaToTarget.diffY);
+        } else {
+            targetPos = this.config.targetPos;
+        }
+
+        //console.log({myPos, targetPos, orgTargetPos: this.config.targetPos});
+
+        var path = pathFinding.findPath(myPos, targetPos);
 
         if (path.length > 1) {
             this.config.path = path;
@@ -79,7 +95,7 @@ export class GotoLocationInstruction implements IInstruction {
             }
         }
 
-        const firstPosToGoTo = this.getNextPos(myInfo, shouldCalcPath);
+        const firstPosToGoTo = this.getNextPos(myInfo, shouldCalcPath, delta);
 
         if (!firstPosToGoTo) {
             return result;
@@ -109,12 +125,21 @@ export class GotoLocationInstruction implements IInstruction {
             rotationTarget = this.config.targetPos;
         }
 
-        const desiredRotation = Calculations.getTargetRotation(myInfo.pos, rotationTarget);
+        let desiredRotation = Calculations.getTargetRotation(myInfo.pos, rotationTarget);
+
+        if (this.config.backwards) {
+            result.targetSpeed = -result.targetSpeed;
+            desiredRotation += Math.PI;
+            if (desiredRotation > Math.PI * 2) {
+                desiredRotation -= Math.PI * 2;
+            }
+        }
+
         const angleDiff = Calculations.getAngleDiff(myInfo.rot, desiredRotation);
         result.rotDelta = angleDiff;
 
         // if very close, but angle is steep, slow down for a while
-        if (delta.distance < 250) {
+        if (!this.config.backwards && delta.distance < 250) {
             if (angleDiff > Math.PI / 4) {
                 result.targetSpeed = -1;
             } else if (angleDiff > Math.PI / 5) {
@@ -122,13 +147,7 @@ export class GotoLocationInstruction implements IInstruction {
             }
         }
 
-        if (this.config.backwards) {
-            result.targetSpeed = -result.targetSpeed;
-            result.rotDelta += Math.PI;
-            if (result.rotDelta > Math.PI * 2) {
-                result.rotDelta -= Math.PI * 2;
-            }
-        }
+
 
         return result;
     }

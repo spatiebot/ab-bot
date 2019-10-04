@@ -1,6 +1,5 @@
 import { ITarget } from "./itarget";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
-import { FleeTarget } from "./flee-target";
 import { DodgeMissileTarget } from "./dodge-missile-target";
 import { BotCharacter } from "../bot-character";
 import { DropCratesTarget } from "./drop-crates-target";
@@ -9,7 +8,7 @@ import { Score } from "../airmash/score";
 import { CrateTarget } from "./crate-target";
 import { OtherPlayerTarget } from "./other-player-target";
 import { DoNothingTarget } from "./do-nothing.target";
-import { DoNothingInstruction } from "../instructions/do-nothing-instruction";
+import { DodgeEnemiesTarget } from "./dodge-enemies-target";
 
 const TIME_OUT = 60 * 1000; // 1 min
 
@@ -69,10 +68,9 @@ export class TargetSelection {
             return dodge;
         }
 
-        // fleeing is the second priority
-        const flee = new FleeTarget(this.env, this.character);
-        if (flee.isValid()) {
-            return flee;
+        const avoid = new DodgeEnemiesTarget(this.env, this.character);
+        if (avoid.isValid()) {
+            return avoid;
         }
 
         return null;

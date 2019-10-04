@@ -66,7 +66,7 @@ export class AirmashApiFacade implements IAirmashEnvironment {
             energy: p.energy,
             health: p.health,
             id: p.id,
-            isHidden: p.status === 1 || p.dead || p.hidden,
+            isHidden: p.dead || p.hidden,
             isInView: !p.isStale() && !p.leftHorizon,
             isStealthed: p.stealth,
             lowResPos: p.lowResPos,
@@ -199,7 +199,7 @@ export class AirmashApiFacade implements IAirmashEnvironment {
     }
 
     sendCommand(command: string, args: string) {
-        this.sendCommand(command, args);
+        this.network.sendCommand(command, args);
     }
 
     setDebugProperties(config: any) {

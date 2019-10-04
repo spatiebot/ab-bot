@@ -342,6 +342,8 @@ export class Network {
         // send start info to game
         const players = msg.players as [];
         for (const p of players) {
+            const player = p as any;
+            player.hidden = player.status === 1;
             this.game.onPlayerInfo(p);
         }
         this.game.onStart(msg.id as number);

@@ -14,7 +14,7 @@ export class SteeringState {
 
     send(env: IAirmashEnvironment, value: boolean) {
         var keystate = env.getMyKeyState();
-        if (keystate[this.key] === value) {
+        if (keystate[this.key] === value && this.key !== 'SPECIAL') {
             return;
         }        
 

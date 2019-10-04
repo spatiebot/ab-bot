@@ -7,7 +7,7 @@ export class BotCharacter {
         goal: 'stealCrates',
         missileDistance: 100,
         otherAircraftDistance: 10,
-        fleeHealth: 0.4,
+        fleeHealth: 0.7,
         type: 0 // any
     };
 
@@ -30,8 +30,7 @@ export class BotCharacter {
         predictPositions: false,
         goal: 'nothing',
         missileDistance: 300,
-        otherAircraftDistance: 300,
-        fleeHealth: 0.7,
+        otherAircraftDistance: 300
     }
 
     static Mohawk: BotCharacter = {
@@ -45,6 +44,15 @@ export class BotCharacter {
         type: 3
     }
 
+    static Goli: BotCharacter = {
+        ...BotCharacter.Default,
+        name: 'Goli',
+        intimateRange: 500,
+        otherAircraftDistance: 200,
+        fleeHealth: 0.8, // it takes some time to turn
+        type: 2
+    }
+
     static CrateStealer: BotCharacter = {
         ...BotCharacter.Shy,
         missileDistance: 200,
@@ -55,6 +63,8 @@ export class BotCharacter {
 
     static get(type: number): BotCharacter {
         switch (type) {
+            case 2:
+                return BotCharacter.Goli;
             case 3:
                 return BotCharacter.Mohawk;
             default:

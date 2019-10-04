@@ -23,17 +23,30 @@ export class DropCratesTarget implements ITarget {
                 env.sendChat('Roger that!');
                 console.log('selected player for pooping: ' + this.targetID);
             }
+
+            if (!this.isValid()) {
+                this.poopState.reset();
+            }
+   
         } else if (score && score.upgrades > 5 && (!this.poopState.openForPoopCommandsSince || this.poopState.openForPoopCommandsTimeout())) {
             // env.sendChat("Upgrade party! Say '#poop me' in the chat to get some.");
             this.poopState.openForPoopCommandsSince = Date.now();
             console.log('started poopparty');
         }
+
     }
 
     isValid(): boolean {
+        if (!this.targetID) {
+            return false;
+        }
+        
         const hasUpgradesToSpare = this.score && this.score.upgrades > 5;
         const isTimedOut = this.poopState.confirmedPlayerTimeout();
-        return !this.shouldRecycle && hasUpgradesToSpare && !isTimedOut && !!this.getTarget();
+        const hasTarget = !!this.getTarget();
+
+        const isValid = !this.shouldRecycle && hasUpgradesToSpare && !isTimedOut && hasTarget;
+        return isValid;
     }
 
     private getTarget(): PlayerInfo {
@@ -41,6 +54,9 @@ export class DropCratesTarget implements ITarget {
             return null;
         }
         const p = this.env.getPlayer(this.targetID);
+        if (!p) {
+            return null;
+        }
         if (p.isStealthed || p.isHidden) {
             return null;
         }

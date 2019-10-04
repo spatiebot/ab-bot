@@ -33,7 +33,6 @@ export class Player extends Mob {
     strafe: boolean;
     keystate: Keystate;
     flagspeed: boolean;
-    status: number;
     leftHorizon: boolean = false;
 
     update(timeFactor: number) {
@@ -104,10 +103,6 @@ export class Player extends Mob {
 
         if (p.keystate != null) {
             this.keystate = p.keystate;
-        }
-
-        if (p.status != null) {
-            this.status = p.status;
         }
 
         if (p.flagspeed != null) {
