@@ -9,6 +9,7 @@ To run the bot:
 3. node dist/src/app.js --name=SomeBot --flag=eu
 
 Parameters:
+
     --type: the type of aircraft used. Default = 1
     --flag: the flag. Default = eu
     --ws: websocket to connect to. Use the full url or one of the shortcuts:
