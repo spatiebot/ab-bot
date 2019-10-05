@@ -4,6 +4,7 @@ This is a bot API + implementation based on the wight Airbattle API.
 
 To run the bot:
 
+1. clone repository and submodule (`git clone --recurse-submodules git://github.com/spatiebot/ab-bot.git`)
 1. npm i
 2. tsc
 3. node dist/src/app.js --name=SomeBot --flag=eu
