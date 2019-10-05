@@ -122,8 +122,8 @@ export class PathFinding {
         };
     }
 
-    public makeWalkable(pos: Pos, suggestedDeltaX: number, suggestedDeltaY: number) {
-        if (pos.x < this.navConfig.mapProperties.left || pos.x > this.navConfig.mapProperties.right
+    public makeWalkable(pos: Pos, suggestedDeltaX: number, suggestedDeltaY: number, tries = 0) {
+        if (tries > 10 || pos.x < this.navConfig.mapProperties.left || pos.x > this.navConfig.mapProperties.right
             || pos.y < this.navConfig.mapProperties.top || pos.y > this.navConfig.mapProperties.bottom) {
             return { x: 0, y: 0 };
         }
@@ -136,7 +136,7 @@ export class PathFinding {
             x: pos.x + suggestedDeltaX,
             y: pos.y + suggestedDeltaY
         });
-        return this.makeWalkable(newPos, suggestedDeltaX, suggestedDeltaY);
+        return this.makeWalkable(newPos, suggestedDeltaX, suggestedDeltaY, tries + 1);
     }
 
     public findPath(myPos: Pos, otherPos: Pos, distance: number): Pos[] {
