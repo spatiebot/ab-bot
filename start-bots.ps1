@@ -1,0 +1,7 @@
+Start-Process -FilePath 'node' -ArgumentList 'dist/src/app.js --name=Botsy --ws=ws://185.177.59.40:3501'
+Start-Process -FilePath 'node' -ArgumentList 'dist/src/app.js --name=Goly --type=2 --ws=ws://185.177.59.40:3501'
+Start-Process -FilePath 'node' -ArgumentList 'dist/src/app.js --name=Mohy --type=3 --ws=ws://185.177.59.40:3501'
+Start-Process -FilePath 'node' -ArgumentList 'dist/src/app.js --name=Torny --type=4 --ws=ws://185.177.59.40:3501'
+Start-Process -FilePath 'node' -ArgumentList 'dist/src/app.js --name=Prowly --type=5 --ws=ws://185.177.59.40:3501'
+Start-Process -FilePath 'node' -ArgumentList 'dist/src/app.js --name=ShyRonnie --type=1 --ws=ws://185.177.59.40:3501 --character=Shy'
+Start-Process -FilePath 'node' -ArgumentList 'dist/src/app.js --name=Hulky --type=1 --ws=ws://185.177.59.40:3501 --character=Aggressive'
