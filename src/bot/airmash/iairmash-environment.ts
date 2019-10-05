@@ -2,6 +2,7 @@ import { PlayerInfo } from "./player-info";
 import { PathFinding } from "../instructions/path-finding";
 import { Crate } from "./crate";
 import { Missile } from "./missile";
+import { FlagInfo } from "../../api/flagInfo";
 
 export interface IAirmashEnvironment {
 
@@ -10,6 +11,7 @@ export interface IAirmashEnvironment {
 
     joinGame(name: string, flag: string);
     selectAircraft(type: number);
+    getGameType(): number;
 
     on(what: string, subscriber: (e: any) => any);
 
@@ -33,6 +35,8 @@ export interface IAirmashEnvironment {
     sendChat(msg: string);
     sendSay(msg: string);
     sendCommand(command: string, args: string);
+
+    getFlagInfo(team: number): FlagInfo;
 
     setDebugProperties(config: any);
 }

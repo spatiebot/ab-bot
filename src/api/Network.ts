@@ -82,6 +82,7 @@ export class Network {
                     console.log('no result', msg);
                 }
                 this.onServerMessage(result, config.isPrimary);
+
             } catch (error) {
                 this.game.onError(error);
             }
@@ -276,6 +277,7 @@ export class Network {
             case SERVER_PACKETS.CHAT_TEAM:
             case SERVER_PACKETS.CHAT_SAY:
             case SERVER_PACKETS.CHAT_WHISPER:
+                msg.id = msg.id || msg.from;
                 this.game.onChat(msg.id as number, msg.text as string);
                 break;
 
@@ -301,6 +303,18 @@ export class Network {
 
             // ignore
             case SERVER_PACKETS.PLAYER_POWERUP:
+                break;
+
+            case SERVER_PACKETS.SERVER_MESSAGE:
+                this.game.onServerMessage(msg.text as string);
+                break;
+
+            case SERVER_PACKETS.GAME_FLAG:
+                if (msg.type === 2) {
+                    this.game.onFlagTaken(msg.flag as number, msg.id as number);
+                } else {
+                    this.game.onFlagDropped(msg.flag as number, msg.posX as number, msg.posY as number);
+                }
                 break;
 
             default:
@@ -349,7 +363,7 @@ export class Network {
             player.hidden = player.status === 1;
             this.game.onPlayerInfo(p);
         }
-        this.game.onStart(msg.id as number);
+        this.game.onStart(msg.id as number, msg.type as number);
     }
 
     private send(msg: ProtocolPacket, sendToBackup: boolean = false) {
@@ -366,5 +380,4 @@ export class Network {
             this.game.onError(error);
         }
     }
-
 }

@@ -2,8 +2,14 @@ import { Network } from "./Network";
 import { Player } from "./Player";
 import { Mob } from "./Mob";
 import { Debug } from "../helper/debug";
+import { FlagInfo } from "./flagInfo";
+import { Pos } from "../bot/pos";
 
 export class Game {
+
+    public type: number;
+    public readonly blueFlag = new FlagInfo(1);
+    public readonly redFlag = new FlagInfo(2);
 
     private myID: number;
     private players = {};
@@ -13,6 +19,8 @@ export class Game {
     private previousTickTime: number;
     private readonly subscribers = {};
     private ping: number = 30;
+    private tickDurations: any = {};
+
 
     private debugConfig: any;
 
@@ -74,7 +82,7 @@ export class Game {
     onTick() {
         const now = Date.now();
         const prevTime = this.previousTickTime || now - 7;
-        const framesSinceLastFrame = (now - prevTime) / 16.666; 
+        const framesSinceLastFrame = (now - prevTime) / 16.666;
         const timeFactor = framesSinceLastFrame > 10 ? 10 : framesSinceLastFrame;
         this.previousTickTime = now;
 
@@ -82,13 +90,20 @@ export class Game {
             p.update(timeFactor);
         }
 
+        this.tickDurations.updatePlayers = Date.now() - now;
+
         for (const m of this.getMobs()) {
             m.update(timeFactor);
         }
 
+        this.tickDurations.updateMobs = Date.now() - now;
+
         this.trigger("tick", {});
+
+        this.tickDurations.tick = Date.now() - now;
+
     }
-    
+
     onPingPong(ping: number) {
         this.ping = ping;
     }
@@ -99,20 +114,21 @@ export class Game {
         this.trigger("error", error);
     }
 
-    onStart(myID: number) {
+    onStart(myID: number, gameType: number) {
         this.myID = myID;
+        this.type = gameType;
         console.log("My id: " + myID);
-        this.trigger("spawned", {id: myID});
+        this.trigger("spawned", { id: myID, gameType });
     }
 
     onRespawn(playerId: number) {
         this.getPlayer(playerId).reset();
-        this.trigger("spawned", {id: playerId, respawn: true});
+        this.trigger("spawned", { id: playerId, respawn: true });
     }
 
     onPlayerInfo(player: Player) {
         const p = this.getPlayer(player.id);
-    
+
         if (!p) {
             this.players[player.id] = new Player(player);
         } else {
@@ -125,11 +141,11 @@ export class Game {
     }
 
     onHit(playerID: number) {
-        this.trigger("playerhit", {playerID});
+        this.trigger("playerhit", { playerID });
     }
 
     onKill(playerID: number, killerID: number) {
-        this.trigger("playerkilled", {killerID, killedID: playerID});
+        this.trigger("playerkilled", { killerID, killedID: playerID });
 
         if (playerID === this.myID) {
             this.mobs = {}; // we don't get despawn messages if the mob is not in sight.
@@ -171,6 +187,39 @@ export class Game {
     onMobDespawned(id: number) {
         delete this.mobs[id];
     }
+
+    onServerMessage(text: string) {
+        console.log("Server message: " + text);
+        this.trigger("serverMessage", { text });
+    }
+
+    onFlagDropped(flag: number, posX: number, posY: number) {
+        let flagInfo = this.blueFlag;
+        if (flag === 2) {
+            flagInfo = this.redFlag;
+        }
+        flagInfo.carrierId = null;
+        flagInfo.pos = new Pos({ x: posX, y: posY });
+
+        this.trigger("flag", { 
+            redFlag: this.redFlag,
+            blueFlag: this.blueFlag
+        });
+    }
+
+    onFlagTaken(flag: number, playerId: number) {
+        let flagInfo = this.blueFlag;
+        if (flag === 2) {
+            flagInfo = this.redFlag;
+        }
+        flagInfo.carrierId = playerId;
+
+        this.trigger("flag", { 
+            redFlag: this.redFlag,
+            blueFlag: this.blueFlag
+        });
+    }
+
 
     setDebugProperties(config: any) {
         // use for random debug stuff

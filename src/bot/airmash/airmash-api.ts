@@ -11,6 +11,7 @@ import { Missile } from "./missile";
 import { KEY_CODES } from "../../../ab-protocol/src/types/client";
 import { CHAT_TYPE } from "../../api/chat-type";
 import { Debug } from "../../helper/debug";
+import { FlagInfo } from "../../api/flagInfo";
 
 export class AirmashApiFacade implements IAirmashEnvironment {
 
@@ -31,7 +32,7 @@ export class AirmashApiFacade implements IAirmashEnvironment {
     }
     private main() {
         try {
-            this.game.onTick();            
+            this.game.onTick();
         } catch (error) {
             this.game.onError(error);
         }
@@ -53,8 +54,16 @@ export class AirmashApiFacade implements IAirmashEnvironment {
         return walls;
     }
 
+    getFlagInfo(team: number): FlagInfo {
+        return team === 1 ? this.game.blueFlag : this.game.redFlag;
+    }
+
     me(): PlayerInfo {
         return this.getPlayerFrom(this.game.getPlayer(this.game.getMyId()));
+    }
+
+    getGameType(): number {
+        return this.game.type;
     }
 
     private getPlayerFrom(p: Player): PlayerInfo {
@@ -62,11 +71,13 @@ export class AirmashApiFacade implements IAirmashEnvironment {
             return null;
         }
 
+        const isSuspiciouslyCentered = !p.posX && !p.posY && !p.rot;
+
         return {
             energy: p.energy,
             health: p.health,
             id: p.id,
-            isHidden: p.dead || p.hidden,
+            isHidden: p.dead || p.hidden || isSuspiciouslyCentered,
             isInView: !p.isStale() && !p.leftHorizon,
             isStealthed: p.stealth,
             lowResPos: p.lowResPos,
@@ -132,7 +143,7 @@ export class AirmashApiFacade implements IAirmashEnvironment {
     getMissiles(): Missile[] {
         const mobs = this.game.getMobs();
         const missiles = mobs.filter(x => !x.stationary);
-        
+
         const mapped = missiles.map(x => this.getMissileFrom(x));
         return mapped;
     }

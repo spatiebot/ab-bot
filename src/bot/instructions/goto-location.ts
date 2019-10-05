@@ -48,9 +48,7 @@ export class GotoLocationInstruction implements IInstruction {
             targetPos = this.config.targetPos;
         }
 
-        //console.log({myPos, targetPos, orgTargetPos: this.config.targetPos});
-
-        var path = pathFinding.findPath(myPos, targetPos);
+        var path = pathFinding.findPath(myPos, targetPos, deltaToTarget.distance);
 
         if (path.length > 1) {
             this.config.path = path;

@@ -17,6 +17,7 @@ export class AirmashBot {
     private lastTick = Date.now();
     private score: Score;
     private lastState = Date.now();
+    private tickDurations: any = {};
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter = null) {
 
@@ -75,9 +76,9 @@ export class AirmashBot {
 
     private logState() {
         const me = this.env.me();
-        console.log(`Ping: ${this.env.getPing()}, upgrades: ${this.score.upgrades}`);
+        console.log(`Name: ${me.name}, Ping: ${this.env.getPing()}, upgrades: ${this.score.upgrades}`);
         console.log(`Score: ${this.score.score}, energy: ${me.energy}, health: ${me.health}`);
-        if (me.upgrades) {
+        if (me.upgrades && (me.upgrades.speed === 0 || me.upgrades.speed > 0)) {
             console.log(`Applied upgrades: speed ${me.upgrades.speed}, defense ${me.upgrades.defense}, energy ${me.upgrades.energy}, missile ${me.upgrades.missile}`);
         }
     }
@@ -92,12 +93,14 @@ export class AirmashBot {
     }
 
     private onTick() {
-        const msBetweenTicks = Date.now() - this.lastTick;
+        const now = Date.now();
+        const msBetweenTicks = now - this.lastTick;
         if (msBetweenTicks > 200) {
-            console.log("Panicking: delay between ticks too long: " + msBetweenTicks);
+            console.log("PANIC: delay between ticks too long: " + msBetweenTicks);
+            console.log(this.tickDurations);
             this.reset();
         }
-        this.lastTick = Date.now();
+        this.lastTick = now;
 
         if (!this.isSpawned) {
             return;
@@ -109,6 +112,8 @@ export class AirmashBot {
             this.steeringInstallation.add(i.getSteeringInstruction());
         }
 
+        this.tickDurations.targetSelection = Date.now() - now;
+
         //prowler should be as stealthed as possible
         const me = this.env.me();
         if (me.type === 5 && me.energy > 0.6 && !me.isStealthed) {
@@ -117,6 +122,8 @@ export class AirmashBot {
             this.steeringInstallation.add(stealthInstruction);
         }
 
+        this.tickDurations.prowlerStealthness = Date.now() - now;
+
         const msSinceLastState = Date.now() - this.lastState;
         if (msSinceLastState > 5000) {
             const applyUpgrades = new ApplyUpgrades(this.env, this.character);
@@ -124,7 +131,10 @@ export class AirmashBot {
 
             this.logState();
             this.lastState = Date.now();
+
+            this.tickDurations.applyUpgrades = Date.now() - now;
         }
+        this.tickDurations.total = Date.now() - now;
     }
 
     private onPlayerKilled(data: any) {

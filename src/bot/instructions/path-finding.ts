@@ -23,8 +23,10 @@ export class PathFinding {
         mapProperties: { left: -16500, top: -8300, right: 16500, bottom: 8300 },
         maxGridLength: 3000,
         marginStep: 1000,
-        scale: 0.1
+        defaultScale: 0.1
     };
+
+    private scaleFactor: number;
 
     constructor(walls: number[][], missiles: any[], playersToAvoid: PlayerInfo[]) {
 
@@ -63,9 +65,9 @@ export class PathFinding {
 
         const removeWalkabilityfor = obstacle => {
             const scaledObstacle = {
-                x: obstacle.x * this.navConfig.scale,
-                y: obstacle.y * this.navConfig.scale,
-                size: obstacle.size * this.navConfig.scale
+                x: obstacle.x * this.scaleFactor,
+                y: obstacle.y * this.scaleFactor,
+                size: obstacle.size * this.scaleFactor
             };
 
             if (scaledObstacle.x < left - scaledObstacle.size || scaledObstacle.x > left + width + scaledObstacle.size) {
@@ -100,11 +102,11 @@ export class PathFinding {
     }
 
     private isValid(pos: { x: number, y: number }): boolean {
-        const margin = 32 * this.navConfig.scale;
-        return pos.x > this.navConfig.mapProperties.left * this.navConfig.scale + margin &&
-            pos.x < this.navConfig.mapProperties.right * this.navConfig.scale - margin &&
-            pos.y > this.navConfig.mapProperties.top * this.navConfig.scale + margin &&
-            pos.y < this.navConfig.mapProperties.bottom * this.navConfig.scale - margin;
+        const margin = 32 * this.scaleFactor;
+        return pos.x > this.navConfig.mapProperties.left * this.scaleFactor + margin &&
+            pos.x < this.navConfig.mapProperties.right * this.scaleFactor - margin &&
+            pos.y > this.navConfig.mapProperties.top * this.scaleFactor + margin &&
+            pos.y < this.navConfig.mapProperties.bottom * this.scaleFactor - margin;
     }
 
     private scale(pos: ScaledPos): ScaledPos {
@@ -113,9 +115,9 @@ export class PathFinding {
             return pos;
         }
         return {
-            x: pos.x * this.navConfig.scale,
-            y: pos.y * this.navConfig.scale,
-            scale: this.navConfig.scale,
+            x: pos.x * this.scaleFactor,
+            y: pos.y * this.scaleFactor,
+            scale: this.scaleFactor,
             isAccurate: pos.isAccurate
         };
     }
@@ -137,7 +139,17 @@ export class PathFinding {
         return this.makeWalkable(newPos, suggestedDeltaX, suggestedDeltaY);
     }
 
-    public findPath(myPos: Pos, otherPos: Pos): Pos[] {
+    public findPath(myPos: Pos, otherPos: Pos, distance: number): Pos[] {
+
+        this.scaleFactor = this.navConfig.defaultScale;
+        if (distance > 3000) {
+            this.scaleFactor = this.scaleFactor / 9;
+        } else if (distance > 2000) {
+            this.scaleFactor = this.scaleFactor / 6;
+        } else if (distance > 1000) {
+            this.scaleFactor = this.scaleFactor / 3;
+        }
+
         try {
             return this.findPathInner(ScaledPos.fromPos(myPos), ScaledPos.fromPos(otherPos), 0);
         } catch (error) {
@@ -172,11 +184,11 @@ export class PathFinding {
             gridLeft = myPos.x - gridWidth + 1 + halvarin;
         }
 
-        if (gridLeft < this.navConfig.mapProperties.left * this.navConfig.scale) {
-            gridLeft = this.navConfig.mapProperties.left * this.navConfig.scale;
+        if (gridLeft < this.navConfig.mapProperties.left * this.scaleFactor) {
+            gridLeft = this.navConfig.mapProperties.left * this.scaleFactor;
         }
-        if (gridLeft + gridWidth > this.navConfig.mapProperties.right * this.navConfig.scale) {
-            gridLeft = this.navConfig.mapProperties.right * this.navConfig.scale - gridWidth - 1;
+        if (gridLeft + gridWidth > this.navConfig.mapProperties.right * this.scaleFactor) {
+            gridLeft = this.navConfig.mapProperties.right * this.scaleFactor - gridWidth - 1;
         }
 
         let gridTop: number;
@@ -187,11 +199,11 @@ export class PathFinding {
             gridTop = myPos.y - gridHeight + 1 + halvarin;
         }
 
-        if (gridTop < this.navConfig.mapProperties.top * this.navConfig.scale) {
-            gridTop = this.navConfig.mapProperties.top * this.navConfig.scale;
+        if (gridTop < this.navConfig.mapProperties.top * this.scaleFactor) {
+            gridTop = this.navConfig.mapProperties.top * this.scaleFactor;
         }
-        if (gridTop + gridHeight > this.navConfig.mapProperties.bottom * this.navConfig.scale) {
-            gridTop = this.navConfig.mapProperties.bottom * this.navConfig.scale - gridHeight - 1;
+        if (gridTop + gridHeight > this.navConfig.mapProperties.bottom * this.scaleFactor) {
+            gridTop = this.navConfig.mapProperties.bottom * this.scaleFactor - gridHeight - 1;
         }
 
         // get grid with mountains
@@ -241,17 +253,17 @@ export class PathFinding {
 
             const result = [];
             for (let i = 0; i < path.length; i++) {
-                const x = (path[i][0] + gridLeft) / this.navConfig.scale;
-                const y = (path[i][1] + gridTop) / this.navConfig.scale;
+                const x = (path[i][0] + gridLeft) / this.scaleFactor;
+                const y = (path[i][1] + gridTop) / this.scaleFactor;
                 result.push({ x, y });
             }
             return result;
         } else {
             // this is an unwalkable path. Try broadening the grid to find a way around an obstacle (mountain)
-            if (level > 8 || margin >= this.navConfig.maxGridLength * this.navConfig.scale) {
+            if (level > 8 || margin >= this.navConfig.maxGridLength * this.scaleFactor) {
                 return []; // sorry, can't find a path
             }
-            return this.findPathInner(myPos, otherPos, margin + (this.navConfig.marginStep * this.navConfig.scale), level + 1);
+            return this.findPathInner(myPos, otherPos, margin + (this.navConfig.marginStep * this.scaleFactor), level + 1);
         }
     }
 

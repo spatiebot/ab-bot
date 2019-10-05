@@ -10,19 +10,21 @@ export const steeringInstallationIntervalMs = 180;
 export const longThrottleInterval = 3.5 * steeringInstallationIntervalMs;
 
 function isNullOrUndefined(obj: any): boolean {
-    return obj === null || typeof(obj) === 'undefined';
+    return obj === null || typeof (obj) === 'undefined';
 }
 
 export class SteeringInstallation {
 
     private instructions: SteeringInstruction[] = [];
-    private steeringInterval: any;
-    
+
     private rotation: Rotate;
     private speed: Speed;
     private fire: Fire;
     private fart: Fart;
     private stealth: Stealth;
+    private isStarted: boolean;
+    private lastExecuted: number = 0;
+    private isExecuting: boolean;
 
     constructor(private env: IAirmashEnvironment) {
         this.rotation = new Rotate(env);
@@ -30,18 +32,16 @@ export class SteeringInstallation {
         this.fire = new Fire(env);
         this.fart = new Fart(env);
         this.stealth = new Stealth(env);
+
+        env.on("tick", () => this.execute());
     }
 
     start() {
-        if (this.steeringInterval) {
-            return;
-        }
-        this.steeringInterval = setInterval(() => this.execute(), steeringInstallationIntervalMs);
+        this.isStarted = true;
     }
 
     stop() {
-        clearInterval(this.steeringInterval);
-        this.steeringInterval = null;
+        this.isStarted = false;
         this.instructions = [];
     }
 
@@ -55,16 +55,38 @@ export class SteeringInstallation {
     }
 
     private execute() {
-        const instruction = this.compress(this.instructions);
-        this.instructions = [];
+        if (!this.isStarted) {
+            return;
+        }
+        if (this.isExecuting) {
+            console.log("Steeringinterval started twice!");
+            return;
+        }
 
-        const me = this.env.me();
+        const now = Date.now();
+        if (now - this.lastExecuted < steeringInstallationIntervalMs) {
+            return;
+        }
 
-        this.rotation.execute(me, instruction.rotDelta);
-        this.speed.execute(me, instruction.targetSpeed, instruction.boost, instruction.fire);
-        this.stealth.execute(instruction.stealth);
-        this.fart.execute(instruction.fart);
-        this.fire.execute(me, instruction.fire);
+        this.isExecuting = true;
+
+        try {
+
+            const instruction = this.compress(this.instructions);
+            this.instructions = [];
+
+            const me = this.env.me();
+
+            this.rotation.execute(me, instruction.rotDelta);
+            this.speed.execute(me, instruction.targetSpeed, instruction.boost, instruction.fire);
+            this.stealth.execute(instruction.stealth);
+            this.fart.execute(instruction.fart);
+            this.fire.execute(me, instruction.fire);
+            
+        } finally {
+            this.lastExecuted = now;
+            this.isExecuting = false;
+        }
     }
 
     private compress(instructions: SteeringInstruction[]): SteeringInstruction {
@@ -83,5 +105,5 @@ export class SteeringInstallation {
     }
 
 
-    
+
 }
