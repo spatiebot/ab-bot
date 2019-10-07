@@ -12,9 +12,9 @@ export class CrateTarget implements ITarget {
     private gotoLocationConfig = new GotoLocationConfig();
 
     goal = "stealCrates";
-    
-    constructor(private env: IAirmashEnvironment) {
-        const crates = env.getCrates();
+
+    constructor(private env: IAirmashEnvironment, blacklist: number[]) {
+        const crates = env.getCrates().filter(x => blacklist.indexOf(x.id) === -1);
         const myPos = env.me().pos;
 
         let closestCrate;
@@ -29,7 +29,6 @@ export class CrateTarget implements ITarget {
 
         if (closestCrate) {
             this.targetID = closestCrate.id;
-            console.log('selected target crate at pos ' + closestCrate.pos.x + ',' + closestCrate.pos.y);
         }
     }
 
@@ -46,6 +45,21 @@ export class CrateTarget implements ITarget {
     }
 
     onKill(killerID: number, killedID: number) {
+    }
+
+    getInfo() {
+        const crate = this.getTarget();
+        if (!crate) {
+            return {
+                info: 'crate disappeared',
+                id: this.targetID
+            };
+        }
+
+        return {
+            info: 'crate at pos ' + crate.pos.x + ',' + crate.pos.y,
+            id: this.targetID
+        };
     }
 
     getInstructions(): IInstruction[] {

@@ -32,8 +32,6 @@ export class SteeringInstallation {
         this.fire = new Fire(env);
         this.fart = new Fart(env);
         this.stealth = new Stealth(env);
-
-        env.on("tick", () => this.execute());
     }
 
     start() {
@@ -54,7 +52,7 @@ export class SteeringInstallation {
         this.instructions.push(instruction);
     }
 
-    private execute() {
+    executeWhenReady() {
         if (!this.isStarted) {
             return;
         }

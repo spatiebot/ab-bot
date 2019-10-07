@@ -6,13 +6,19 @@ import { CrateTarget } from "./crate-target";
 import { OtherPlayerTarget } from "./other-player-target";
 import { DoNothingTarget } from "./do-nothing.target";
 import { DodgeEnemiesTarget } from "./dodge-enemies-target";
+import { GotoLocationTarget } from "./goto-location-target";
+import { Pos } from "../pos";
 
 const TIME_OUT = 60 * 1000; // 1 min
 
 export class TargetSelection {
     private target: ITarget;
+    private ctfTarget: ITarget;
     private lastLoggedTarget: string;
     private lastSelectedTime: number = 0;
+    private lastTargetId: number;
+    private dontSelectId: number;
+    private timeout: number = 0;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
         this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
@@ -22,6 +28,11 @@ export class TargetSelection {
         this.target = null;
         this.lastSelectedTime = 0;
         this.lastLoggedTarget = "";
+
+        // this was called on error, prevent selection of the same id the next time
+        this.dontSelectId = this.lastTargetId;
+        this.lastTargetId = null;
+        this.timeout = Date.now() + 1000; // wait a sec before next target
     }
 
     private onPlayerKilled(data: any) {
@@ -31,28 +42,90 @@ export class TargetSelection {
     }
 
     getTarget(): ITarget {
+        if (Date.now() < this.timeout) {
+            return new DoNothingTarget();
+        }
+
         let target = this.getPriorityTarget();
+        if (!target) {
+            if (this.env.getGameType() === 2) {
+                target = this.getCtfTarget();
+                this.ctfTarget = target;
+            }
+        }
+
         if (!target) {
             this.selectRegularTarget();
             target = this.target;
         }
 
-        if (this.lastLoggedTarget !== target.goal) {
-            this.lastLoggedTarget = target.goal;
-            console.log("Target: " + target.goal);
+        const targetInfo = target.getInfo();
+        if (this.lastLoggedTarget !== targetInfo.info) {
+            this.lastLoggedTarget = targetInfo.info
+            console.log("Target: " + targetInfo.info);
+        }
+
+        if (targetInfo.id) {
+            this.lastTargetId = targetInfo.id;
         }
 
         return target;
     }
 
+    private getCtfTarget(): ITarget {
+        const me = this.env.me();
+        const myFlagInfo = this.env.getFlagInfo(me.team);
+        const otherFlagInfo = this.env.getFlagInfo(me.team === 1 ? 2 : 1);
+
+        if (!myFlagInfo.pos) {
+            return;
+        }
+        if (!otherFlagInfo.pos) {
+            return;
+        }
+
+        const flagDefaultX = me.team === 1 ? -9670 : 8600;
+        const flagDefaultY = me.team === 1 ? -1470 : -940;
+
+        if (otherFlagInfo.carrierId === me.id) {
+            // i'm the flag carrier! Bring it home.
+            return new GotoLocationTarget(this.env, new Pos({ x: flagDefaultX, y: flagDefaultY }));
+        }
+
+        if (myFlagInfo.carrierId && myFlagInfo.carrierId !== this.dontSelectId) {
+            // flag is taken, hunt the carrier
+            if (this.ctfTarget && this.ctfTarget.getInfo().id === myFlagInfo.carrierId && this.ctfTarget.isValid()) {
+                // already hunting
+                return this.ctfTarget;
+            }
+
+            const recoverTarget = new OtherPlayerTarget(this.env, this.character, [], myFlagInfo.carrierId);
+
+            if (recoverTarget.isValid()) {
+                return recoverTarget;
+            }
+        }
+
+        const flagIsHome = myFlagInfo.pos.x === flagDefaultX && myFlagInfo.pos.y === flagDefaultY;
+        if (!flagIsHome) {
+            // flag should be recovered
+            return new GotoLocationTarget(this.env, myFlagInfo.pos);
+        }
+
+        if (!otherFlagInfo.carrierId) {
+            // go grab the enemy flag
+            return new GotoLocationTarget(this.env, otherFlagInfo.pos);
+        }
+    }
+
     private getPriorityTarget(): ITarget {
         // dodging bullets is always a priority
-        const dodge = new DodgeMissileTarget(this.env, this.character);
+        const dodge = new DodgeMissileTarget(this.env, this.character, [this.dontSelectId]);
         if (dodge.isValid()) {
             return dodge;
         }
 
-        const avoid = new DodgeEnemiesTarget(this.env, this.character);
+        const avoid = new DodgeEnemiesTarget(this.env, this.character, [this.dontSelectId]);
         if (avoid.isValid()) {
             return avoid;
         }
@@ -79,9 +152,9 @@ export class TargetSelection {
 
         let potentialNewTarget: ITarget;
         if (this.character.goal === 'stealCrates') {
-            potentialNewTarget = new CrateTarget(this.env);
+            potentialNewTarget = new CrateTarget(this.env, [this.dontSelectId]);
         } else if (this.character.goal === 'fight') {
-            potentialNewTarget = new OtherPlayerTarget(this.env, this.character);
+            potentialNewTarget = new OtherPlayerTarget(this.env, this.character, [this.dontSelectId]);
         } else if (this.character.goal === "nothing") {
             potentialNewTarget = new DoNothingTarget();
         }
@@ -100,7 +173,7 @@ export class TargetSelection {
         }
 
         // so take the default target then
-        this.target = new OtherPlayerTarget(this.env, this.character);
+        this.target = new OtherPlayerTarget(this.env, this.character, [this.dontSelectId]);
         this.lastSelectedTime = Date.now();
 
         if (!this.target.isValid()) {

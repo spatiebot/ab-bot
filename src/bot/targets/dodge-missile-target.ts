@@ -13,12 +13,15 @@ export class DodgeMissileTarget implements ITarget {
 
     private missileToAvoidId: number;
 
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
+    constructor(private env: IAirmashEnvironment, private character: BotCharacter, private blacklist: number[]) {
 
         const me = env.me();
         const myTeam = me.team;
         const allMissiles = env.getMissiles();
         const hostileMissiles = allMissiles.filter(x => {
+            if (blacklist.indexOf(x.id) > -1) {
+                return false;
+            }
             if (!x.playerID) {
                 // assume hostile
                 return true;
@@ -76,6 +79,13 @@ export class DodgeMissileTarget implements ITarget {
     private getMissileToAvoid(): Missile {
         var missile = this.env.getMissile(this.missileToAvoidId);
         return missile;
+    }
+
+    getInfo() {
+        return {
+            info: 'avoid missile',
+            id: this.missileToAvoidId
+        };
     }
 
     getInstructions(): IInstruction[] {

@@ -176,6 +176,16 @@ export class Network {
                 }
                 break;
 
+            case SERVER_PACKETS.PLAYER_RETEAM:
+                const teamPlayers = msg.players as any[];
+                for (let i = 0; i < teamPlayers.length; i++) {
+                    const existingTeamPlayer = this.game.getPlayer(teamPlayers[i].id);
+                    if (existingTeamPlayer) {
+                        existingTeamPlayer.team = teamPlayers[i].team;
+                    }
+                }
+                break;
+
             case SERVER_PACKETS.PLAYER_UPGRADE:
                 const me = this.game.getPlayer(this.game.getMyId());
                 me.appliedUpgrades = <Upgrades>(msg as any);

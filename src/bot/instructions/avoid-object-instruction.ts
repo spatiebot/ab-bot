@@ -10,7 +10,7 @@ export class AvoidObjectInstruction implements IInstruction {
 
     }
 
-    getSteeringInstruction(): SteeringInstruction {
+    getSteeringInstruction(): Promise<SteeringInstruction> {
 
         let perpendicular = this.objectRot + .5 * Math.PI;
         const objectToMeAngle = Calculations.getTargetRotation(this.objectPos, this.myPos);
@@ -39,7 +39,7 @@ export class AvoidObjectInstruction implements IInstruction {
         }
 
         instruction.boost = true;
-        return instruction;
+        return Promise.resolve(instruction);
     }
 
 }

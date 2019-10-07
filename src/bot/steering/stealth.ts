@@ -10,12 +10,15 @@ export class Stealth {
         this.stealth = new SteeringState('SPECIAL');
     }
 
-    execute(fart: boolean) {
+    execute(stealth: boolean) {
         if (this.stealthTimeout) {
             return;
         }
+        if (this.env.me().type !== 5) {
+            return;
+        }
 
-        if (!fart) {
+        if (!stealth) {
             this.stealth.send(this.env, false);
         } else {
             this.stealth.send(this.env, true);

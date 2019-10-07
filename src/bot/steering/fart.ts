@@ -14,16 +14,14 @@ export class Fart {
         if (this.fartTimeout) {
             return;
         }
+        if (this.env.me().type !== 2) {
+            return;
+        }
 
         if (!fart) {
             this.fart.send(this.env, false);
         } else {
             this.fart.send(this.env, true);
-
-            this.fartTimeout = setTimeout(() => {
-                this.fart.send(this.env, false);
-                this.fartTimeout = null;
-            }, 500);
         }
     }
 }

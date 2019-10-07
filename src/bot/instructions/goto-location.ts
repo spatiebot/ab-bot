@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 import { IInstruction } from "./iinstruction";
 import { SteeringInstruction } from "../steering/steering-instruction";
 import { Calculations } from "../calculations";
@@ -6,7 +8,19 @@ import { GotoLocationConfig } from "./goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { PlayerInfo } from "../airmash/player-info";
 import { Pos } from "../pos";
-import { PathFinding } from "./path-finding";
+import { Worker } from "worker_threads";
+
+declare const __dirname: string;
+let pfWorker: Worker;
+
+function createNewWorker() {
+    if (pfWorker) {
+        pfWorker.terminate();
+    }
+
+    pfWorker = new Worker(__dirname + '/path-finding.js');
+}
+createNewWorker();
 
 export class GotoLocationInstruction implements IInstruction {
 
@@ -15,7 +29,7 @@ export class GotoLocationInstruction implements IInstruction {
     constructor(private env: IAirmashEnvironment, private character: BotCharacter, private targetPlayerId = null) {
     }
 
-    private getNextPos(me: PlayerInfo, shouldCalcPath: boolean, deltaToTarget: { diffX: number, diffY: number, distance: number }) {
+    private async getNextPos(me: PlayerInfo, shouldCalcPath: boolean, deltaToTarget: { diffX: number, diffY: number, distance: number }): Promise<Pos> {
         // prevent one-time inaccurate readings to disturb the path
         const isDisturbingPos = this.config.prevTargetPos && this.config.prevTargetPos.isAccurate && !this.config.targetPos.isAccurate;
         shouldCalcPath = shouldCalcPath && !isDisturbingPos;
@@ -24,11 +38,9 @@ export class GotoLocationInstruction implements IInstruction {
             if (this.config.path) {
                 return this.getMostProbablePosFromPath(1, me.pos);
             }
-            return null;
         }
 
         const players = this.env.getPlayers().filter(x => x.id !== me.id && x.id !== this.targetPlayerId);
-        const pathFinding = new PathFinding(this.env.getWalls(), this.env.getMissiles(), players);
 
         let myPos = me.pos;
         if (this.character && this.character.predictPositions) {
@@ -43,19 +55,61 @@ export class GotoLocationInstruction implements IInstruction {
                 x: myPos.x - deltaToTarget.diffX,
                 y: myPos.y - deltaToTarget.diffY
             });
-            targetPos = pathFinding.makeWalkable(targetPos, -deltaToTarget.diffX, -deltaToTarget.diffY);
         } else {
             targetPos = this.config.targetPos;
         }
 
-        var path = pathFinding.findPath(myPos, targetPos, deltaToTarget.distance);
+        const pathFindingConfig = {
+            walls: this.env.getWalls(),
+            missiles: this.env.getMissiles(),
+            players,
+            myPos,
+            targetPos,
+            distance: deltaToTarget.distance
+        };
 
-        if (path.length > 1) {
-            this.config.path = path;
-            return path[1]; // the first pos is my own position
-        }
+        const path = await this.findPath(pathFindingConfig);
 
-        return null;
+        this.config.path = path;
+        return path[1]; // the first pos is my own position
+    }
+
+    private findPath(pathFindingConfig: any): Promise<Pos[]> {
+        pfWorker.removeAllListeners();
+
+        const pfPromise = new Promise<Pos[]>((resolve, reject) => {
+
+            function cleanUp() {
+                clearTimeout(timeOut);
+                pfWorker.removeAllListeners();
+            }
+
+            const timeOut = setTimeout(() => {
+                createNewWorker();
+                cleanUp();
+                reject(new Error('pathFinding timeout'));
+            }, 800);
+
+            pfWorker.on("error", err => {
+                reject(err);
+                cleanUp();
+            });
+
+            pfWorker.on("message", message => {
+                if (message.path) {
+                    resolve(message.path);
+                }
+                if (message.error) {
+                    reject(message.error);
+                }
+                reject(message);
+                cleanUp();
+            });
+
+            pfWorker.postMessage(pathFindingConfig);
+        });
+
+        return pfPromise;
     }
 
     private getMostProbablePosFromPath(ix: number, myPos: Pos): Pos {
@@ -78,7 +132,7 @@ export class GotoLocationInstruction implements IInstruction {
         this.config = config;
     }
 
-    getSteeringInstruction(): SteeringInstruction {
+    async getSteeringInstruction(): Promise<SteeringInstruction> {
         const result = new SteeringInstruction();
 
         const myInfo = this.env.me();
@@ -93,12 +147,7 @@ export class GotoLocationInstruction implements IInstruction {
             }
         }
 
-        const firstPosToGoTo = this.getNextPos(myInfo, shouldCalcPath, delta);
-
-        if (!firstPosToGoTo) {
-            return result;
-        }
-
+        const firstPosToGoTo = await this.getNextPos(myInfo, shouldCalcPath, delta);
 
         if (!delta || delta.distance == this.config.desiredDistanceToTarget) {
             result.targetSpeed = 0;
@@ -109,10 +158,17 @@ export class GotoLocationInstruction implements IInstruction {
             result.targetSpeed = 1;
 
             if (myInfo.type === 1) {
-                if (this.character && delta.distance > this.character.firingRange) {
-                    result.boost = true;
-                } else if (this.config.desiredDistanceToTarget === 0) {
-                    result.boost = true; // always boost to get to target 
+                let isCarryingFlag = false;
+                if (this.env.getGameType() === 2) {
+                    const otherFlag = this.env.getFlagInfo(myInfo.team === 1 ? 2 : 1);
+                    isCarryingFlag = otherFlag.carrierId === myInfo.id;
+                }
+                if (!isCarryingFlag) {
+                    if (this.character && delta.distance > this.character.firingRange) {
+                        result.boost = true;
+                    } else if (this.config.desiredDistanceToTarget === 0) {
+                        result.boost = true; // always boost to get to target 
+                    }
                 }
             }
         }
@@ -144,8 +200,6 @@ export class GotoLocationInstruction implements IInstruction {
                 result.targetSpeed = 0;
             }
         }
-
-
 
         return result;
     }

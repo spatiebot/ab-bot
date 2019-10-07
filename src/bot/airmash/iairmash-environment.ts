@@ -1,5 +1,4 @@
 import { PlayerInfo } from "./player-info";
-import { PathFinding } from "../instructions/path-finding";
 import { Crate } from "./crate";
 import { Missile } from "./missile";
 import { FlagInfo } from "../../api/flagInfo";

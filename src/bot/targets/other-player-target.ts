@@ -18,36 +18,55 @@ export class OtherPlayerTarget implements ITarget {
 
     goal = "fight";
 
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
+    constructor(private env: IAirmashEnvironment, private character: BotCharacter, blacklist: number[], victimId: number = null) {
 
         let victim: PlayerInfo;
-        const me = env.me();
 
-        const enemies = getPlayersSortedByDistance(env, true)
-            .filter(x => x.player.team !== me.team)
-            .filter(x => this.isTargetValid(x.player));
+        if (victimId) {
+            victim = env.getPlayer(victimId);
+        } else {
+            const me = env.me();
 
-        const withinRange = enemies.filter(x => x.delta.distance < character.firingRange);
-        if (withinRange.length > 0) {
-            withinRange.sort((a, b) => {
-                if (a.player.health < b.player.health) {
-                    return -1;
-                } else if (a.player.health > b.player.health) {
-                    return 1;
-                }
-                return 0;
-            });
-            victim = withinRange[0].player;
-        }
+            const enemies = getPlayersSortedByDistance(env, true)
+                .filter(x => x.player.team !== me.team)
+                .filter(x => blacklist.indexOf(x.player.id) === -1)
+                .filter(x => this.isTargetValid(x.player));
 
-        if (enemies.length > 0) {
-            victim = victim || enemies[0].player;
+            const withinRange = enemies.filter(x => x.delta.distance < character.firingRange);
+            if (withinRange.length > 0) {
+                withinRange.sort((a, b) => {
+                    if (a.player.health < b.player.health) {
+                        return -1;
+                    } else if (a.player.health > b.player.health) {
+                        return 1;
+                    }
+                    return 0;
+                });
+                victim = withinRange[0].player;
+            }
+
+            if (enemies.length > 0) {
+                victim = victim || enemies[0].player;
+            }
         }
 
         if (victim) {
             this.targetID = victim.id;
-            console.log(`selected other player '${victim.name}' with health ${victim.health}`);
         }
+    }
+
+    getInfo() {
+        const enemy = this.getTarget();
+        if (!enemy) {
+            return {
+                info: 'enemy disappeared',
+                id: this.targetID
+            };
+        }
+        return {
+            info: 'attack ' + enemy.name,
+            id: this.targetID
+        };
     }
 
     private getTarget(): PlayerInfo {

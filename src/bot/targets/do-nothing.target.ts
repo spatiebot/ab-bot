@@ -10,10 +10,17 @@ export class DoNothingTarget implements ITarget {
         return true;
     }
 
+
+    getInfo() {
+        return {
+            info: 'Nothing',
+            id: null
+        };
+    }
     getInstructions(): IInstruction[] {
         return [new DoNothingInstruction()]
     }
-    
+
     onKill(killerID: number, killedID: number) {
     }
 }

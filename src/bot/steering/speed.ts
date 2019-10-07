@@ -41,7 +41,7 @@ export class Speed {
                 this.currentBoostTimeout = setTimeout(() => {
                     this.boost.send(this.env, false);
                     this.currentBoostTimeout = setTimeout(() => this.currentBoostTimeout = null, 1000);
-                }, 900);
+                }, 2000);
             }
         }
     }

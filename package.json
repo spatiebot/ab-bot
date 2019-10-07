@@ -7,6 +7,7 @@
         "yargs": "^14.0.0"
     },
     "devDependencies": {
+        "@types/worker-threads-pool": "^2.0.0",
         "@types/yargs": "^13.0.2"
     }
 }

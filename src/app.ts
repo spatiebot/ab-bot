@@ -1,14 +1,8 @@
 
 import { argv } from 'yargs';
 import { AirmashBot } from './bot/airmash-bot';
-import { Grid, Util, AStarFinder } from "pathfinding";
-import { PathFindingFacade } from './bot/instructions/pathfinding-facade';
 import { AirmashApiFacade } from "./bot/airmash/airmash-api";
 import { BotCharacter } from './bot/bot-character';
-
-PathFindingFacade.Grid = Grid;
-PathFindingFacade.Util = Util;
-PathFindingFacade.AStarFinder = AStarFinder;
 
 const urls = {
     local: "ws://127.0.0.1:3501/ffa",

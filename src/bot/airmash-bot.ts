@@ -17,7 +17,7 @@ export class AirmashBot {
     private lastTick = Date.now();
     private score: Score;
     private lastState = Date.now();
-    private tickDurations: any = {};
+    private isPreparingSteeringInstructions = false;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter = null) {
 
@@ -95,9 +95,8 @@ export class AirmashBot {
     private onTick() {
         const now = Date.now();
         const msBetweenTicks = now - this.lastTick;
-        if (msBetweenTicks > 200) {
+        if (msBetweenTicks > 300) {
             console.log("PANIC: delay between ticks too long: " + msBetweenTicks);
-            console.log(this.tickDurations);
             this.reset();
         }
         this.lastTick = now;
@@ -106,24 +105,6 @@ export class AirmashBot {
             return;
         }
 
-        const target = this.targetSelection.getTarget();
-        const instructions = target.getInstructions();
-        for (let i of instructions) {
-            this.steeringInstallation.add(i.getSteeringInstruction());
-        }
-
-        this.tickDurations.targetSelection = Date.now() - now;
-
-        //prowler should be as stealthed as possible
-        const me = this.env.me();
-        if (me.type === 5 && me.energy > 0.6 && !me.isStealthed) {
-            const stealthInstruction = new SteeringInstruction();
-            stealthInstruction.stealth = true;
-            this.steeringInstallation.add(stealthInstruction);
-        }
-
-        this.tickDurations.prowlerStealthness = Date.now() - now;
-
         const msSinceLastState = Date.now() - this.lastState;
         if (msSinceLastState > 5000) {
             const applyUpgrades = new ApplyUpgrades(this.env, this.character);
@@ -131,10 +112,44 @@ export class AirmashBot {
 
             this.logState();
             this.lastState = Date.now();
-
-            this.tickDurations.applyUpgrades = Date.now() - now;
         }
-        this.tickDurations.total = Date.now() - now;
+
+        this.prepareSteering();
+    }
+
+    private async prepareSteering(): Promise<any> {
+        if (this.isPreparingSteeringInstructions) {
+            return;
+        }
+        this.isPreparingSteeringInstructions = true;
+
+        try {
+            const target = this.targetSelection.getTarget();
+            const instructions = target.getInstructions();
+            try {
+                for (let i of instructions) {
+                    const steeringInstruction = await i.getSteeringInstruction();
+                    this.steeringInstallation.add(steeringInstruction);
+                }
+            } catch (err) {
+                console.log(err);
+                console.log("Get steeringinstructions failed. Resetting target.");
+                this.reset();
+            }
+
+            //prowler should be as stealthed as possible
+            const me = this.env.me();
+            if (me.type === 5 && me.energy > 0.6 && !me.isStealthed) {
+                const stealthInstruction = new SteeringInstruction();
+                stealthInstruction.stealth = true;
+                this.steeringInstallation.add(stealthInstruction);
+            }
+
+            this.steeringInstallation.executeWhenReady();
+
+        } finally {
+            this.isPreparingSteeringInstructions = false;
+        }
     }
 
     private onPlayerKilled(data: any) {

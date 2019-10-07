@@ -16,10 +16,11 @@ export class DodgeEnemiesTarget implements ITarget {
     private playerToAvoidID: number;
     private gotoLocationConfig = new GotoLocationConfig();
     
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
+    constructor(private env: IAirmashEnvironment, private character: BotCharacter, blacklist: number[]) {
 
         const me = env.me();
         const otherAircrafts = env.getPlayers()
+            .filter(x => blacklist.indexOf(x.id) === -1)
             .filter(x => x.id !== env.myId() && x.team !== me.team)
             .filter(x => !x.isHidden && x.isInView && !x.isStealthed);
 
@@ -89,6 +90,20 @@ export class DodgeEnemiesTarget implements ITarget {
         result.push(new FireInstruction());
                 
         return result;
+    }
+    
+    getInfo() {
+        const enemy = this.env.getPlayer(this.playerToAvoidID);
+        if (!enemy) {
+            return {
+                info: 'enemy disappeared',
+                id: this.playerToAvoidID
+            };
+        }
+        return {
+            info: 'avoid enemy ' + enemy.name,
+            id: this.playerToAvoidID
+        };
     }
 
     private getEnemyPos(predictPositions: boolean): Pos {

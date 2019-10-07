@@ -1,9 +1,32 @@
+/// <reference types="node" />
+
 import { Calculations } from "../calculations";
 import { PlayerInfo } from "../airmash/player-info";
-import { PathFindingFacade } from "./pathfinding-facade";
 import { Pos } from "../pos";
+import { parentPort } from "worker_threads";
+import { Grid, AStarFinder, Util } from "pathfinding";
 
 let mountains;
+
+parentPort.on("message", message => run(message));
+
+function run(workerData) {
+
+    const walls = workerData.walls;
+    const missiles = workerData.missiles;
+    const players = workerData.players;
+    const myPos = workerData.myPos;
+    const targetPos = workerData.targetPos;
+    const distance = workerData.distance;
+
+    try {
+        const pathFinding = new PathFinding(walls, missiles, players);
+        const path = pathFinding.findPath(myPos, targetPos, distance);
+        parentPort.postMessage({ path });
+    } catch (error) {
+        parentPort.postMessage({ error });
+    }
+}
 
 class ScaledPos extends Pos {
     scale: number;
@@ -13,7 +36,7 @@ class ScaledPos extends Pos {
     }
 }
 
-export class PathFinding {
+class PathFinding {
 
     private readonly mobstacles: any[];
     private readonly playerObstacles: any[];
@@ -23,7 +46,7 @@ export class PathFinding {
         mapProperties: { left: -16500, top: -8300, right: 16500, bottom: 8300 },
         maxGridLength: 3000,
         marginStep: 1000,
-        defaultScale: 0.1
+        defaultScale: 0.2
     };
 
     private scaleFactor: number;
@@ -61,7 +84,7 @@ export class PathFinding {
 
     private getGrid(width: number, height: number, left: number, top: number): any {
 
-        const grid = new PathFindingFacade.Grid(Math.ceil(width), Math.ceil(height));
+        const grid = new Grid(Math.ceil(width), Math.ceil(height));
 
         const removeWalkabilityfor = obstacle => {
             const scaledObstacle = {
@@ -101,14 +124,6 @@ export class PathFinding {
         return grid;
     }
 
-    private isValid(pos: { x: number, y: number }): boolean {
-        const margin = 32 * this.scaleFactor;
-        return pos.x > this.navConfig.mapProperties.left * this.scaleFactor + margin &&
-            pos.x < this.navConfig.mapProperties.right * this.scaleFactor - margin &&
-            pos.y > this.navConfig.mapProperties.top * this.scaleFactor + margin &&
-            pos.y < this.navConfig.mapProperties.bottom * this.scaleFactor - margin;
-    }
-
     private scale(pos: ScaledPos): ScaledPos {
         if (pos.scale) {
             // has already been scaled
@@ -122,62 +137,53 @@ export class PathFinding {
         };
     }
 
-    public makeWalkable(pos: Pos, suggestedDeltaX: number, suggestedDeltaY: number, tries = 0) {
-        if (tries > 10 || pos.x < this.navConfig.mapProperties.left || pos.x > this.navConfig.mapProperties.right
-            || pos.y < this.navConfig.mapProperties.top || pos.y > this.navConfig.mapProperties.bottom) {
-            return { x: 0, y: 0 };
-        }
-
-        const scaled = this.scale(ScaledPos.fromPos(pos));
-        if (this.isValid(scaled)) {
-            return pos;
-        }
-        const newPos = new Pos({
-            x: pos.x + suggestedDeltaX,
-            y: pos.y + suggestedDeltaY
-        });
-        return this.makeWalkable(newPos, suggestedDeltaX, suggestedDeltaY, tries + 1);
-    }
-
     public findPath(myPos: Pos, otherPos: Pos, distance: number): Pos[] {
 
-        this.scaleFactor = this.navConfig.defaultScale;
-        if (distance > 3000) {
-            this.scaleFactor = this.scaleFactor / 9;
-        } else if (distance > 2000) {
-            this.scaleFactor = this.scaleFactor / 6;
-        } else if (distance > 1000) {
-            this.scaleFactor = this.scaleFactor / 3;
+        this.scaleFactor = Math.min(0.4, 500 / distance);  // this.navConfig.defaultScale;
+        const initialMargin = this.navConfig.marginStep * this.scaleFactor;
+
+        let roughResult: { smoothenedPosList: Pos[], posList: Pos[] };
+        try {
+            roughResult = this.findPathInner(ScaledPos.fromPos(myPos), ScaledPos.fromPos(otherPos), initialMargin);
+        } catch (error) {
+            // retry once with just pointing in the right direction and finding a path some distance away
+            let delta = Calculations.getDelta(myPos, otherPos);
+            const diffX = Math.min(300, delta.diffX);
+            const factor = diffX === 0 ? 1 : delta.diffX / diffX;
+            otherPos = new Pos({ x: myPos.x + diffX, y: myPos.y + delta.diffY * factor });
+            
+            delta = Calculations.getDelta(myPos, otherPos);
+            if (!delta) {
+                throw new Error("Second try failed. First error: " + error);
+            }
+
+            this.scaleFactor = Math.min(0.4, 500 / delta.distance);
+            roughResult = this.findPathInner(ScaledPos.fromPos(myPos), ScaledPos.fromPos(otherPos), initialMargin);
         }
 
-        try {
-            return this.findPathInner(ScaledPos.fromPos(myPos), ScaledPos.fromPos(otherPos), 0);
-        } catch (error) {
-            // better luck next time 
-            return [];
+        const roughPos = roughResult.posList[1];
+        const delta = Calculations.getDelta(myPos, roughPos);
+
+        if (!delta) {
+            throw new Error("Pathfinding apparently failed");
         }
+
+        if (delta.distance < 300) {
+            const path = roughResult.smoothenedPosList;
+            return path;
+        }
+
+        return this.findPath(myPos, roughPos, delta.distance);
     }
 
-    public findPathInner(myPos: ScaledPos, otherPos: ScaledPos, margin: number, level: number = 1): Pos[] {
+    public findPathInner(myPos: ScaledPos, otherPos: ScaledPos, scaledMargin: number, level: number = 1): { smoothenedPosList: Pos[], posList: Pos[] } {
         myPos = this.scale(myPos);
         otherPos = this.scale(otherPos);
 
-        if (!this.isValid(myPos)) {
-            return [];
-        }
-
-        if (!this.isValid(otherPos)) {
-            let posLog = "";
-            if (otherPos) {
-                posLog = otherPos.x + "," + otherPos.y;
-            }
-            return [];
-        }
-
-        const halvarin = margin / 2;
+        const halvarin = scaledMargin / 2;
 
         let gridLeft: number;
-        const gridWidth = Math.min(this.navConfig.maxGridLength, Math.abs(otherPos.x - myPos.x) + margin);
+        const gridWidth = Math.abs(otherPos.x - myPos.x) + scaledMargin; // Math.min(this.navConfig.maxGridLength * this.scaleFactor, Math.abs(otherPos.x - myPos.x) + scaledMargin);
         if (otherPos.x > myPos.x) {
             gridLeft = myPos.x - halvarin;
         } else {
@@ -192,7 +198,7 @@ export class PathFinding {
         }
 
         let gridTop: number;
-        const gridHeight = Math.min(this.navConfig.maxGridLength, Math.abs(otherPos.y - myPos.y) + margin);
+        const gridHeight = Math.abs(otherPos.y - myPos.y) + scaledMargin; // Math.min(this.navConfig.maxGridLength * this.scaleFactor, Math.abs(otherPos.y - myPos.y) + scaledMargin);
         if (otherPos.y > myPos.y) {
             gridTop = myPos.y - halvarin;
         } else {
@@ -209,7 +215,7 @@ export class PathFinding {
         // get grid with mountains
         const grid = this.getGrid(gridWidth, gridHeight, gridLeft, gridTop);
 
-        const finder = new PathFindingFacade.AStarFinder({
+        const finder = new AStarFinder({
             allowDiagonal: true
         });
 
@@ -249,23 +255,29 @@ export class PathFinding {
         let path = finder.findPath(fromX, fromY, toX, toY, grid);
 
         if (path.length > 0) {
-            path = PathFindingFacade.Util.smoothenPath(grid, path);
-
-            const result = [];
+            const posList = [];
             for (let i = 0; i < path.length; i++) {
                 const x = (path[i][0] + gridLeft) / this.scaleFactor;
                 const y = (path[i][1] + gridTop) / this.scaleFactor;
-                result.push({ x, y });
+                posList.push({ x, y });
             }
-            return result;
+
+            const smoothenedPath = Util.smoothenPath(grid, path);
+            const smoothenedPosList = [];
+            for (let i = 0; i < smoothenedPath.length; i++) {
+                const x = (smoothenedPath[i][0] + gridLeft) / this.scaleFactor;
+                const y = (smoothenedPath[i][1] + gridTop) / this.scaleFactor;
+                smoothenedPosList.push({ x, y });
+            }
+
+            return { smoothenedPosList, posList };
         } else {
             // this is an unwalkable path. Try broadening the grid to find a way around an obstacle (mountain)
-            if (level > 8 || margin >= this.navConfig.maxGridLength * this.scaleFactor) {
-                return []; // sorry, can't find a path
+            if (level > 5 || scaledMargin >= this.navConfig.maxGridLength * this.scaleFactor) {
+                throw new Error("unable to find walkable path");
             }
-            return this.findPathInner(myPos, otherPos, margin + (this.navConfig.marginStep * this.scaleFactor), level + 1);
+
+            return this.findPathInner(myPos, otherPos, scaledMargin + (this.navConfig.marginStep * this.scaleFactor), level + 1);
         }
     }
-
-
 }

@@ -3,10 +3,10 @@ import { SteeringInstruction } from "../steering/steering-instruction";
 
 export class FireInstruction implements IInstruction {
 
-    getSteeringInstruction(): SteeringInstruction {
+    getSteeringInstruction(): Promise<SteeringInstruction> {
         const result = new SteeringInstruction();
         result.fire = true;
-        return result;
+        return Promise.resolve(result);
     }
 
 }
