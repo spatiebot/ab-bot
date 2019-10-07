@@ -16,14 +16,16 @@ Parameters:
     --ws: websocket to connect to. Use the full url or one of the shortcuts:
 
         local: "ws://127.0.0.1:3501/ffa",
-        steamDev: "wss://game.airmash.steamroller.tk/dev",
-        steamFfa: "wss://game.airmash.steamroller.tk/ffa",
         euFfa: "wss://eu.airmash.online/ffa",
         euFfa2: "wss://eu-airmash1-foo.westeurope.cloudapp.azure.com/ffa",
-        euCtf: "wss://eu.airmash.online/ctf",
-        frCtf: "wss://lags.win/ctf",
-        fooDev1: "ws://eu-airmash1-foo.westeurope.cloudapp.azure.com/dev?1",
-        fooDev2: "ws://eu-airmash1-foo.westeurope.cloudapp.azure.com/dev?2"
+        euCtf: "wss://lags.win/ctf",
+        euCtf2: "wss://eu-airmash1-foo.westeurope.cloudapp.azure.com/ctf",
+        euCtf3: "wss://eu.airmash.online/ctf",
+        fooDev: "ws://eu-airmash1-foo.westeurope.cloudapp.azure.com/dev?1",
+        ukDev: "wss://uk.test.airmash.online/dev",
+        usFfa: "wss://game.airmash.steamroller.tk/ffa",
+        usCtf: "wss://game.airmash.steamroller.tk/ctf",
+        usDev: "wss://game.airmash.steamroller.tk/dev"
 
     Default is euFfa.
 
