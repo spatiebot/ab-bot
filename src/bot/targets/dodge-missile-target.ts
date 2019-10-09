@@ -62,7 +62,15 @@ export class DodgeMissileTarget implements ITarget {
     }
 
     private getDistanceToKeep(): number {
-        return this.character.missileDistance * (2 - this.env.me().health);
+        const me = this.env.me();
+        const myHealth = me.health;
+        const otherFlagInfo = this.env.getFlagInfo(me.team === 1 ? 2 : 1);
+        const imtheflagcarrier = otherFlagInfo.carrierId === me.id;
+        const flagAnxiety = imtheflagcarrier ? 3 : 1;
+        const healthAnxiety = myHealth <= this.character.fleeHealth ? 20 : 1;
+        const healthFactor = myHealth > 0 ?  1 / myHealth : 100;
+
+        return this.character.missileDistance * healthFactor * healthAnxiety * flagAnxiety;
     }
 
     isValid(): boolean {
@@ -82,9 +90,11 @@ export class DodgeMissileTarget implements ITarget {
     }
 
     getInfo() {
+        const missile = this.getMissileToAvoid();
         return {
             info: 'avoid missile',
-            id: this.missileToAvoidId
+            id: this.missileToAvoidId,
+            pos: missile ? missile.pos: null
         };
     }
 

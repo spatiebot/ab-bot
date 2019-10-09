@@ -7,4 +7,5 @@ export class GotoLocationConfig {
     path: Pos[];
     lastPathTime: number;
     backwards: boolean;
+    errors = 0;
 }

@@ -60,12 +60,14 @@ export class OtherPlayerTarget implements ITarget {
         if (!enemy) {
             return {
                 info: 'enemy disappeared',
-                id: this.targetID
+                id: this.targetID,
+                pos: null
             };
         }
         return {
             info: 'attack ' + enemy.name,
-            id: this.targetID
+            id: this.targetID,
+            pos: enemy.pos
         };
     }
 

@@ -8,6 +8,7 @@ import { DoNothingTarget } from "./do-nothing.target";
 import { DodgeEnemiesTarget } from "./dodge-enemies-target";
 import { GotoLocationTarget } from "./goto-location-target";
 import { Pos } from "../pos";
+import { Calculations } from "../calculations";
 
 const TIME_OUT = 60 * 1000; // 1 min
 
@@ -92,6 +93,7 @@ export class TargetSelection {
             return new GotoLocationTarget(this.env, new Pos({ x: flagDefaultX, y: flagDefaultY }));
         }
 
+        let potentialNewTargets: ITarget[] = [];
         if (myFlagInfo.carrierId && myFlagInfo.carrierId !== this.dontSelectId) {
             // flag is taken, hunt the carrier
             if (this.ctfTarget && this.ctfTarget.getInfo().id === myFlagInfo.carrierId && this.ctfTarget.isValid()) {
@@ -99,23 +101,37 @@ export class TargetSelection {
                 return this.ctfTarget;
             }
 
-            const recoverTarget = new OtherPlayerTarget(this.env, this.character, [], myFlagInfo.carrierId);
+            const killFlagCarrier = new OtherPlayerTarget(this.env, this.character, [], myFlagInfo.carrierId);
 
-            if (recoverTarget.isValid()) {
-                return recoverTarget;
+            if (killFlagCarrier.isValid()) {
+                potentialNewTargets.push(killFlagCarrier);
             }
         }
 
         const flagIsHome = myFlagInfo.pos.x === flagDefaultX && myFlagInfo.pos.y === flagDefaultY;
         if (!flagIsHome) {
             // flag should be recovered
-            return new GotoLocationTarget(this.env, myFlagInfo.pos);
+            const recoverFlag = new GotoLocationTarget(this.env, myFlagInfo.pos);
+            potentialNewTargets.push(recoverFlag);
         }
 
         if (!otherFlagInfo.carrierId) {
             // go grab the enemy flag
-            return new GotoLocationTarget(this.env, otherFlagInfo.pos);
+            const grabFlag = new GotoLocationTarget(this.env, otherFlagInfo.pos);
+            potentialNewTargets.push(grabFlag);
         }
+
+        try {
+            potentialNewTargets.sort((a, b) => {
+                const distanceA = Calculations.getDelta(me.pos, a.getInfo().pos).distance;
+                const distanceB = Calculations.getDelta(me.pos, b.getInfo().pos).distance;
+                return distanceA - distanceB;
+            });
+        } catch (error) {
+            // whatever
+        }
+
+        return potentialNewTargets[0];
     }
 
     private getPriorityTarget(): ITarget {

@@ -52,10 +52,15 @@ export class DodgeEnemiesTarget implements ITarget {
     }
 
     private getDistanceToKeep(): number {
-        const myHealth = this.env.me().health;
+        const me = this.env.me();
+        const myHealth = me.health;
+        const otherFlagInfo = this.env.getFlagInfo(me.team === 1 ? 2 : 1);
+        const imtheflagcarrier = otherFlagInfo.carrierId === me.id;
+        const flagAnxiety = imtheflagcarrier ? 3 : 1;
+
         const healthAnxiety = myHealth <= this.character.fleeHealth ? 20 : 1;
         const healthFactor = myHealth > 0 ?  1 / myHealth : 100;
-        return this.character.otherAircraftDistance * healthFactor * healthAnxiety;
+        return this.character.otherAircraftDistance * healthFactor * healthAnxiety * flagAnxiety;
     }
 
     isValid(): boolean {
@@ -97,12 +102,14 @@ export class DodgeEnemiesTarget implements ITarget {
         if (!enemy) {
             return {
                 info: 'enemy disappeared',
-                id: this.playerToAvoidID
+                id: this.playerToAvoidID,
+                pos: null
             };
         }
         return {
             info: 'avoid enemy ' + enemy.name,
-            id: this.playerToAvoidID
+            id: this.playerToAvoidID,
+            pos: enemy.pos
         };
     }
 

@@ -32,7 +32,8 @@ export class GotoLocationTarget implements ITarget {
     getInfo() {
         return {
             info: 'goto location ' + this.targetPos.x + ', ' + this.targetPos.y,
-            id: null
+            id: null,
+            pos: this.targetPos
         };
     }
 

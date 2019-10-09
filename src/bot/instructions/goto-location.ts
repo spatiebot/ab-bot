@@ -68,10 +68,22 @@ export class GotoLocationInstruction implements IInstruction {
             distance: deltaToTarget.distance
         };
 
-        const path = await this.findPath(pathFindingConfig);
+        try {
+            const path = await this.findPath(pathFindingConfig);
 
-        this.config.path = path;
-        return path[1]; // the first pos is my own position
+            this.config.path = path;
+            this.config.errors = 0;
+            return path[1]; // the first pos is my own position
+        } catch (error) {
+            // just fly dumbly towards the target
+            this.config.errors++;
+
+            if (this.config.errors > 20) {
+                throw error;
+            }
+
+            return targetPos;
+        }
     }
 
     private findPath(pathFindingConfig: any): Promise<Pos[]> {

@@ -52,13 +52,15 @@ export class CrateTarget implements ITarget {
         if (!crate) {
             return {
                 info: 'crate disappeared',
-                id: this.targetID
+                id: this.targetID,
+                pos: null
             };
         }
 
         return {
             info: 'crate at pos ' + crate.pos.x + ',' + crate.pos.y,
-            id: this.targetID
+            id: this.targetID,
+            pos: crate.pos
         };
     }
 

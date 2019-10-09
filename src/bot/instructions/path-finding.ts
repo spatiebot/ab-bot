@@ -45,7 +45,7 @@ class PathFinding {
         // map is -16352 to 16352 in the x direction and -8160 to 8160 in the y-direction
         mapProperties: { left: -16500, top: -8300, right: 16500, bottom: 8300 },
         maxGridLength: 3000,
-        marginStep: 1000,
+        marginStep: 500,
         defaultScale: 0.2
     };
 
@@ -119,7 +119,7 @@ class PathFinding {
 
         mountains.forEach(x => removeWalkabilityfor(x));
         this.mobstacles.forEach(x => removeWalkabilityfor(x));
-        this.playerObstacles.forEach(x => removeWalkabilityfor(x));
+        //        this.playerObstacles.forEach(x => removeWalkabilityfor(x));
 
         return grid;
     }
@@ -139,41 +139,38 @@ class PathFinding {
 
     public findPath(myPos: Pos, otherPos: Pos, distance: number): Pos[] {
 
-        this.scaleFactor = Math.min(0.4, 500 / distance);  // this.navConfig.defaultScale;
-        const initialMargin = this.navConfig.marginStep * this.scaleFactor;
+        this.scaleFactor = 0.01;
+        let initialMargin = this.scaleFactor * this.navConfig.marginStep;
+        let nearPos: Pos;
 
-        let roughResult: { smoothenedPosList: Pos[], posList: Pos[] };
-        try {
-            roughResult = this.findPathInner(ScaledPos.fromPos(myPos), ScaledPos.fromPos(otherPos), initialMargin);
-        } catch (error) {
-            // retry once with just pointing in the right direction and finding a path some distance away
-            let delta = Calculations.getDelta(myPos, otherPos);
-            const diffX = Math.min(300, delta.diffX);
-            const factor = diffX === 0 ? 1 : delta.diffX / diffX;
-            otherPos = new Pos({ x: myPos.x + diffX, y: myPos.y + delta.diffY * factor });
-            
-            delta = Calculations.getDelta(myPos, otherPos);
-            if (!delta) {
-                throw new Error("Second try failed. First error: " + error);
+        // do a very rough estimate for a first run
+        if (distance >= 400) {
+            const estimate = this.findPathInner(ScaledPos.fromPos(myPos), ScaledPos.fromPos(otherPos), initialMargin);
+            nearPos = this.getPosOnGoodDistance(myPos, estimate.posList, 1);
+            if (!nearPos) {
+                throw new Error('pathfinding apparently failed');
             }
+        } else {
+            nearPos = otherPos;
+        }
+        this.scaleFactor = 1 / 36; // the smallest mountain is 36
 
-            this.scaleFactor = Math.min(0.4, 500 / delta.distance);
-            roughResult = this.findPathInner(ScaledPos.fromPos(myPos), ScaledPos.fromPos(otherPos), initialMargin);
+        initialMargin = this.scaleFactor * this.navConfig.marginStep;
+        const result = this.findPathInner(ScaledPos.fromPos(myPos), ScaledPos.fromPos(otherPos), initialMargin);
+        return result.smoothenedPosList;
+    }
+
+    private getPosOnGoodDistance(myPos, posList: Pos[], index: number) {
+        const pos = posList[index];
+        if (!pos) {
+            return null;
         }
 
-        const roughPos = roughResult.posList[1];
-        const delta = Calculations.getDelta(myPos, roughPos);
-
-        if (!delta) {
-            throw new Error("Pathfinding apparently failed");
+        const distance = Calculations.getDelta(myPos, pos).distance;
+        if (distance >= 400) {
+            return pos;
         }
-
-        if (delta.distance < 300) {
-            const path = roughResult.smoothenedPosList;
-            return path;
-        }
-
-        return this.findPath(myPos, roughPos, delta.distance);
+        return this.getPosOnGoodDistance(myPos, posList, index + 1);
     }
 
     public findPathInner(myPos: ScaledPos, otherPos: ScaledPos, scaledMargin: number, level: number = 1): { smoothenedPosList: Pos[], posList: Pos[] } {

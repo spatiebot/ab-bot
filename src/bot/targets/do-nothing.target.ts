@@ -14,7 +14,8 @@ export class DoNothingTarget implements ITarget {
     getInfo() {
         return {
             info: 'Nothing',
-            id: null
+            id: null,
+            pos: null
         };
     }
     getInstructions(): IInstruction[] {
