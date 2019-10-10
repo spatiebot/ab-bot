@@ -9,8 +9,10 @@ import { DodgeEnemiesTarget } from "./dodge-enemies-target";
 import { GotoLocationTarget } from "./goto-location-target";
 import { Pos } from "../pos";
 import { Calculations } from "../calculations";
+import { ProtectTarget } from "./protect-target";
 
 const TIME_OUT = 60 * 1000; // 1 min
+const PROTECT_TIME_OUT = 5 * TIME_OUT;
 
 export class TargetSelection {
     private target: ITarget;
@@ -20,9 +22,11 @@ export class TargetSelection {
     private lastTargetId: number;
     private dontSelectId: number;
     private timeout: number = 0;
+    private protectId: number = 0;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
         this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
+        this.env.on('chat', msg => this.onChat(msg));
     }
 
     reset() {
@@ -33,12 +37,27 @@ export class TargetSelection {
         // this was called on error, prevent selection of the same id the next time
         this.dontSelectId = this.lastTargetId;
         this.lastTargetId = null;
+        this.protectId = null;
         this.timeout = Date.now() + 1000; // wait a sec before next target
     }
 
     private onPlayerKilled(data: any) {
         if (this.target) {
             this.target.onKill(data.killerID, data.killedID);
+        }
+    }
+
+    private onChat(msg) {
+        if (msg.text === '#protect me' && this.character.goal === 'protect') {
+            if (!this.protectId) {
+                this.protectId = msg.id;
+                const player = this.env.getPlayer(this.protectId);
+                if (player) {
+                    this.env.sendChat("OK, " + player.name + ", I'm coming!")
+                } else {
+                    this.protectId = null;
+                }
+            }
         }
     }
 
@@ -141,7 +160,11 @@ export class TargetSelection {
             return dodge;
         }
 
-        const avoid = new DodgeEnemiesTarget(this.env, this.character, [this.dontSelectId]);
+        const dontSelect = [this.dontSelectId];
+        if (this.protectId) {
+            dontSelect.push(this.protectId);
+        }
+        const avoid = new DodgeEnemiesTarget(this.env, this.character, dontSelect);
         if (avoid.isValid()) {
             return avoid;
         }
@@ -153,7 +176,8 @@ export class TargetSelection {
 
         const hasTarget = !!this.target;
         const isFulfillingPrimaryGoal = hasTarget && this.target.goal === this.character.goal;
-        const isTargetTimedOut = Date.now() - this.lastSelectedTime > TIME_OUT;
+        const timeOut = hasTarget && this.target.goal === 'protect' ? PROTECT_TIME_OUT : TIME_OUT;
+        const isTargetTimedOut = Date.now() - this.lastSelectedTime > timeOut;
         const isTargetValid = hasTarget && !isTargetTimedOut && this.target.isValid();
         const isLastResortTarget = isTargetValid && this.target.goal === "nothing" && this.character.goal !== "nothing";
 
@@ -164,6 +188,8 @@ export class TargetSelection {
 
         if (isTargetTimedOut) {
             console.log("Target timed out. Select a new one");
+
+            this.protectId = null;
         }
 
         let potentialNewTarget: ITarget;
@@ -173,6 +199,8 @@ export class TargetSelection {
             potentialNewTarget = new OtherPlayerTarget(this.env, this.character, [this.dontSelectId]);
         } else if (this.character.goal === "nothing") {
             potentialNewTarget = new DoNothingTarget();
+        } else if (this.character.goal === "protect") {
+            potentialNewTarget = new ProtectTarget(this.env, this.character, this.protectId);
         }
 
         if (potentialNewTarget && potentialNewTarget.isValid()) {

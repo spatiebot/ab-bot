@@ -64,13 +64,19 @@ export class BotCharacter {
         upgradePriority: [1, 4, 2, 3],
         type: 4
     }
-
     
     static Prowler: BotCharacter = {
         ...BotCharacter.Default,
         name: 'Prowler',
         upgradePriority: [3, 1, 2, 4],
         type: 5 
+    }
+
+    static Protective: BotCharacter = {
+        ...BotCharacter.Aggressive,
+        name: 'Protect',
+        goal: 'protect',
+        type: 1
     }
 
     static get(type: number): BotCharacter {

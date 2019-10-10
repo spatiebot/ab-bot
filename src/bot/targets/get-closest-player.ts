@@ -1,6 +1,7 @@
 import { PlayerInfo } from "../airmash/player-info";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { Calculations } from "../calculations";
+import { Pos } from "../pos";
 
 class Result {
     player: PlayerInfo;
@@ -11,8 +12,9 @@ class Result {
     };
 }
 
-function getPlayersSortedByDistance(env: IAirmashEnvironment, excludeHidden: boolean = false): Result[] {
+function getPlayersSortedByDistance(env: IAirmashEnvironment, excludeHidden: boolean = false, pos: Pos = null): Result[] {
     const me = env.me();
+    pos = pos || me.pos;
 
     const allPlayers = env.getPlayers();
     const players = allPlayers.filter(x => x.id !== me.id &&
@@ -21,7 +23,7 @@ function getPlayersSortedByDistance(env: IAirmashEnvironment, excludeHidden: boo
     const list: Result[] = [];
     for (let i = 0; i < players.length; i++) {
         const p = players[i];
-        const delta = Calculations.getDelta(me.pos, PlayerInfo.getMostReliablePos(p));
+        const delta = Calculations.getDelta(pos, PlayerInfo.getMostReliablePos(p));
         if (!delta) {
             continue;
         }
