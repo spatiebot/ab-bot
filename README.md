@@ -2,6 +2,10 @@
 
 This is a bot API + implementation based on the wight Airbattle API.
 
+The bot can do FFA and CTF.  
+In CTF it will randomly choose to be attacker or defend.  
+In FFA it can also run as a protecting bot, sticking to a player and defending the player from enemies.  
+
 To run the bot, you need Node v12 or more.
 
 1. clone repository and submodule (`git clone --recurse-submodules git://github.com/spatiebot/ab-bot.git`)
