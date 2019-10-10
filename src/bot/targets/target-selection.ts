@@ -49,14 +49,19 @@ export class TargetSelection {
 
     private onChat(msg) {
         if (msg.text === '#protect me' && this.character.goal === 'protect') {
+            console.log('Protect me instruction received');
             if (!this.protectId) {
                 this.protectId = msg.id;
+                console.log('ProtectID: ' + this.protectId);
                 const player = this.env.getPlayer(this.protectId);
                 if (player) {
                     this.env.sendChat("OK, " + player.name + ", I'm coming!")
                 } else {
+                    console.log('ProtectID apparently invalid');
                     this.protectId = null;
                 }
+            } else {
+                console.log("ignoring: already on another target");
             }
         }
     }
