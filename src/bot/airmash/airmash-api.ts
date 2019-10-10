@@ -10,7 +10,6 @@ import { Mob } from "../../api/Mob";
 import { Missile } from "./missile";
 import { KEY_CODES } from "../../../ab-protocol/src/types/client";
 import { CHAT_TYPE } from "../../api/chat-type";
-import { Debug } from "../../helper/debug";
 import { FlagInfo } from "../../api/flagInfo";
 
 export class AirmashApiFacade implements IAirmashEnvironment {

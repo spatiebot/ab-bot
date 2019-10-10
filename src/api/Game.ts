@@ -1,9 +1,9 @@
 import { Network } from "./Network";
 import { Player } from "./Player";
 import { Mob } from "./Mob";
-import { Debug } from "../helper/debug";
 import { FlagInfo } from "./flagInfo";
 import { Pos } from "../bot/pos";
+import logger = require("../helper/logger");
 
 export class Game {
 
@@ -108,7 +108,7 @@ export class Game {
     }
 
     onError(error: Error) {
-        console.log(error.message, error.stack);
+        logger.error("error occurred", error.message, error.stack);
         this.network.stop();
         this.trigger("error", error);
     }
@@ -117,7 +117,7 @@ export class Game {
         this.trigger("start", {});
         this.myID = myID;
         this.type = gameType;
-        console.log("My id: " + myID);
+        logger.debug("My id: " + myID);
         this.trigger("spawned", { id: myID, gameType });
     }
 
@@ -189,7 +189,7 @@ export class Game {
     }
 
     onServerMessage(text: string) {
-        console.log("Server message: " + text);
+        logger.debug("Server message: " + text);
         this.trigger("serverMessage", { text });
     }
 

@@ -4,9 +4,12 @@
     "dependencies": {
         "pathfinding": "^0.4.18",
         "ws": "^7.1.2",
-        "yargs": "^14.0.0"
+        "yargs": "^14.0.0",
+        "pino": "5.13.4",
+        "pino-pretty": "3.2.0"
     },
     "devDependencies": {
+        "@types/pino": "^5.8.11",
         "@types/worker-threads-pool": "^2.0.0",
         "@types/yargs": "^13.0.2"
     }

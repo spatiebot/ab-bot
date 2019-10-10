@@ -4,7 +4,6 @@ import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { BotCharacter } from "../bot-character";
 import { Calculations } from "../calculations";
 import { AvoidObjectInstruction } from "../instructions/avoid-object-instruction";
-import { Debug } from "../../helper/debug";
 import { Missile } from "../airmash/missile";
 import { FartInstruction } from "../instructions/fart-instruction";
 

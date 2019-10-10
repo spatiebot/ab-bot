@@ -5,7 +5,7 @@ import { Calculations } from "../calculations";
 import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { Crate } from "../airmash/crate";
-import { Debug } from "../../helper/debug";
+import logger = require("../../helper/logger");
 
 export class CrateTarget implements ITarget {
     private readonly targetID: number;
@@ -36,7 +36,7 @@ export class CrateTarget implements ITarget {
         if (this.targetID) {
             var crate = this.env.getCrate(this.targetID);
             if (!crate) {
-                console.log("Target disappeared");
+                logger.info("Target disappeared");
                 return null;
             }
             return crate;

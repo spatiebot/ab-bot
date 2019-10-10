@@ -22,7 +22,7 @@ export class ProtectTarget implements ITarget {
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter, private target: Pos | number) {
         const now = Date.now();
-        if (!target && now - lastAnnounceTime > ANNOUNCE_TIMEOUT) {
+        if (!target && now - lastAnnounceTime > ANNOUNCE_TIMEOUT && this.env.getGameType() === 1) {
             this.env.sendChat("I'm here to protect. Say '#protect me' to get some extra protection.");
             lastAnnounceTime = now;
         }
@@ -41,7 +41,7 @@ export class ProtectTarget implements ITarget {
         }
 
         const player = this.env.getPlayer(this.target);
-        if (!player) {
+        if (!player || player.isHidden) {
             return false;
         }
 

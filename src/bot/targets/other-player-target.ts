@@ -9,6 +9,7 @@ import { Pos } from "../pos";
 import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { getPlayersSortedByDistance } from "./get-closest-player";
+import logger = require("../../helper/logger");
 
 export class OtherPlayerTarget implements ITarget {
 
@@ -75,7 +76,7 @@ export class OtherPlayerTarget implements ITarget {
         if (this.targetID) {
             var p = this.env.getPlayer(this.targetID);
             if (!p) {
-                console.log("Target disappeared");
+                logger.info("Target disappeared");
             }
             return p;
         }
@@ -84,7 +85,7 @@ export class OtherPlayerTarget implements ITarget {
 
     onKill(killerID: number, killedID: number) {
         if (this.targetID === killedID) {
-            console.log("Target was killed");
+            logger.info("Target was killed");
             this.shouldRecycle = true;
         }
         if (this.env.me().id === killedID) {

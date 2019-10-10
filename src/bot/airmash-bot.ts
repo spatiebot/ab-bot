@@ -5,6 +5,7 @@ import { TargetSelection } from "./targets/target-selection";
 import { Score } from "./airmash/score";
 import { ApplyUpgrades } from "./apply-upgrades";
 import { SteeringInstruction } from "./steering/steering-instruction";
+import logger = require("../helper/logger");
 
 export class AirmashBot {
 
@@ -51,10 +52,10 @@ export class AirmashBot {
             return;
         }
 
-        console.log("i spawned");
+        logger.info("i spawned");
 
         if (this.env.me().type !== this.aircraftType) {
-            console.log("... in the wrong body. Respawning as a different aircraft...");
+            logger.info("... in the wrong body. Respawning as a different aircraft...");
             setTimeout(() => this.env.selectAircraft(this.aircraftType), 2000);
             return;
         }
@@ -63,7 +64,7 @@ export class AirmashBot {
 
         const myType = this.env.me().type;
         if (!this.character || this.character.type !== 0 && this.character.type !== myType) {
-            console.log('new char selected because this character is not my type');
+            logger.warn('new char selected because this character is not my type');
             this.character = BotCharacter.get(myType);
         }
         this.steeringInstallation.start();
@@ -72,15 +73,15 @@ export class AirmashBot {
     private onChat(msg) {
         const p = this.env.getPlayer(msg.id);
         const name = p ? p.name : "unknown";
-        console.log(name + ' says: "' + msg.text + '"');
+        logger.info(name + ' says: "' + msg.text + '"');
     }
 
     private logState() {
         const me = this.env.me();
-        console.log(`Name: ${me.name}, Ping: ${this.env.getPing()}, upgrades: ${this.score.upgrades}`);
-        console.log(`Score: ${this.score.score}, energy: ${me.energy}, health: ${me.health}`);
+        logger.info(`Name: ${me.name}, Ping: ${this.env.getPing()}, upgrades: ${this.score.upgrades}`);
+        logger.info(`Score: ${this.score.score}, energy: ${me.energy}, health: ${me.health}`);
         if (me.upgrades && (me.upgrades.speed === 0 || me.upgrades.speed > 0)) {
-            console.log(`Applied upgrades: speed ${me.upgrades.speed}, defense ${me.upgrades.defense}, energy ${me.upgrades.energy}, missile ${me.upgrades.missile}`);
+            logger.info(`Upgrade levels: speed ${me.upgrades.speed}, defense ${me.upgrades.defense}, energy ${me.upgrades.energy}, missile ${me.upgrades.missile}`);
         }
     }
 
@@ -97,14 +98,14 @@ export class AirmashBot {
         this.isSpawned = false;
         this.steeringInstallation.stop();
         this.targetSelection.reset();
-        console.log("CTF game over");
+        logger.info("CTF game over");
     }
 
     private onTick() {
         const now = Date.now();
         const msBetweenTicks = now - this.lastTick;
         if (msBetweenTicks > 300) {
-            console.log("PANIC: delay between ticks too long: " + msBetweenTicks);
+            logger.error("PANIC: delay between ticks too long: " + msBetweenTicks);
             this.reset();
         }
         this.lastTick = now;
@@ -140,8 +141,8 @@ export class AirmashBot {
                     this.steeringInstallation.add(steeringInstruction);
                 }
             } catch (err) {
-                console.log(err);
-                console.log("Get steeringinstructions failed. Resetting target.");
+                logger.error(err);
+                logger.warn("Get steeringinstructions failed. Resetting target.");
                 this.reset();
             }
 
@@ -162,18 +163,18 @@ export class AirmashBot {
 
     private onPlayerKilled(data: any) {
         if (data.killedID === this.env.myId()) {
-            console.log('I was killed or removed from the game');
+            logger.info('I was killed or removed from the game');
             this.isSpawned = false;
             this.steeringInstallation.stop();
         } else if (data.killerID === this.env.myId()) {
             const other = this.env.getPlayer(data.killedID);
             const otherName = !!other ? other.name : "an unknown player";
-            console.log("I killed " + otherName);
+            logger.info("I killed " + otherName);
         }
     }
 
     private onError(data: any) {
-        console.log('Error', data);
+        logger.error('Error', data);
         this.env.stopMainLoop();
         this.steeringInstallation.stop();
     }

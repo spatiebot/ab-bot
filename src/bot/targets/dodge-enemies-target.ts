@@ -3,7 +3,6 @@ import { IInstruction } from "../instructions/iinstruction";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { BotCharacter } from "../bot-character";
 import { Calculations } from "../calculations";
-import { Debug } from "../../helper/debug";
 import { PlayerInfo } from "../airmash/player-info";
 import { Pos } from "../pos";
 import { GotoLocationConfig } from "../instructions/goto-location-config";

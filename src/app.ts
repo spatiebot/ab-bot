@@ -3,6 +3,7 @@ import { argv } from 'yargs';
 import { AirmashBot } from './bot/airmash-bot';
 import { AirmashApiFacade } from "./bot/airmash/airmash-api";
 import { BotCharacter } from './bot/bot-character';
+import logger = require('./helper/logger');
 
 const urls = {
     local: "ws://127.0.0.1:3501/ffa",
@@ -30,12 +31,13 @@ const flag = <string>argv.flag || 'eu';
 const character = <string>argv.character;
 const botCharacter = BotCharacter[character] || BotCharacter.get(Number(type));
 
-console.log('Starting with the following configuration:');
-console.log('name: ' + name);
-console.log('type: ' + type);
-console.log('flag: ' + flag);
-console.log('character: ' + botCharacter.name);
-console.log('url: ' + ws);
+logger.info('Starting with the following configuration:', {
+    name: name,
+    type: type,
+    flag: flag,
+    character: botCharacter.name,
+    url: ws
+});
 
 var env = new AirmashApiFacade(ws);
 const bot = new AirmashBot(env, botCharacter);

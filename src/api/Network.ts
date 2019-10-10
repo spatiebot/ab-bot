@@ -11,8 +11,8 @@ import { Mob } from './Mob';
 import { CHAT_TYPE } from './chat-type';
 import { Player } from './Player';
 import { Pos } from '../bot/pos';
-import { Debug } from '../helper/debug';
 import { Upgrades } from './upgrades';
+import logger = require('../helper/logger');
 
 export class Network {
     private client: WebSocket;
@@ -56,7 +56,7 @@ export class Network {
         ws.onopen = () => {
             tries -= 1;
             if (config.isPrimary) {
-                console.log("Primary socket connecting");
+                logger.debug("Primary socket connecting");
                 this.send({
                     c: CLIENT_PACKETS.LOGIN,
                     protocol: 5,
@@ -67,7 +67,7 @@ export class Network {
                     flag: config.flag
                 });
             } else {
-                console.log("Backup socket connecting");
+                logger.debug("Backup socket connecting");
                 this.backupClientIsConnected = true;
                 this.send({
                     c: CLIENT_PACKETS.BACKUP,
@@ -79,7 +79,7 @@ export class Network {
             try {
                 const result = unmarshaling.unmarshalServerMessage(msg.data);
                 if (!result) {
-                    console.log('no result', msg);
+                    logger.warn('no result', msg);
                 }
                 this.onServerMessage(result, config.isPrimary);
 
@@ -88,11 +88,10 @@ export class Network {
             }
         };
         ws.onerror = (ev) => {
-            console.log(ev);
             this.game.onError(new Error((config.isPrimary ? 'primary' : 'backup') + ' socket error' + ev));
         };
         ws.onclose = () => {
-            console.log('socket closed');
+            logger.warn('socket closed');
             this.game.onError(new Error((config.isPrimary ? 'primary' : 'backup') + ' socket closed'));
         };
         return ws;
@@ -149,7 +148,7 @@ export class Network {
     private onServerMessage(msg: ProtocolPacket, isPrimary: boolean) {
         switch (msg.c) {
             case SERVER_PACKETS.BACKUP:
-                console.log("backup client connected");
+                logger.info("backup client connected");
                 this.backupClientIsConnected = true;
                 break;
 
@@ -334,7 +333,7 @@ export class Network {
                 break;
 
             default:
-                console.log(msg);
+                logger.warn("Unknown message type", msg);
                 break;
         }
     }

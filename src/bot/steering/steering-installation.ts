@@ -5,6 +5,7 @@ import { Speed } from "./speed";
 import { Fire } from "./fire";
 import { Fart } from "./fart";
 import { Stealth } from "./stealth";
+import logger = require("../../helper/logger");
 
 export const steeringInstallationIntervalMs = 180;
 export const longThrottleInterval = 3.5 * steeringInstallationIntervalMs;
@@ -57,7 +58,7 @@ export class SteeringInstallation {
             return;
         }
         if (this.isExecuting) {
-            console.log("Steeringinterval started twice!");
+            logger.warn("Steeringinterval started twice!");
             return;
         }
 

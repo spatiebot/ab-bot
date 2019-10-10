@@ -10,6 +10,7 @@ import { GotoLocationTarget } from "./goto-location-target";
 import { Pos } from "../pos";
 import { Calculations } from "../calculations";
 import { ProtectTarget } from "./protect-target";
+import logger = require("../../helper/logger");
 
 const TIME_OUT = 60 * 1000; // 1 min
 const PROTECT_TIME_OUT = 5 * TIME_OUT;
@@ -17,6 +18,7 @@ const PROTECT_TIME_OUT = 5 * TIME_OUT;
 export class TargetSelection {
     private target: ITarget;
     private ctfTarget: ITarget;
+    private tempTarget: ITarget;
     private lastLoggedTarget: string;
     private lastSelectedTime: number = 0;
     private lastTargetId: number;
@@ -40,7 +42,8 @@ export class TargetSelection {
         this.dontSelectId = this.lastTargetId;
         this.lastTargetId = null;
         this.protectId = null;
-        this.timeout = Date.now() + 1000; // wait a sec before next target
+        this.timeout = Date.now() + 500; // wait a sec before next target
+        this.tempTarget = new DoNothingTarget();
     }
 
     private onPlayerKilled(data: any) {
@@ -53,28 +56,36 @@ export class TargetSelection {
         if (msg.id === this.env.myId()) {
             return;
         }
+        if (msg.text.indexOf('#drop') !== -1) {
+            const player = this.env.getPlayer(msg.id);
+            if (player.team === this.env.me().team) {
+                this.env.sendCommand("drop", "");
+                this.tempTarget = new ProtectTarget(this.env, this.character, msg.id);
+                this.timeout = Date.now() + 10000; // wait a few sec before next target
+            }
+        }
         if (this.character.goal === 'protect') {
             if (msg.text.indexOf('#protect me') !== -1) {
-                console.log('Protect me instruction received');
+                logger.debug('Protect me instruction received');
                 if (!this.protectId) {
                     this.protectId = msg.id;
-                    console.log('ProtectID: ' + this.protectId);
+                    logger.debug('ProtectID: ' + this.protectId);
                     const player = this.env.getPlayer(this.protectId);
                     if (player) {
-                        this.env.sendChat("OK, " + player.name + ", I'm coming!")
+                        this.env.sendChat("OK, " + player.name + ", I'm heading your way. Say '#unprotect' to stop me from following you.")
                     } else {
-                        console.log('ProtectID apparently invalid');
+                        logger.debug('ProtectID apparently invalid');
                         this.protectId = null;
                     }
                 } else {
-                    console.log("ignoring: already on another target");
+                    logger.debug("ignoring: already on another target");
                 }
             } else if (msg.text.indexOf('#unprotect') !== -1) {
-                console.log('Unprotect message');
+                logger.debug('Unprotect message');
                 if (this.protectId === msg.id) {
-                    console.log('From protectplayer');
+                    logger.debug('From protectplayer');
                     const player = this.env.getPlayer(this.protectId);
-                    this.env.sendChat("Roger that, " + player.name);
+                    this.env.sendChat("I'll stop following you, " + player.name);
                     this.protectId = null;
                     this.target = null;
                 }
@@ -83,8 +94,8 @@ export class TargetSelection {
     }
 
     getTarget(): ITarget {
-        if (Date.now() < this.timeout) {
-            return new DoNothingTarget();
+        if (Date.now() < this.timeout && this.tempTarget.isValid()) {
+            return this.tempTarget;
         }
 
         let target = this.getPriorityTarget();
@@ -103,7 +114,7 @@ export class TargetSelection {
         const targetInfo = target.getInfo();
         if (this.lastLoggedTarget !== targetInfo.info) {
             this.lastLoggedTarget = targetInfo.info
-            console.log("Target: " + targetInfo.info);
+            logger.info("Target: " + targetInfo.info);
         }
 
         if (targetInfo.id) {
@@ -128,8 +139,9 @@ export class TargetSelection {
 
         if (this.ctfType === 0) {
             this.ctfType = Calculations.getRandomInt(1, 3);
-            console.log("I am " + (this.ctfType === 1 ? "an attacker" : "on D"));
+            logger.info("I am " + (this.ctfType === 1 ? "an attacker" : "on D"));
         }
+        const isDefensive = this.ctfType === 2;
 
         const flagDefaultX = me.team === 1 ? -9670 : 8600;
         const flagDefaultY = me.team === 1 ? -1470 : -940;
@@ -160,13 +172,12 @@ export class TargetSelection {
             const recoverFlag = new GotoLocationTarget(this.env, myFlagInfo.pos);
             potentialNewTargets.push(recoverFlag);
         }
-        const isDefensive = this.ctfType === 2;
 
         if (isDefensive) {
             const protectFlag = new ProtectTarget(this.env, this.character, myFlagInfo.pos);
             potentialNewTargets.push(protectFlag);
         } else {
-            if (!otherFlagInfo.carrierId) {
+            if (otherFlagInfo.carrierId) {
                 // protect the carrier
                 const protectCarrier = new ProtectTarget(this.env, this.character, otherFlagInfo.carrierId);
                 potentialNewTargets.push(protectCarrier);
@@ -224,7 +235,7 @@ export class TargetSelection {
         }
 
         if (isTargetTimedOut) {
-            console.log("Target timed out. Select a new one");
+            logger.warn("Target timed out. Select a new one");
 
             this.protectId = null;
         }
