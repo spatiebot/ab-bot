@@ -27,6 +27,7 @@ export class AirmashBot {
         this.env.on('tick', () => this.onTick());
         this.env.on('chat', (msg) => this.onChat(msg));
         this.env.on('score', (score: Score) => this.onScore(score));
+        this.env.on('ctfGameOver', () => this.onCtfGameOver());
 
         this.steeringInstallation = new SteeringInstallation(this.env);
         this.targetSelection = new TargetSelection(this.env, this.character);
@@ -90,6 +91,13 @@ export class AirmashBot {
     private reset() {
         this.steeringInstallation.reset();
         this.targetSelection.reset();
+    }
+
+    private onCtfGameOver() {
+        this.isSpawned = false;
+        this.steeringInstallation.stop();
+        this.targetSelection.reset();
+        console.log("CTF game over");
     }
 
     private onTick() {

@@ -21,7 +21,6 @@ export class Game {
     private ping: number = 30;
     private tickDurations: any = {};
 
-
     private debugConfig: any;
 
     constructor(private readonly network: Network) {
@@ -115,6 +114,7 @@ export class Game {
     }
 
     onStart(myID: number, gameType: number) {
+        this.trigger("start", {});
         this.myID = myID;
         this.type = gameType;
         console.log("My id: " + myID);
@@ -193,6 +193,10 @@ export class Game {
         this.trigger("serverMessage", { text });
     }
 
+    onCtfGameOver() {
+        this.trigger("ctfGameOver", {});
+    }
+
     onFlagDropped(flag: number, posX: number, posY: number) {
         let flagInfo = this.blueFlag;
         if (flag === 2) {
@@ -201,7 +205,7 @@ export class Game {
         flagInfo.carrierId = null;
         flagInfo.pos = new Pos({ x: posX, y: posY });
 
-        this.trigger("flag", { 
+        this.trigger("flag", {
             redFlag: this.redFlag,
             blueFlag: this.blueFlag
         });
@@ -214,7 +218,7 @@ export class Game {
         }
         flagInfo.carrierId = playerId;
 
-        this.trigger("flag", { 
+        this.trigger("flag", {
             redFlag: this.redFlag,
             blueFlag: this.blueFlag
         });

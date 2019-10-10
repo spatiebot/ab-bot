@@ -23,6 +23,7 @@ export class TargetSelection {
     private dontSelectId: number;
     private timeout: number = 0;
     private protectId: number = 0;
+    private ctfType: number = 0; // attacking (1) or defending bot (2)
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
         this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
@@ -33,6 +34,7 @@ export class TargetSelection {
         this.target = null;
         this.lastSelectedTime = 0;
         this.lastLoggedTarget = "";
+        this.ctfType = 0;
 
         // this was called on error, prevent selection of the same id the next time
         this.dontSelectId = this.lastTargetId;
@@ -67,7 +69,7 @@ export class TargetSelection {
                 } else {
                     console.log("ignoring: already on another target");
                 }
-            } else if(msg.text.indexOf('#unprotect') !== -1) {
+            } else if (msg.text.indexOf('#unprotect') !== -1) {
                 console.log('Unprotect message');
                 if (this.protectId === msg.id) {
                     console.log('From protectplayer');
@@ -112,6 +114,7 @@ export class TargetSelection {
     }
 
     private getCtfTarget(): ITarget {
+
         const me = this.env.me();
         const myFlagInfo = this.env.getFlagInfo(me.team);
         const otherFlagInfo = this.env.getFlagInfo(me.team === 1 ? 2 : 1);
@@ -121,6 +124,11 @@ export class TargetSelection {
         }
         if (!otherFlagInfo.pos) {
             return;
+        }
+
+        if (this.ctfType === 0) {
+            this.ctfType = Calculations.getRandomInt(1, 3);
+            console.log("I am " + (this.ctfType === 1 ? "an attacker" : "on D"));
         }
 
         const flagDefaultX = me.team === 1 ? -9670 : 8600;
@@ -152,11 +160,21 @@ export class TargetSelection {
             const recoverFlag = new GotoLocationTarget(this.env, myFlagInfo.pos);
             potentialNewTargets.push(recoverFlag);
         }
+        const isDefensive = this.ctfType === 2;
 
-        if (!otherFlagInfo.carrierId) {
-            // go grab the enemy flag
-            const grabFlag = new GotoLocationTarget(this.env, otherFlagInfo.pos);
-            potentialNewTargets.push(grabFlag);
+        if (isDefensive) {
+            const protectFlag = new ProtectTarget(this.env, this.character, myFlagInfo.pos);
+            potentialNewTargets.push(protectFlag);
+        } else {
+            if (!otherFlagInfo.carrierId) {
+                // protect the carrier
+                const protectCarrier = new ProtectTarget(this.env, this.character, otherFlagInfo.carrierId);
+                potentialNewTargets.push(protectCarrier);
+            } else {
+                // go grab the enemy flag
+                const grabFlag = new GotoLocationTarget(this.env, otherFlagInfo.pos);
+                potentialNewTargets.push(grabFlag);
+            }
         }
 
         try {

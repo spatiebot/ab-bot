@@ -327,6 +327,12 @@ export class Network {
                 }
                 break;
 
+            case SERVER_PACKETS.SERVER_CUSTOM:
+                if (msg.type === 2) {
+                    this.game.onCtfGameOver();
+                }
+                break;
+
             default:
                 console.log(msg);
                 break;
