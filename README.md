@@ -37,4 +37,5 @@ Parameters:
         - Default
         - Aggressive
         - Shy
+        - Protective (will listen to '#protect me' commands)
 
