@@ -48,20 +48,34 @@ export class TargetSelection {
     }
 
     private onChat(msg) {
-        if (msg.text === '#protect me' && this.character.goal === 'protect') {
-            console.log('Protect me instruction received');
-            if (!this.protectId) {
-                this.protectId = msg.id;
-                console.log('ProtectID: ' + this.protectId);
-                const player = this.env.getPlayer(this.protectId);
-                if (player) {
-                    this.env.sendChat("OK, " + player.name + ", I'm coming!")
+        if (msg.id === this.env.myId()) {
+            return;
+        }
+        if (this.character.goal === 'protect') {
+            if (msg.text.indexOf('#protect me') !== -1) {
+                console.log('Protect me instruction received');
+                if (!this.protectId) {
+                    this.protectId = msg.id;
+                    console.log('ProtectID: ' + this.protectId);
+                    const player = this.env.getPlayer(this.protectId);
+                    if (player) {
+                        this.env.sendChat("OK, " + player.name + ", I'm coming!")
+                    } else {
+                        console.log('ProtectID apparently invalid');
+                        this.protectId = null;
+                    }
                 } else {
-                    console.log('ProtectID apparently invalid');
-                    this.protectId = null;
+                    console.log("ignoring: already on another target");
                 }
-            } else {
-                console.log("ignoring: already on another target");
+            } else if(msg.text.indexOf('#unprotect') !== -1) {
+                console.log('Unprotect message');
+                if (this.protectId === msg.id) {
+                    console.log('From protectplayer');
+                    const player = this.env.getPlayer(this.protectId);
+                    this.env.sendChat("Roger that, " + player.name);
+                    this.protectId = null;
+                    this.target = null;
+                }
             }
         }
     }

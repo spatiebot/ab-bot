@@ -71,7 +71,7 @@ export class AirmashBot {
     private onChat(msg) {
         const p = this.env.getPlayer(msg.id);
         const name = p ? p.name : "unknown";
-        console.log("Chat: " + name + ": " + msg.text);
+        console.log(name + ' says: "' + msg.text + '"');
     }
 
     private logState() {
