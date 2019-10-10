@@ -40,6 +40,11 @@ export class ProtectTarget implements ITarget {
             return false;
         }
 
+        const player = this.env.getPlayer(this.target);
+        if (!player) {
+            return false;
+        }
+
         if (this.gotoLocationTarget) {
             return this.gotoLocationTarget.isValid();
         }
