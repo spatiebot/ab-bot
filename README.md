@@ -1,6 +1,6 @@
 # ab-bot
 
-This is a bot API + implementation based on the wight Airbattle API.
+This is an Airmash bot API + implementation based on the wight Airbattle API.
 
 The bot can do FFA and CTF.  
 In CTF it will randomly choose to be attacker or defend.  
