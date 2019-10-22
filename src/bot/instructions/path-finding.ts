@@ -167,7 +167,7 @@ class PathFinding {
         }
 
         const distance = Calculations.getDelta(myPos, pos).distance;
-        if (distance >= 400) {
+        if (distance >= 400 || index == posList.length + 1) {
             return pos;
         }
         return this.getPosOnGoodDistance(myPos, posList, index + 1);

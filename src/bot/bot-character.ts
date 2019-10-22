@@ -34,7 +34,7 @@ export class BotCharacter {
         missileDistance: 300,
         otherAircraftDistance: 300,
         upgradePriority: [2, 1, 3, 4],
-    }
+    };
 
     static Mohawk: BotCharacter = {
         ...BotCharacter.Default,
@@ -46,7 +46,7 @@ export class BotCharacter {
         fleeHealth: 0.8,
         upgradePriority: [2, 3, 4, 1],
         type: 3
-    }
+    };
 
     static Goli: BotCharacter = {
         ...BotCharacter.Default,
@@ -56,28 +56,35 @@ export class BotCharacter {
         fleeHealth: 0.8, // it takes some time to turn
         upgradePriority: [1, 3, 4, 2],
         type: 2
-    }
+    };
 
     static Tornado: BotCharacter = {
         ...BotCharacter.Default,
         name: 'Tornado',
         upgradePriority: [1, 4, 2, 3],
         type: 4
-    }
+    };
     
     static Prowler: BotCharacter = {
         ...BotCharacter.Default,
         name: 'Prowler',
         upgradePriority: [3, 1, 2, 4],
         type: 5 
-    }
+    };
 
     static Protective: BotCharacter = {
         ...BotCharacter.Aggressive,
         name: 'Protect',
         goal: 'protect',
         type: 1
-    }
+    };
+
+    static Brexit: BotCharacter = {
+        ...BotCharacter.Aggressive,
+        name: 'Brexit',
+        goal: 'brexit',
+        type: 1
+    };
 
     static get(type: number): BotCharacter {
         switch (type) {

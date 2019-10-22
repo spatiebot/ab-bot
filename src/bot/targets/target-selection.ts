@@ -249,6 +249,12 @@ export class TargetSelection {
             potentialNewTarget = new DoNothingTarget();
         } else if (this.character.goal === "protect") {
             potentialNewTarget = new ProtectTarget(this.env, this.character, this.protectId);
+        } else if (this.character.goal === "brexit") {
+            potentialNewTarget = new ProtectTarget(this.env, this.character, new Pos({
+                x: -403.046875, y: -3182.646484375 // UK
+                // x: -5246.271484375, y: -7008.716796875 // Greenland
+            }));
+            potentialNewTarget.goal = "brexit";
         }
 
         if (potentialNewTarget && potentialNewTarget.isValid()) {
