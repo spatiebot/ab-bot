@@ -19,12 +19,19 @@ export class ProtectTarget implements ITarget {
 
     private gotoLocationTarget: GotoLocationTarget;
     private attackTarget: OtherPlayerTarget;
+    private target: Pos | number;
 
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter, private target: Pos | number) {
+    constructor(private env: IAirmashEnvironment, private character: BotCharacter, target: Pos | number) {
         const now = Date.now();
         if (!target && now - lastAnnounceTime > ANNOUNCE_TIMEOUT && this.env.getGameType() === 1) {
             this.env.sendChat("I'm here to protect. Say '#protect me' to get some extra protection.");
             lastAnnounceTime = now;
+        }
+
+        if (typeof target === 'number') {
+            this.target = target;
+        } else {
+            this.target = new Pos(target);
         }
     }
 

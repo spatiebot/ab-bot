@@ -10,6 +10,7 @@ export class Game {
     public type: number;
     public readonly blueFlag = new FlagInfo(1);
     public readonly redFlag = new FlagInfo(2);
+    public readonly ctfScores = { 1: 0, 2: 0};
 
     private myID: number;
     private players = {};
@@ -197,12 +198,17 @@ export class Game {
         this.trigger("ctfGameOver", {});
     }
 
-    onFlagDropped(flag: number, posX: number, posY: number) {
+    onCtfScore(blue: number, red: number) {
+        this.ctfScores[1] = blue;
+        this.ctfScores[2] = red;
+    }
+
+    onFlag(flag: number, playerId: number, posX: number, posY: number) {
         let flagInfo = this.blueFlag;
         if (flag === 2) {
             flagInfo = this.redFlag;
         }
-        flagInfo.carrierId = null;
+        flagInfo.carrierId = !!playerId ? playerId : null;
         flagInfo.pos = new Pos({ x: posX, y: posY });
 
         this.trigger("flag", {
@@ -210,20 +216,6 @@ export class Game {
             blueFlag: this.blueFlag
         });
     }
-
-    onFlagTaken(flag: number, playerId: number) {
-        let flagInfo = this.blueFlag;
-        if (flag === 2) {
-            flagInfo = this.redFlag;
-        }
-        flagInfo.carrierId = playerId;
-
-        this.trigger("flag", {
-            redFlag: this.redFlag,
-            blueFlag: this.blueFlag
-        });
-    }
-
 
     setDebugProperties(config: any) {
         // use for random debug stuff

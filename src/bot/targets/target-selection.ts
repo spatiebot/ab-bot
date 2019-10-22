@@ -140,6 +140,7 @@ export class TargetSelection {
         if (this.ctfType === 0) {
             this.ctfType = Calculations.getRandomInt(1, 3);
             logger.info("I am " + (this.ctfType === 1 ? "an attacker" : "on D"));
+            logger.info("flag info", { myFlagInfo, otherFlagInfo });
         }
         const isDefensive = this.ctfType === 2;
 
@@ -148,7 +149,9 @@ export class TargetSelection {
 
         if (otherFlagInfo.carrierId === me.id) {
             // i'm the flag carrier! Bring it home.
-            return new GotoLocationTarget(this.env, new Pos({ x: flagDefaultX, y: flagDefaultY }));
+            var goto = new GotoLocationTarget(this.env, new Pos({ x: flagDefaultX, y: flagDefaultY }));
+            goto.setInfo("bring flag home");
+            return goto;
         }
 
         let potentialNewTargets: ITarget[] = [];
@@ -162,20 +165,23 @@ export class TargetSelection {
             const killFlagCarrier = new OtherPlayerTarget(this.env, this.character, [], myFlagInfo.carrierId);
 
             if (killFlagCarrier.isValid()) {
+                killFlagCarrier.setInfo("Hunt flag carrier");
                 potentialNewTargets.push(killFlagCarrier);
             }
         }
 
         const flagIsHome = myFlagInfo.pos.x === flagDefaultX && myFlagInfo.pos.y === flagDefaultY;
-        if (!flagIsHome) {
-            // flag should be recovered
-            const recoverFlag = new GotoLocationTarget(this.env, myFlagInfo.pos);
-            potentialNewTargets.push(recoverFlag);
-        }
 
         if (isDefensive) {
-            const protectFlag = new ProtectTarget(this.env, this.character, myFlagInfo.pos);
-            potentialNewTargets.push(protectFlag);
+            if (!flagIsHome) {
+                // flag should be recovered
+                const recoverFlag = new GotoLocationTarget(this.env, myFlagInfo.pos);
+                recoverFlag.setInfo("recover flag");
+                potentialNewTargets.push(recoverFlag);
+            } else {
+                const protectFlag = new ProtectTarget(this.env, this.character, myFlagInfo.pos);
+                potentialNewTargets.push(protectFlag);
+            }
         } else {
             if (otherFlagInfo.carrierId) {
                 // protect the carrier
@@ -184,6 +190,7 @@ export class TargetSelection {
             } else {
                 // go grab the enemy flag
                 const grabFlag = new GotoLocationTarget(this.env, otherFlagInfo.pos);
+                grabFlag.setInfo("Go grab flag");
                 potentialNewTargets.push(grabFlag);
             }
         }
@@ -252,9 +259,13 @@ export class TargetSelection {
         } else if (this.character.goal === "brexit") {
             potentialNewTarget = new ProtectTarget(this.env, this.character, new Pos({
                 x: -403.046875, y: -3182.646484375 // UK
-                // x: -5246.271484375, y: -7008.716796875 // Greenland
             }));
             potentialNewTarget.goal = "brexit";
+        } else if (this.character.goal === "greenland") {
+            potentialNewTarget = new ProtectTarget(this.env, this.character, new Pos({
+                x: -5246.271484375, y: -7008.716796875 // Greenland
+            }));
+            potentialNewTarget.goal = "greenland";
         }
 
         if (potentialNewTarget && potentialNewTarget.isValid()) {

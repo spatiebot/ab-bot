@@ -9,6 +9,7 @@ export class GotoLocationTarget implements ITarget {
     private gotoLocationConfig = new GotoLocationConfig();
 
     goal = "gotoLocation";
+    private manualInfo: string;
     
     constructor(private env: IAirmashEnvironment, private readonly targetPos: Pos) {
     }
@@ -31,10 +32,14 @@ export class GotoLocationTarget implements ITarget {
 
     getInfo() {
         return {
-            info: 'goto location ' + this.targetPos.x + ', ' + this.targetPos.y,
+            info: this.manualInfo || 'goto location ' + this.targetPos.x + ', ' + this.targetPos.y,
             id: null,
             pos: this.targetPos
         };
+    }
+
+    setInfo(info: string) {
+        this.manualInfo = info;
     }
 
     isValid(): boolean {

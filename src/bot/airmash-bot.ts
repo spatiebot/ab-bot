@@ -53,6 +53,7 @@ export class AirmashBot {
         }
 
         logger.info("i spawned");
+        logger.info("Game type: " + this.env.getGameType());
 
         if (this.env.me().type !== this.aircraftType) {
             logger.info("... in the wrong body. Respawning as a different aircraft...");

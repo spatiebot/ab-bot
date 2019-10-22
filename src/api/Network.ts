@@ -319,11 +319,8 @@ export class Network {
                 break;
 
             case SERVER_PACKETS.GAME_FLAG:
-                if (msg.type === 2) {
-                    this.game.onFlagTaken(msg.flag as number, msg.id as number);
-                } else {
-                    this.game.onFlagDropped(msg.flag as number, msg.posX as number, msg.posY as number);
-                }
+                this.game.onFlag(msg.flag as number, msg.id as number, msg.posX as number, msg.posY as number);
+                this.game.onCtfScore(msg.blueteam as number, msg.redteam as number);
                 break;
 
             case SERVER_PACKETS.SERVER_CUSTOM:

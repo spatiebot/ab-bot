@@ -5,7 +5,7 @@ export class BotCharacter {
         intimateRange: 250,
         predictPositions: false,
         goal: 'stealCrates',
-        missileDistance: 100,
+        missileDistance: 50,
         otherAircraftDistance: 10,
         fleeHealth: 0.7,
         upgradePriority: [2, 4, 1, 3],
@@ -17,7 +17,7 @@ export class BotCharacter {
         name: 'Aggressive',
         predictPositions: true,
         goal: 'fight',
-        missileDistance: 100,
+        missileDistance: 20,
         otherAircraftDistance: 10,
         fleeHealth: 0.4,
         upgradePriority: [4, 3, 2, 1],
@@ -83,6 +83,13 @@ export class BotCharacter {
         ...BotCharacter.Aggressive,
         name: 'Brexit',
         goal: 'brexit',
+        type: 1
+    };
+
+    static Greenland: BotCharacter = {
+        ...BotCharacter.Aggressive,
+        name: 'Greenland',
+        goal: 'greenland',
         type: 1
     };
 

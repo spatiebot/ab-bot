@@ -16,6 +16,7 @@ export class OtherPlayerTarget implements ITarget {
     private readonly targetID: number;
     private shouldRecycle: boolean;
     private gotoLocationConfig = new GotoLocationConfig();
+    private manualInfo: string;
 
     goal = "fight";
 
@@ -66,10 +67,14 @@ export class OtherPlayerTarget implements ITarget {
             };
         }
         return {
-            info: 'attack ' + enemy.name,
+            info: (this.manualInfo || "") + ' attack ' + enemy.name,
             id: this.targetID,
             pos: enemy.pos
         };
+    }
+
+    setInfo(info: string) {
+        this.manualInfo = info;
     }
 
     private getTarget(): PlayerInfo {

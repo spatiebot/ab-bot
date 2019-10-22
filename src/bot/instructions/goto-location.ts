@@ -9,6 +9,7 @@ import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { PlayerInfo } from "../airmash/player-info";
 import { Pos } from "../pos";
 import { Worker } from "worker_threads";
+import logger = require("../../helper/logger");
 
 declare const __dirname: string;
 let pfWorker: Worker;
@@ -35,12 +36,13 @@ export class GotoLocationInstruction implements IInstruction {
         shouldCalcPath = shouldCalcPath && !isDisturbingPos;
 
         if (!shouldCalcPath) {
-            if (this.config.path) {
-                return this.getMostProbablePosFromPath(1, me.pos);
+            if (this.config.path && this.config.path.length > 0) {
+                logger.warn("path from cached");
+                return this.walkPath();
             }
         }
 
-        const players = this.env.getPlayers().filter(x => x.id !== me.id && x.id !== this.targetPlayerId);
+        // const players = this.env.getPlayers().filter(x => x.id !== me.id && x.id !== this.targetPlayerId);
 
         let myPos = me.pos;
         if (this.character && this.character.predictPositions) {
@@ -60,10 +62,9 @@ export class GotoLocationInstruction implements IInstruction {
         }
 
         const pathFindingConfig = {
-            walls: this.env.getWalls(),
             missiles: this.env.getMissiles(),
-            players,
             myPos,
+            myType: me.type,
             targetPos,
             distance: deltaToTarget.distance
         };
@@ -73,7 +74,7 @@ export class GotoLocationInstruction implements IInstruction {
 
             this.config.path = path;
             this.config.errors = 0;
-            return path[1]; // the first pos is my own position
+            return this.walkPath(1);
         } catch (error) {
             // just fly dumbly towards the target
             this.config.errors++;
@@ -84,6 +85,16 @@ export class GotoLocationInstruction implements IInstruction {
 
             return targetPos;
         }
+    }
+
+    private walkPath(next = 0) : Pos {
+        if (!this.config.path || this.config.path.length === 0) {
+            logger.error("No path left to walk");
+            return new Pos({x: 0, y: 0}); // sorry
+        }
+        var pos = this.config.path[next];
+        this.config.path = this.config.path.slice(next + 1);
+        return pos;
     }
 
     private findPath(pathFindingConfig: any): Promise<Pos[]> {
@@ -124,21 +135,6 @@ export class GotoLocationInstruction implements IInstruction {
         return pfPromise;
     }
 
-    private getMostProbablePosFromPath(ix: number, myPos: Pos): Pos {
-        const pos = this.config.path[ix];
-        const hasNext = this.config.path.length > ix + 1;
-
-        if (!hasNext) {
-            return pos;
-        }
-
-        const delta = Calculations.getDelta(myPos, pos);
-        if (delta.distance > 100) {
-            return pos;
-        }
-
-        return this.getMostProbablePosFromPath(ix + 1, myPos);
-    }
 
     configure(config: GotoLocationConfig) {
         this.config = config;
