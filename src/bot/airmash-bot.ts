@@ -1,24 +1,28 @@
 import { IAirmashEnvironment } from "./airmash/iairmash-environment";
 import { SteeringInstallation } from "./steering/steering-installation";
 import { BotCharacter } from "./bot-character";
-import { TargetSelection } from "./targets/target-selection";
 import { Score } from "./airmash/score";
 import { ApplyUpgrades } from "./apply-upgrades";
 import { SteeringInstruction } from "./steering/steering-instruction";
 import logger = require("../helper/logger");
+import { ITargetSelection } from "./targetselection/itarget-selection";
+import { TargetSelectionFactory } from "./targetselection/target-selection-factory";
+import { StopWatch } from "../helper/timer";
 
 export class AirmashBot {
 
     static current: AirmashBot;
 
     private readonly steeringInstallation: SteeringInstallation;
-    private readonly targetSelection: TargetSelection;
+    private targetSelection: ITargetSelection;
     private aircraftType: number;
     private isSpawned: boolean;
-    private lastTick = Date.now();
     private score: Score;
-    private lastState = Date.now();
     private isPreparingSteeringInstructions = false;
+
+    private readonly tickStopwatch = new StopWatch();
+    private readonly infoStopwatch = new StopWatch();
+    private readonly upgradesStopwatch = new StopWatch();
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter = null) {
 
@@ -31,7 +35,6 @@ export class AirmashBot {
         this.env.on('ctfGameOver', () => this.onCtfGameOver());
 
         this.steeringInstallation = new SteeringInstallation(this.env);
-        this.targetSelection = new TargetSelection(this.env, this.character);
 
         AirmashBot.current = this;
     }
@@ -63,11 +66,18 @@ export class AirmashBot {
 
         this.isSpawned = true;
 
+        this.tickStopwatch.start();
+        this.upgradesStopwatch.start();
+        this.infoStopwatch.start();
+
         const myType = this.env.me().type;
         if (!this.character || this.character.type !== 0 && this.character.type !== myType) {
             logger.warn('new char selected because this character is not my type');
             this.character = BotCharacter.get(myType);
         }
+
+        this.targetSelection = TargetSelectionFactory.createTargetSelection(this.env, this.character);
+
         this.steeringInstallation.start();
     }
 
@@ -103,25 +113,25 @@ export class AirmashBot {
     }
 
     private onTick() {
-        const now = Date.now();
-        const msBetweenTicks = now - this.lastTick;
-        if (msBetweenTicks > 300) {
-            logger.error("PANIC: delay between ticks too long: " + msBetweenTicks);
+
+        if (this.tickStopwatch.elapsedMs() > 300) {
+            logger.error("PANIC: delay between ticks too long: " + this.tickStopwatch.elapsedMs());
             this.reset();
         }
-        this.lastTick = now;
+        this.tickStopwatch.start();
 
         if (!this.isSpawned) {
             return;
         }
 
-        const msSinceLastState = Date.now() - this.lastState;
-        if (msSinceLastState > 5000) {
+        if (this.upgradesStopwatch.elapsedMs() > 5000) {
             const applyUpgrades = new ApplyUpgrades(this.env, this.character);
             applyUpgrades.execute(this.score);
+        }
 
+        if (this.infoStopwatch.elapsedSeconds() > 20) {
             this.logState();
-            this.lastState = Date.now();
+            this.infoStopwatch.start();
         }
 
         this.prepareSteering();
@@ -134,7 +144,7 @@ export class AirmashBot {
         this.isPreparingSteeringInstructions = true;
 
         try {
-            const target = this.targetSelection.getTarget();
+            const target = this.targetSelection.exec();
             const instructions = target.getInstructions();
             try {
                 for (let i of instructions) {
@@ -150,9 +160,12 @@ export class AirmashBot {
             //prowler should be as stealthed as possible
             const me = this.env.me();
             if (me.type === 5 && me.energy > 0.6 && !me.isStealthed) {
-                const stealthInstruction = new SteeringInstruction();
-                stealthInstruction.stealth = true;
-                this.steeringInstallation.add(stealthInstruction);
+                const flagInfo = this.env.getFlagInfo(me.team === 1 ? 2 : 1);
+                if (flagInfo.carrierId !== me.id) {
+                    const stealthInstruction = new SteeringInstruction();
+                    stealthInstruction.stealth = true;
+                    this.steeringInstallation.add(stealthInstruction);
+                }
             }
 
             this.steeringInstallation.executeWhenReady();

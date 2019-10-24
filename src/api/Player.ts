@@ -1,6 +1,6 @@
 import { Mob } from "./Mob";
 import { Pos } from "../bot/pos";
-import { Keystate } from "../../ab-protocol/src/types/client";
+import { Keystate } from "../ab-protocol/src/types/client";
 import { PlayerUpdate } from "./player-update";
 import { PowerUps } from "./powerups";
 import { Upgrades } from "./upgrades";

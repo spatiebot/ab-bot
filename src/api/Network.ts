@@ -1,11 +1,11 @@
-import * as marshaling from '../../ab-protocol/src/marshaling';
-import * as unmarshaling from '../../ab-protocol/src/unmarshaling';
-import CLIENT_PACKETS from '../../ab-protocol/src/packets/client';
-import SERVER_PACKETS from '../../ab-protocol/src/packets/server';
-import { KEY_CODES } from '../../ab-protocol/src/types/client';
-import { decodeMinimapCoords, decodeKeystate, decodeUpgrades } from '../../ab-protocol/src/decoding/index';
+import * as marshaling from '../ab-protocol/src/marshaling';
+import * as unmarshaling from '../ab-protocol/src/unmarshaling';
+import CLIENT_PACKETS from '../ab-protocol/src/packets/client';
+import SERVER_PACKETS from '../ab-protocol/src/packets/server';
+import { KEY_CODES } from '../ab-protocol/src/types/client';
+import { decodeMinimapCoords, decodeKeystate, decodeUpgrades } from '../ab-protocol/src/decoding/index';
 import WebSocket from 'ws';
-import { ProtocolPacket } from '../../ab-protocol/src/packets';
+import { ProtocolPacket } from '../ab-protocol/src/packets';
 import { Game } from './Game';
 import { Mob } from './Mob';
 import { CHAT_TYPE } from './chat-type';

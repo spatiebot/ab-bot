@@ -8,15 +8,17 @@ import { Pos } from "../pos";
 import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { GotoLocationInstruction } from "../instructions/goto-location";
 import { FireInstruction } from "../instructions/fire-instruction";
+import { BaseTarget } from "./base-target";
 
-export class DodgeEnemiesTarget implements ITarget {
+export class DodgeEnemiesTarget extends BaseTarget {
     goal = 'avoid';
 
     private playerToAvoidID: number;
     private gotoLocationConfig = new GotoLocationConfig();
-    
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter, blacklist: number[]) {
 
+    constructor(private env: IAirmashEnvironment, private character: BotCharacter, blacklist: number[]) {
+        super();
+        
         const me = env.me();
         const otherAircrafts = env.getPlayers()
             .filter(x => blacklist.indexOf(x.id) === -1)
@@ -58,7 +60,7 @@ export class DodgeEnemiesTarget implements ITarget {
         const flagAnxiety = imtheflagcarrier ? 3 : 1;
 
         const healthAnxiety = myHealth <= this.character.fleeHealth ? 20 : 1;
-        const healthFactor = myHealth > 0 ?  1 / myHealth : 100;
+        const healthFactor = myHealth > 0 ? 1 / myHealth : 100;
         return this.character.otherAircraftDistance * healthFactor * healthAnxiety * flagAnxiety;
     }
 
@@ -92,10 +94,10 @@ export class DodgeEnemiesTarget implements ITarget {
         result.push(instruction);
 
         result.push(new FireInstruction());
-                
+
         return result;
     }
-    
+
     getInfo() {
         const enemy = this.env.getPlayer(this.playerToAvoidID);
         if (!enemy) {

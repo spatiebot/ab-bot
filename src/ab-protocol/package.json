@@ -1,0 +1,193 @@
+{
+  "name": "@airbattle/protocol",
+  "version": "5.10.0",
+  "description": "ab-protocol library.",
+  "author": "wight",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/lib.js",
+  "typings": "./dist/lib.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "dev": "watch",
+    "lint": "eslint . --ext .js,.mjs,.ts",
+    "prepare": "npm run build",
+    "lint-autofix": "eslint --ext .js,.mjs,.ts --fix",
+    "lint-staged": "lint-staged"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wight-airmash/ab-protocol.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wight-airmash/ab-protocol/issues"
+  },
+  "files": [
+    "dist"
+  ],
+  "lint-staged": {
+    "src/**/*.(js|ts|mjs)": [
+      "eslint --fix",
+      "git add"
+    ],
+    "*.(json)": [
+      "prettier --config ./package.json --write",
+      "git add"
+    ]
+  },
+  "pre-commit": "lint-staged",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^12.7.5",
+    "@typescript-eslint/eslint-plugin": "^2.3.0",
+    "@typescript-eslint/parser": "^2.3.0",
+    "eslint": "^6.4.0",
+    "eslint-config-airbnb": "^18.0.1",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-prettier": "^6.3.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-prettier": "^3.1.1",
+    "lint-staged": "^9.2.5",
+    "pre-commit": "^1.2.2",
+    "prettier": "^1.18.2",
+    "typescript": "^3.6.3"
+  },
+  "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "@typescript-eslint"
+    ],
+    "extends": [
+      "airbnb-base",
+      "plugin:@typescript-eslint/eslint-recommended",
+      "plugin:@typescript-eslint/recommended",
+      "prettier/@typescript-eslint",
+      "plugin:prettier/recommended"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 2018,
+      "sourceType": "module",
+      "project": "./tsconfig.json"
+    },
+    "env": {
+      "node": true,
+      "es6": true
+    },
+    "settings": {
+      "import/extensions": [
+        ".js",
+        ".ts",
+        ".mjs"
+      ],
+      "import/resolver": {
+        "node": {
+          "extensions": [
+            ".js",
+            ".ts",
+            ".mjs"
+          ]
+        }
+      }
+    },
+    "rules": {
+      "@typescript-eslint/explicit-function-return-type": [
+        "warn",
+        {
+          "allowExpressions": true
+        }
+      ],
+      "@typescript-eslint/no-empty-interface": "off",
+      "@typescript-eslint/explicit-member-accessibility": [
+        "error",
+        {
+          "overrides": {
+            "constructors": "no-public",
+            "methods": "no-public"
+          }
+        }
+      ],
+      "no-bitwise": "off",
+      "no-useless-constructor": "off",
+      "padding-line-between-statements": [
+        "error",
+        {
+          "blankLine": "always",
+          "prev": "*",
+          "next": "return"
+        },
+        {
+          "blankLine": "always",
+          "prev": "*",
+          "next": "case"
+        },
+        {
+          "blankLine": "any",
+          "prev": "case",
+          "next": "case"
+        },
+        {
+          "blankLine": "always",
+          "prev": "if",
+          "next": "*"
+        },
+        {
+          "blankLine": "always",
+          "prev": "*",
+          "next": "if"
+        },
+        {
+          "blankLine": "always",
+          "prev": "function",
+          "next": "*"
+        },
+        {
+          "blankLine": "always",
+          "prev": "*",
+          "next": "function"
+        },
+        {
+          "blankLine": "always",
+          "prev": "multiline-block-like",
+          "next": "*"
+        },
+        {
+          "blankLine": "always",
+          "prev": "*",
+          "next": "multiline-block-like"
+        },
+        {
+          "blankLine": "always",
+          "prev": [
+            "const",
+            "let",
+            "var"
+          ],
+          "next": "*"
+        },
+        {
+          "blankLine": "any",
+          "prev": [
+            "const",
+            "let",
+            "var"
+          ],
+          "next": [
+            "const",
+            "let",
+            "var"
+          ]
+        }
+      ]
+    }
+  },
+  "eslintIgnore": [
+    "dist/*"
+  ],
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "singleQuote": true,
+    "printWidth": 100
+  }
+}

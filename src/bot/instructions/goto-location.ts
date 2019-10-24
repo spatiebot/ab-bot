@@ -10,6 +10,7 @@ import { PlayerInfo } from "../airmash/player-info";
 import { Pos } from "../pos";
 import { Worker } from "worker_threads";
 import logger = require("../../helper/logger");
+import P = require("pino");
 
 declare const __dirname: string;
 let pfWorker: Worker;
@@ -19,9 +20,11 @@ function createNewWorker() {
         pfWorker.terminate();
     }
 
-    pfWorker = new Worker(__dirname + '/path-finding.js');
+    pfWorker = new Worker(__dirname + '/../pathfinding/path-finding.js');
 }
 createNewWorker();
+
+const NEXT_PATH_POINT_DISTANCE_THRESHOLD = 30;
 
 export class GotoLocationInstruction implements IInstruction {
 
@@ -74,7 +77,7 @@ export class GotoLocationInstruction implements IInstruction {
 
             this.config.path = path;
             this.config.errors = 0;
-            return this.walkPath(1);
+            return this.walkPath();
         } catch (error) {
             // just fly dumbly towards the target
             this.config.errors++;
@@ -90,10 +93,17 @@ export class GotoLocationInstruction implements IInstruction {
     private walkPath(next = 0) : Pos {
         if (!this.config.path || this.config.path.length === 0) {
             logger.error("No path left to walk");
+            this.config.needNewPath = true;
             return new Pos({x: 0, y: 0}); // sorry
         }
         var pos = this.config.path[next];
         this.config.path = this.config.path.slice(next + 1);
+
+        const delta = Calculations.getDelta(this.env.me().pos, pos)
+        if (delta.distance < NEXT_PATH_POINT_DISTANCE_THRESHOLD) {
+            return this.walkPath();
+        }
+
         return pos;
     }
 

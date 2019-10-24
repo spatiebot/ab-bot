@@ -1,8 +1,9 @@
 import { ITarget } from "./itarget";
 import { IInstruction } from "../instructions/iinstruction";
 import { DoNothingInstruction } from "../instructions/do-nothing-instruction";
+import { BaseTarget } from "./base-target";
 
-export class DoNothingTarget implements ITarget {
+export class DoNothingTarget extends BaseTarget {
 
     goal = "nothing";
 

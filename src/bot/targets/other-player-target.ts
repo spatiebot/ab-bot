@@ -10,8 +10,9 @@ import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { getPlayersSortedByDistance } from "./get-closest-player";
 import logger = require("../../helper/logger");
+import { BaseTarget } from "./base-target";
 
-export class OtherPlayerTarget implements ITarget {
+export class OtherPlayerTarget extends BaseTarget {
 
     private readonly targetID: number;
     private shouldRecycle: boolean;
@@ -20,7 +21,8 @@ export class OtherPlayerTarget implements ITarget {
 
     goal = "fight";
 
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter, blacklist: number[], victimId: number = null) {
+    constructor(private env: IAirmashEnvironment, private character: BotCharacter, blacklist: number[], victimId: number = null, private peaceful = false) {
+        super();
 
         let victim: PlayerInfo;
 
@@ -67,7 +69,7 @@ export class OtherPlayerTarget implements ITarget {
             };
         }
         return {
-            info: (this.manualInfo || "") + ' attack ' + enemy.name,
+            info: (this.manualInfo || "") + (this.peaceful ? ' goto ' : ' attack ') + enemy.name,
             id: this.targetID,
             pos: enemy.pos
         };
@@ -113,11 +115,13 @@ export class OtherPlayerTarget implements ITarget {
         instruction.configure(this.gotoLocationConfig);
         result.push(instruction);
 
-        const me = this.env.me();
-        const delta = Calculations.getDelta(me.pos, targetPos);
-        if (delta) {
-            if (delta.distance < this.character.firingRange) {
-                result.push(new FireInstruction());
+        if (!this.peaceful) {
+            const me = this.env.me();
+            const delta = Calculations.getDelta(me.pos, targetPos);
+            if (delta) {
+                if (delta.distance < this.character.firingRange) {
+                    result.push(new FireInstruction());
+                }
             }
         }
 
@@ -144,6 +148,9 @@ export class OtherPlayerTarget implements ITarget {
 
     isValid(): boolean {
         if (this.shouldRecycle) {
+            return false;
+        }
+        if (this.gotoLocationConfig.needNewPath) {
             return false;
         }
 

@@ -4,14 +4,16 @@ import { IInstruction } from "../instructions/iinstruction";
 import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { Pos } from "../pos";
+import { BaseTarget } from "./base-target";
 
-export class GotoLocationTarget implements ITarget {
+export class GotoLocationTarget extends BaseTarget {
     private gotoLocationConfig = new GotoLocationConfig();
 
     goal = "gotoLocation";
     private manualInfo: string;
     
     constructor(private env: IAirmashEnvironment, private readonly targetPos: Pos) {
+        super();
     }
 
     onKill(killerID: number, killedID: number) {
@@ -43,6 +45,6 @@ export class GotoLocationTarget implements ITarget {
     }
 
     isValid(): boolean {
-        return true;
+        return !this.gotoLocationConfig.needNewPath;
     }
 }

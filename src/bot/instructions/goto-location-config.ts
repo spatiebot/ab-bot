@@ -8,4 +8,5 @@ export class GotoLocationConfig {
     lastPathTime: number;
     backwards: boolean;
     errors = 0;
+    needNewPath: boolean;
 }

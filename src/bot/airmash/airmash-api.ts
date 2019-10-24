@@ -8,7 +8,7 @@ import { Pos } from "../pos";
 import { Crate } from "./crate";
 import { Mob } from "../../api/Mob";
 import { Missile } from "./missile";
-import { KEY_CODES } from "../../../ab-protocol/src/types/client";
+import { KEY_CODES } from "../../ab-protocol/src/types/client";
 import { CHAT_TYPE } from "../../api/chat-type";
 import { FlagInfo } from "../../api/flagInfo";
 

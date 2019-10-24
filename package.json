@@ -1,6 +1,9 @@
 {
     "name": "ab-bot",
-    "version": "0.1.0",
+    "version": "1.0.0",
+    "scripts": {
+        "build": "gulp"
+    },
     "dependencies": {
         "easystarjs": "^0.4.3",
         "pino": "5.13.4",
@@ -10,6 +13,9 @@
     },
     "devDependencies": {
         "@types/pino": "^5.8.11",
-        "@types/yargs": "^13.0.2"
+        "@types/yargs": "^13.0.2",
+        "gulp": "^4.0.0",
+        "gulp-typescript": "^5.0.1",
+        "typescript": "^3.6.4"
     }
 }

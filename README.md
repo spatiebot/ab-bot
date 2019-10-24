@@ -9,9 +9,9 @@ In FFA it can also run as a protecting bot, sticking to a player and defending t
 To run the bot, you need Node v12 or more.
 
 1. clone repository and submodule (`git clone --recurse-submodules git://github.com/spatiebot/ab-bot.git`)
-1. npm i
-2. tsc
-3. node dist/src/app.js --name=SomeBot --flag=eu
+2. npm i
+3. gulp
+4. node dist/app.js --name=SomeBot
 
 Parameters:
 

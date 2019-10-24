@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "es2018",
+    "module": "commonjs",
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "declaration": true,
+    "removeComments": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"],
+  "typedocOptions": {
+    "mode": "file",
+    "out": "docs",
+    "readme": "none",
+    "excludeExternals": true,
+    "excludeNotExported": true,
+    "exclude": [
+      "./src/lib.ts",
+      "./src/marshaling/client.ts",
+      "./src/marshaling/server.ts",
+      "./src/unmarshaling/client.ts",
+      "./src/unmarshaling/server.ts"
+    ]
+  }
+}

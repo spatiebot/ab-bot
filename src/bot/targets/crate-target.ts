@@ -6,14 +6,17 @@ import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { Crate } from "../airmash/crate";
 import logger = require("../../helper/logger");
+import { BaseTarget } from "./base-target";
 
-export class CrateTarget implements ITarget {
+export class CrateTarget extends BaseTarget {
     private readonly targetID: number;
     private gotoLocationConfig = new GotoLocationConfig();
 
+    distance: number;
     goal = "stealCrates";
 
     constructor(private env: IAirmashEnvironment, blacklist: number[]) {
+        super();
         const crates = env.getCrates().filter(x => blacklist.indexOf(x.id) === -1);
         const myPos = env.me().pos;
 
@@ -29,6 +32,7 @@ export class CrateTarget implements ITarget {
 
         if (closestCrate) {
             this.targetID = closestCrate.id;
+            this.distance = closestDistance;
         }
     }
 
@@ -36,7 +40,6 @@ export class CrateTarget implements ITarget {
         if (this.targetID) {
             var crate = this.env.getCrate(this.targetID);
             if (!crate) {
-                logger.info("Target disappeared");
                 return null;
             }
             return crate;

@@ -18,7 +18,7 @@ class Logger {
     }
 
     info(msg: string, ...args: any[]): void {
-        this.logger['warn'](msg, ...args);
+        this.logger['info'](msg, ...args);
     }
 
     warn(msg: string, ...args: any[]): void {

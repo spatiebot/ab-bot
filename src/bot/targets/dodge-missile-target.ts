@@ -6,13 +6,15 @@ import { Calculations } from "../calculations";
 import { AvoidObjectInstruction } from "../instructions/avoid-object-instruction";
 import { Missile } from "../airmash/missile";
 import { FartInstruction } from "../instructions/fart-instruction";
+import { BaseTarget } from "./base-target";
 
-export class DodgeMissileTarget implements ITarget {
+export class DodgeMissileTarget extends BaseTarget {
     goal = 'dodge';
 
     private missileToAvoidId: number;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter, private blacklist: number[]) {
+        super();
 
         const me = env.me();
         const myTeam = me.team;
@@ -63,13 +65,10 @@ export class DodgeMissileTarget implements ITarget {
     private getDistanceToKeep(): number {
         const me = this.env.me();
         const myHealth = me.health;
-        const otherFlagInfo = this.env.getFlagInfo(me.team === 1 ? 2 : 1);
-        const imtheflagcarrier = otherFlagInfo.carrierId === me.id;
-        const flagAnxiety = imtheflagcarrier ? 3 : 1;
         const healthAnxiety = myHealth <= this.character.fleeHealth ? 20 : 1;
-        const healthFactor = myHealth > 0 ?  1 / myHealth : 100;
+        const healthFactor = (myHealth > 0 ? 1 / myHealth : 2) / 2;
 
-        return this.character.missileDistance * healthFactor * healthAnxiety * flagAnxiety;
+        return this.character.missileDistance * healthFactor * healthAnxiety;
     }
 
     isValid(): boolean {
@@ -93,7 +92,7 @@ export class DodgeMissileTarget implements ITarget {
         return {
             info: 'avoid missile',
             id: this.missileToAvoidId,
-            pos: missile ? missile.pos: null
+            pos: missile ? missile.pos : null
         };
     }
 
