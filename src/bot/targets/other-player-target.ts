@@ -18,6 +18,7 @@ export class OtherPlayerTarget extends BaseTarget {
     private shouldRecycle: boolean;
     private gotoLocationConfig = new GotoLocationConfig();
     private manualInfo: string;
+    private maxDistance: number;
 
     goal = "fight";
 
@@ -25,12 +26,11 @@ export class OtherPlayerTarget extends BaseTarget {
         super();
 
         let victim: PlayerInfo;
+        const me = env.me();
 
         if (victimId) {
             victim = env.getPlayer(victimId);
         } else {
-            const me = env.me();
-
             const enemies = getPlayersSortedByDistance(env, true)
                 .filter(x => x.player.team !== me.team)
                 .filter(x => blacklist.indexOf(x.player.id) === -1)
@@ -57,6 +57,10 @@ export class OtherPlayerTarget extends BaseTarget {
         if (victim) {
             this.targetID = victim.id;
         }
+    }
+
+    setMaxDistance(max: number) {
+        this.maxDistance = max;
     }
 
     getInfo() {
@@ -157,6 +161,11 @@ export class OtherPlayerTarget extends BaseTarget {
         const target = this.getTarget();
         if (!this.isTargetValid(target)) {
             return false;
+        }
+
+        if (this.maxDistance) {
+            const distance = Calculations.getDelta(this.env.me().pos, target.pos).distance;
+            return distance < this.maxDistance;
         }
 
         return true;

@@ -31,7 +31,8 @@ const defaultRedFlagPos = new Pos({
 });
 
 const REEVALUATION_TIME_MS = 1500;
-const CRATE_DISTANCE_THRESHOLD = 700;
+const CRATE_DISTANCE_THRESHOLD = 500;
+const FIGHT_DISTANCE_THRESHOLD = 300;
 const PROTECT_ZONE = 700;
 
 export class CtfTargetSelection implements ITargetSelection {
@@ -51,6 +52,8 @@ export class CtfTargetSelection implements ITargetSelection {
     private targets: ITarget[] = [];
     private lastLog: string;
     private stopwatch = new StopWatch();
+    private distanceToMyFlag: number;
+    private distanceToOtherFlag: number;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
         this.reset();
@@ -115,9 +118,20 @@ export class CtfTargetSelection implements ITargetSelection {
 
         // take crates nearby
         const crate = new CrateTarget(this.env, []);
-        if (crate.distance < CRATE_DISTANCE_THRESHOLD) {
+        crate.setMaxDistance(CRATE_DISTANCE_THRESHOLD);
+        if (crate.isValid()) {
             this.targets.push(crate);
             return;
+        }
+
+        // attack enemies nearby
+        if (this.myRole === "A") {
+            const fight = new OtherPlayerTarget(this.env, this.character, []);
+            fight.setMaxDistance(FIGHT_DISTANCE_THRESHOLD);
+            if (fight.isValid()) {
+                this.targets.push(fight);
+                return;
+            }
         }
 
         const currentTargetIsOK = this.peek() && this.peek().isValid();
@@ -128,12 +142,10 @@ export class CtfTargetSelection implements ITargetSelection {
         }
 
         var target = this.determineTarget();
-        const newInfo = target.getInfo();
         if (currentTargetIsOK) {
             // only replace it if it is a different target
             if (!target.equals(this.peek())) {
                 this.targets.push(target);
-                const currentInfo = this.peek().getInfo();
             }
         } else {
             this.targets.push(target);
@@ -157,19 +169,21 @@ export class CtfTargetSelection implements ITargetSelection {
             return new DoNothingTarget();
         }
 
+        const doDefensiveActions = this.myRole === "D" || this.distanceToMyFlag < this.distanceToOtherFlag;
+
         if (this.flagState === FlagStates.ImCarrier) {
             var goHome = new GotoLocationTarget(this.env, this.defaultMyFlagPos);
             goHome.setInfo("bring flag home");
             return goHome;
         }
 
-        if (this.flagState === FlagStates.MyFlagTaken) {
+        if (this.flagState === FlagStates.MyFlagTaken && doDefensiveActions) {
             const killFlagCarrier = new OtherPlayerTarget(this.env, this.character, [], this.myFlagInfo.carrierId);
             killFlagCarrier.setInfo("Hunt flag carrier");
             return killFlagCarrier;
         }
 
-        if (this.flagState === FlagStates.MyFlagDisplaced) {
+        if (this.flagState === FlagStates.MyFlagDisplaced && doDefensiveActions) {
             const recoverFlag = new GotoLocationTarget(this.env, this.myFlagInfo.pos);
             recoverFlag.setInfo("recover abandoned flag");
             return recoverFlag;
@@ -186,7 +200,7 @@ export class CtfTargetSelection implements ITargetSelection {
             grabFlag.setInfo("Go grab flag");
             return grabFlag;
         } else {
-            const protectFlag = new ProtectTarget(this.env, this.character, this.myFlagInfo.pos, 600);
+            const protectFlag = new ProtectTarget(this.env, this.character, this.myFlagInfo.pos, PROTECT_ZONE);
             protectFlag.setInfo("protect my flag");
             return protectFlag;
         }
@@ -209,9 +223,14 @@ export class CtfTargetSelection implements ITargetSelection {
         this.defaultMyFlagPos = this.myTeam === 1 ? defaultBlueFlagPos : defaultRedFlagPos;
         this.defaultOtherFlagPos = this.myTeam === 1 ? defaultRedFlagPos : defaultBlueFlagPos;
 
+        if (this.myFlagInfo.pos) {
+            this.distanceToMyFlag = Calculations.getDelta(this.myFlagInfo.pos, me.pos).distance;
+            this.distanceToOtherFlag = Calculations.getDelta(this.otherFlagInfo.pos, me.pos).distance;
+        }
+
         if (!this.myRole) {
             const dieCast = Calculations.getRandomInt(1, 3);
-            this.myRole = "D"; //dieCast === 1 ? "A" : "D";
+            this.myRole = dieCast === 1 ? "A" : "D";
             logger.warn("My role is " + this.myRole);
         }
     }

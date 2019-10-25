@@ -25,6 +25,8 @@ export class Rotate {
         const absDelta = Math.abs(rotDelta);
 
         if (this.currentRotationTimeout || !rotDelta || absDelta < precision) {
+            this.left.send(this.env, false);
+            this.right.send(this.env, false);
             return;
         }
 

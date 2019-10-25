@@ -5,6 +5,10 @@ export class StopWatch {
         this.startTime = Date.now();
     }
 
+    isStarted(): boolean {
+        return !!this.startTime;
+    }
+
     elapsedMs() {
         return Date.now() - this.startTime;
     }

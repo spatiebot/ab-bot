@@ -12,7 +12,7 @@ export class CrateTarget extends BaseTarget {
     private readonly targetID: number;
     private gotoLocationConfig = new GotoLocationConfig();
 
-    distance: number;
+    private maxDistance: number;
     goal = "stealCrates";
 
     constructor(private env: IAirmashEnvironment, blacklist: number[]) {
@@ -32,8 +32,11 @@ export class CrateTarget extends BaseTarget {
 
         if (closestCrate) {
             this.targetID = closestCrate.id;
-            this.distance = closestDistance;
         }
+    }
+
+    setMaxDistance(max: number) {
+        this.maxDistance = max;
     }
 
     private getTarget(): Crate {
@@ -88,6 +91,16 @@ export class CrateTarget extends BaseTarget {
     }
 
     isValid(): boolean {
-        return !!this.getTarget();
+        var target = this.getTarget();
+        if (!target) {
+            return false;
+        }
+
+        if (this.maxDistance) {
+            var distance = Calculations.getDelta(this.env.me().pos, target.pos).distance;
+            return (distance < this.maxDistance);
+        }
+
+        return true;
     }
 }

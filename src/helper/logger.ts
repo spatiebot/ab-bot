@@ -1,4 +1,6 @@
 import pino from 'pino';
+import * as fs from 'fs';
+
 class Logger {
 
     private logger: pino.Logger;
@@ -31,6 +33,11 @@ class Logger {
 
     fatal(msg: string, ...args: any[]): void {
         this.logger['error'](msg, ...args);
+    }
+
+    writeToFile(x: any) {
+        const s = JSON.stringify(x) + "\r\n";
+        fs.appendFile('log/bot.log', s, _ => {});
     }
 }
 
