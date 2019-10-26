@@ -87,7 +87,7 @@ export class DodgeEnemiesTarget extends BaseTarget {
 
         this.gotoLocationConfig.desiredDistanceToTarget = this.character.intimateRange;
         this.gotoLocationConfig.targetPos = enemyPos;
-        this.gotoLocationConfig.backwards = true;
+        this.gotoLocationConfig.shouldFleeFrom = true;
 
         var instruction = new GotoLocationInstruction(this.env, this.character);
         instruction.configure(this.gotoLocationConfig);

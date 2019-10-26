@@ -13,22 +13,27 @@ import { OtherPlayerTarget } from "../targets/other-player-target";
 import { ProtectTarget } from "../targets/protect-target";
 import { StopWatch } from "../../helper/timer";
 import { CrateTarget } from "../targets/crate-target";
+import { BringFlagHomeTarget } from "../targets/bring-flag-home-target";
 
 enum FlagStates {
     Unknown = "Unkown",
     ImCarrier = "I'm the flag carrier",
+    ImCarrierInDangerZone = "I just grabbed the flag, still in enemy base",
     MyFlagTaken = "My flag is taken",
     MyFlagDisplaced = "My flag is displaced",
     OtherFlagTaken = "The other flag is taken",
     AllIsPeaceful = "Calm before the storm"
 }
 
-const defaultBlueFlagPos = new Pos({
-    x: -9670, y: -1470
-});
-const defaultRedFlagPos = new Pos({
-    x: 8600, y: -940
-});
+const blueFlagPositions = {
+    defaultPos: new Pos({ x: -9670, y: -1470 }),
+    safeLines: { x: -7813, y: -505 }
+};
+
+const redFlagPositions = {
+    defaultPos: new Pos({ x: 8600, y: -940 }),
+    safeLines: { x: 6902, y: 6 }
+};
 
 const REEVALUATION_TIME_MS = 1500;
 const CRATE_DISTANCE_THRESHOLD = 500;
@@ -116,21 +121,23 @@ export class CtfTargetSelection implements ITargetSelection {
 
         this.removeStaleTargetsFromStack();
 
-        // take crates nearby
-        const crate = new CrateTarget(this.env, []);
-        crate.setMaxDistance(CRATE_DISTANCE_THRESHOLD);
-        if (crate.isValid()) {
-            this.targets.push(crate);
-            return;
-        }
-
-        // attack enemies nearby
-        if (this.myRole === "A") {
-            const fight = new OtherPlayerTarget(this.env, this.character, []);
-            fight.setMaxDistance(FIGHT_DISTANCE_THRESHOLD);
-            if (fight.isValid()) {
-                this.targets.push(fight);
+        if (this.flagState !== FlagStates.ImCarrierInDangerZone) {
+            // take crates nearby
+            const crate = new CrateTarget(this.env, []);
+            crate.setMaxDistance(CRATE_DISTANCE_THRESHOLD);
+            if (crate.isValid()) {
+                this.targets.push(crate);
                 return;
+            }
+
+            // attack enemies nearby
+            if (this.myRole === "A") {
+                const fight = new OtherPlayerTarget(this.env, this.character, []);
+                fight.setMaxDistance(FIGHT_DISTANCE_THRESHOLD);
+                if (fight.isValid()) {
+                    this.targets.push(fight);
+                    return;
+                }
             }
         }
 
@@ -171,9 +178,8 @@ export class CtfTargetSelection implements ITargetSelection {
 
         const doDefensiveActions = this.myRole === "D" || this.distanceToMyFlag < this.distanceToOtherFlag;
 
-        if (this.flagState === FlagStates.ImCarrier) {
-            var goHome = new GotoLocationTarget(this.env, this.defaultMyFlagPos);
-            goHome.setInfo("bring flag home");
+        if (this.flagState === FlagStates.ImCarrier || this.flagState === FlagStates.ImCarrierInDangerZone) {
+            var goHome = new BringFlagHomeTarget(this.env, this.defaultMyFlagPos, this.flagState === FlagStates.ImCarrierInDangerZone);
             return goHome;
         }
 
@@ -220,8 +226,8 @@ export class CtfTargetSelection implements ITargetSelection {
         this.myFlagInfo = this.env.getFlagInfo(this.myTeam);
         this.otherFlagInfo = this.env.getFlagInfo(this.otherTeam);
 
-        this.defaultMyFlagPos = this.myTeam === 1 ? defaultBlueFlagPos : defaultRedFlagPos;
-        this.defaultOtherFlagPos = this.myTeam === 1 ? defaultRedFlagPos : defaultBlueFlagPos;
+        this.defaultMyFlagPos = this.myTeam === 1 ? blueFlagPositions.defaultPos : redFlagPositions.defaultPos;
+        this.defaultOtherFlagPos = this.myTeam === 1 ? redFlagPositions.defaultPos : blueFlagPositions.defaultPos;
 
         if (this.myFlagInfo.pos) {
             this.distanceToMyFlag = Calculations.getDelta(this.myFlagInfo.pos, me.pos).distance;
@@ -243,7 +249,18 @@ export class CtfTargetSelection implements ITargetSelection {
         }
 
         if (this.otherFlagInfo.carrierId === this.myId) {
-            // no need to evaluate further
+            const myPos = this.env.me().pos;
+            if (this.myTeam === 1) {
+                if (myPos.y < redFlagPositions.safeLines.y && myPos.x > redFlagPositions.safeLines.x) {
+                    return FlagStates.ImCarrierInDangerZone;
+                }
+            }
+            if (this.myTeam === 2) {
+                if (myPos.y < blueFlagPositions.safeLines.y && myPos.x < blueFlagPositions.safeLines.x) {
+                    return FlagStates.ImCarrierInDangerZone;
+                }
+            }
+
             return FlagStates.ImCarrier;
         }
 

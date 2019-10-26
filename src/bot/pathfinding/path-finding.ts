@@ -121,7 +121,7 @@ function gridContainerFromMountainData(path: string) {
         }
 
         for (let m of mountains[type]) {
-            grid[m.y][m.x] = 1;
+            grid[m.y][m.x] = m.v;
         }
 
         return grid;
@@ -192,7 +192,11 @@ class PathFinding {
                 easystar.avoidAdditionalPoint(missilePos.x, missilePos.y);
             }
 
-            easystar.setAcceptableTiles([0]);
+            easystar.setAcceptableTiles([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]);
+            // set all the greyscales between 0 (black (walkable)) and 26 (white (mountains)) to a tile cost
+            for (var i = 1; i < 26; i++) {
+                easystar.setTileCost(i, i * 5);
+            }
             easystar.enableDiagonals();
             easystar.enableCornerCutting();
 

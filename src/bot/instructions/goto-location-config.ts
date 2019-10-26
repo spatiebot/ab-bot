@@ -3,7 +3,8 @@ import { Pos } from "../pos";
 export class GotoLocationConfig { 
     targetPos: Pos;
     desiredDistanceToTarget: number; 
-    backwards: boolean;
+    shouldFleeFrom: boolean;
     errors = 0;
     needNewPath: boolean;
+    flyBackwards: boolean;
 }

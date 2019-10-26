@@ -31,7 +31,7 @@ export class GotoLocationInstruction implements IInstruction {
         }
 
         let targetPos: Pos;
-        if (this.config.backwards) {
+        if (this.config.shouldFleeFrom) {
             // we need to flee from this target actually
             // draw a line from target trough me, and fly to that point
             targetPos = new Pos({
@@ -64,7 +64,10 @@ export class GotoLocationInstruction implements IInstruction {
 
             return lastPath[1]; // first pos is always my own pos
         } catch (error) {
-            throw error;
+            this.config.errors++;
+            if(this.config.errors > 20) {
+                throw error;
+            }
         }
     }
 
@@ -95,11 +98,10 @@ export class GotoLocationInstruction implements IInstruction {
                     isCarryingFlag = otherFlag.carrierId === myInfo.id;
                 }
                 if (!isCarryingFlag) {
-                    if (this.character && delta.distance > this.character.firingRange) {
+                    const boostDistance = this.character ? this.character.firingRange : 200;
+                    if (delta.distance > boostDistance) {
                         result.boost = true;
-                    } else if (this.config.desiredDistanceToTarget === 0) {
-                        result.boost = true; // always boost to get to target 
-                    }
+                    } 
                 }
             }
         }
@@ -112,7 +114,7 @@ export class GotoLocationInstruction implements IInstruction {
 
         let desiredRotation = Calculations.getTargetRotation(myInfo.pos, rotationTarget);
 
-        if (this.config.backwards) {
+        if (this.config.shouldFleeFrom || this.config.flyBackwards) {
             result.targetSpeed = -result.targetSpeed;
             desiredRotation += Math.PI;
             if (desiredRotation > Math.PI * 2) {
@@ -124,7 +126,7 @@ export class GotoLocationInstruction implements IInstruction {
         result.rotDelta = angleDiff;
 
         // if very close, but angle is steep, slow down for a while
-        if (!this.config.backwards && delta.distance < 250) {
+        if (!this.config.shouldFleeFrom && delta.distance < 250) {
             if (angleDiff > Math.PI / 4) {
                 result.targetSpeed = -1;
             } else if (angleDiff > Math.PI / 5) {
