@@ -14,6 +14,7 @@ import { ProtectTarget } from "../targets/protect-target";
 import { StopWatch } from "../../helper/timer";
 import { CrateTarget } from "../targets/crate-target";
 import { BringFlagHomeTarget } from "../targets/bring-flag-home-target";
+import { PlayerInfo } from "../airmash/player-info";
 
 enum FlagStates {
     Unknown = "Unkown",
@@ -60,8 +61,13 @@ export class CtfTargetSelection implements ITargetSelection {
     private distanceToMyFlag: number;
     private distanceToOtherFlag: number;
 
+    private chatSubscription: number;
+    private playerKilledSubscription: number;
+
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
         this.reset();
+        this.chatSubscription = this.env.on('chat', msg => this.onChat(msg));
+        this.playerKilledSubscription = this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
     }
 
     reset(): void {
@@ -69,6 +75,11 @@ export class CtfTargetSelection implements ITargetSelection {
         this.targets = [];
         this.lastLog = null;
         this.stopwatch.start();
+    }
+
+    dispose(): void {
+        this.env.off('chat', this.chatSubscription);
+        this.env.off('playerkilled', this.playerKilledSubscription);
     }
 
     exec(): ITarget {
@@ -144,7 +155,13 @@ export class CtfTargetSelection implements ITargetSelection {
         const currentTargetIsOK = this.peek() && this.peek().isValid();
         const shouldReevaluateTarget = this.stopwatch.elapsedMs() > REEVALUATION_TIME_MS || !currentTargetIsOK;
 
+
         if (!shouldReevaluateTarget) {
+            return;
+        }
+
+        if (this.peek() && this.peek().isSticky) {
+            // sticky target on top, don't reevaluate
             return;
         }
 
@@ -236,7 +253,7 @@ export class CtfTargetSelection implements ITargetSelection {
 
         if (!this.myRole) {
             const dieCast = Calculations.getRandomInt(1, 3);
-            this.myRole = dieCast === 1 ? "A" : "D";
+            this.myRole = "D"; // dieCast === 1 ? "A" : "D";
             logger.warn("My role is " + this.myRole);
         }
     }
@@ -278,10 +295,8 @@ export class CtfTargetSelection implements ITargetSelection {
                     });
                 }
             }
-        }
-
-        // my flag displaced?
-        if (Calculations.getDelta(this.defaultMyFlagPos, this.myFlagInfo.pos).distance > 100) {
+            // my flag displaced?
+        } else if (Calculations.getDelta(this.defaultMyFlagPos, this.myFlagInfo.pos).distance > 100) {
             const deltaToFlag = Calculations.getDelta(this.myFlagInfo.pos, this.env.me().pos);
             if (deltaToFlag) {
                 currentFlagStates.push({
@@ -312,4 +327,50 @@ export class CtfTargetSelection implements ITargetSelection {
         currentFlagStates.sort((a, b) => a.distanceToEvent - b.distanceToEvent);
         return currentFlagStates[0].state;
     }
+
+
+    private onPlayerKilled(data: any) {
+        for (let t of this.targets) {
+            t.onKill(data.killerID, data.killedID);
+        }
+    }
+
+    private onChat(msg) {
+        if (msg.id === this.myId) {
+            return;
+        }
+        const player = this.env.getPlayer(msg.id);
+        const me = this.env.me();
+
+        if (msg.text.indexOf('#drop') !== -1) {
+            if (player.team === me.team) {
+                const distance = Calculations.getDelta(me.pos, player.pos).distance;
+                if (distance < 300) {
+                    this.env.sendCommand("drop", "");
+                } else {
+                    this.env.sendTeam("too far away!");
+                }
+            }
+        }
+
+        const assistMatch = /^\s*#assist\s+(.+)$/.exec(msg.text);
+        if (assistMatch) {
+            if (this.myRole === "A" && player.team === this.myTeam) {
+                const playerName = assistMatch[1];
+                let playerToAssist: PlayerInfo;
+                if (playerName === 'me') {
+                    playerToAssist = player;
+                } else {
+                    playerToAssist = this.env.getPlayers().find(x => x.name.toLowerCase() === playerName.toLowerCase())
+                }
+
+                if (playerToAssist && playerToAssist.team === this.myTeam) {
+                    const target = new ProtectTarget(this.env, this.character, playerToAssist.id, 200);
+                    target.isSticky = true;
+                    this.targets.push(target);
+                }
+            }
+        }
+    }
+
 }

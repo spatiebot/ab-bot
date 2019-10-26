@@ -10,6 +10,7 @@ export abstract class BaseTarget implements ITarget {
     abstract goal: string;
 
     isActive: boolean;
+    isSticky: boolean;
 
     equals(other: ITarget): boolean {
         if (!other) {

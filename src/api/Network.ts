@@ -23,6 +23,7 @@ export class Network {
     private game: Game;
     private keyCount: number = 0;
     private token: string;
+    private lastChat: string;
 
     constructor(private ws: string) {
     }
@@ -121,6 +122,12 @@ export class Network {
     }
 
     chat(type: CHAT_TYPE, text: string, targetPlayerID: number = null) {
+        if (this.lastChat === text) {
+            // avoid being muted by the server
+            return;
+        }
+        this.lastChat = text;
+
         var c: number;
         switch (type) {
             case CHAT_TYPE.CHAT:

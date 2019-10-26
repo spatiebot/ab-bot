@@ -4,6 +4,7 @@ import { Mob } from "./Mob";
 import { FlagInfo } from "./flagInfo";
 import { Pos } from "../bot/pos";
 import logger = require("../helper/logger");
+import { Calculations } from "../bot/calculations";
 
 export class Game {
 
@@ -27,19 +28,27 @@ export class Game {
     constructor(private readonly network: Network) {
     }
 
-    on(eventName: string, subscriber: (x: any) => void) {
+    on(eventName: string, subscriber: (x: any) => void): number {
         var subs = this.subscribers[eventName];
-        subs = subs || [];
-        subs.push(subscriber);
+        subs = subs || {};
+        const subscriptionID = Calculations.getRandomInt(1, 100000);
+        subs[subscriptionID] = subscriber;
         this.subscribers[eventName] = subs;
+        return subscriptionID;
+    }
+
+    off(eventName, subscriptionID) {
+        var subs = this.subscribers[eventName];
+        subs = subs || {};
+        delete subs[subscriptionID];
     }
 
     private trigger(eventName: string, data: any) {
         var subs = this.subscribers[eventName];
-        subs = subs || [];
+        subs = subs || {};
 
-        for (const sub of subs) {
-            sub(data);
+        for (const key of Object.keys(subs)) {
+            subs[key](data);
         }
     }
 

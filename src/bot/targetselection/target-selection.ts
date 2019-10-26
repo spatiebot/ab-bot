@@ -24,9 +24,17 @@ export class TargetSelection implements ITargetSelection {
     private timeout: number = 0;
     private protectId: number = 0;
 
+    private chatSubscription: number;
+    private playerKilledSubscription: number;
+
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
-        this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
-        this.env.on('chat', msg => this.onChat(msg));
+        this.chatSubscription = this.env.on('chat', msg => this.onChat(msg));
+        this.playerKilledSubscription = this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
+    }
+
+    dispose(): void {
+        this.env.off('chat', this.chatSubscription);
+        this.env.off('playerkilled', this.playerKilledSubscription);
     }
 
     reset(): void {

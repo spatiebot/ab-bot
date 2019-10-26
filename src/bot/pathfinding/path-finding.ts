@@ -121,7 +121,7 @@ function gridContainerFromMountainData(path: string) {
         }
 
         for (let m of mountains[type]) {
-            grid[m.y][m.x] = m.v;
+            grid[m.y][m.x] = Math.round(m.v / 10);
         }
 
         return grid;
@@ -152,7 +152,7 @@ async function doPathFinding(missiles: Missile[], myPos: Pos, myType: number, ta
     let posToGridPos: (pos: Pos) => Pos;
     let posToAirmashPos: (pos: Pos) => Pos;
 
-    if (distance < maxDistanceOnDetailedMap) {
+    if (distance < maxDistanceOnDetailedMap && myType !== 2) {
         // cut grid from detailed map
         const cutGridInfo = gridContainerLarge.cutGrid(myType, myPos, targetPos);
         posToGridPos = function (pos: Pos) {
@@ -192,11 +192,10 @@ class PathFinding {
                 easystar.avoidAdditionalPoint(missilePos.x, missilePos.y);
             }
 
-            easystar.setAcceptableTiles([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]);
-            // set all the greyscales between 0 (black (walkable)) and 26 (white (mountains)) to a tile cost
-            for (var i = 1; i < 26; i++) {
-                easystar.setTileCost(i, i * 5);
-            }
+            easystar.setAcceptableTiles([0, 1, 2]);
+            easystar.setTileCost(1, 10);
+            easystar.setTileCost(2, 50);
+
             easystar.enableDiagonals();
             easystar.enableCornerCutting();
 

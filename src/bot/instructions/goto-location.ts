@@ -11,6 +11,8 @@ import { Pos } from "../pos";
 import logger = require("../../helper/logger");
 import { StopWatch } from "../../helper/timer";
 import { doPathFinding } from "../pathfinding/path-finding";
+import { FlagHelpers } from "../../helper/flaghelpers";
+import { DoNothingInstruction } from "./do-nothing-instruction";
 
 const timeoutUntilNextPathFindingStopWatch = new StopWatch();
 let lastPathFindingMs: number;
@@ -65,7 +67,7 @@ export class GotoLocationInstruction implements IInstruction {
             return lastPath[1]; // first pos is always my own pos
         } catch (error) {
             this.config.errors++;
-            if(this.config.errors > 20) {
+            if (this.config.errors > 20) {
                 throw error;
             }
         }
@@ -92,16 +94,12 @@ export class GotoLocationInstruction implements IInstruction {
             result.targetSpeed = 1;
 
             if (myInfo.type === 1) {
-                let isCarryingFlag = false;
-                if (this.env.getGameType() === 2) {
-                    const otherFlag = this.env.getFlagInfo(myInfo.team === 1 ? 2 : 1);
-                    isCarryingFlag = otherFlag.carrierId === myInfo.id;
-                }
+                const isCarryingFlag = FlagHelpers.isCarryingFlag(this.env);
                 if (!isCarryingFlag) {
                     const boostDistance = this.character ? this.character.firingRange : 200;
                     if (delta.distance > boostDistance) {
                         result.boost = true;
-                    } 
+                    }
                 }
             }
         }
@@ -112,25 +110,27 @@ export class GotoLocationInstruction implements IInstruction {
             rotationTarget = this.config.targetPos;
         }
 
-        let desiredRotation = Calculations.getTargetRotation(myInfo.pos, rotationTarget);
+        if (rotationTarget) {
+            let desiredRotation = Calculations.getTargetRotation(myInfo.pos, rotationTarget);
 
-        if (this.config.shouldFleeFrom || this.config.flyBackwards) {
-            result.targetSpeed = -result.targetSpeed;
-            desiredRotation += Math.PI;
-            if (desiredRotation > Math.PI * 2) {
-                desiredRotation -= Math.PI * 2;
+            if (this.config.shouldFleeFrom || this.config.flyBackwards) {
+                result.targetSpeed = -result.targetSpeed;
+                desiredRotation += Math.PI;
+                if (desiredRotation > Math.PI * 2) {
+                    desiredRotation -= Math.PI * 2;
+                }
             }
-        }
 
-        const angleDiff = Calculations.getAngleDiff(myInfo.rot, desiredRotation);
-        result.rotDelta = angleDiff;
+            const angleDiff = Calculations.getAngleDiff(myInfo.rot, desiredRotation);
+            result.rotDelta = angleDiff;
 
-        // if very close, but angle is steep, slow down for a while
-        if (!this.config.shouldFleeFrom && delta.distance < 250) {
-            if (angleDiff > Math.PI / 4) {
-                result.targetSpeed = -1;
-            } else if (angleDiff > Math.PI / 5) {
-                result.targetSpeed = 0;
+            // if very close, but angle is steep, slow down for a while
+            if (!this.config.shouldFleeFrom && delta.distance < 250) {
+                if (angleDiff > Math.PI / 4) {
+                    result.targetSpeed = -1;
+                } else if (angleDiff > Math.PI / 5) {
+                    result.targetSpeed = 0;
+                }
             }
         }
 

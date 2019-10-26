@@ -11,6 +11,7 @@ import { DoNothingInstruction } from "../instructions/do-nothing-instruction";
 import { BaseTarget } from "./base-target";
 import { PlayerInfo } from "../airmash/player-info";
 import logger = require("../../helper/logger");
+import { FlagHelpers } from "../../helper/flaghelpers";
 
 const blacklist: any = {};
 const banThreshold = 4;
@@ -63,12 +64,17 @@ export class ProtectTarget extends BaseTarget {
             return false;
         }
 
+        if (FlagHelpers.isCarryingFlag(this.env)) {
+
+            return false;
+        }
+
         this.determineInnerTarget();
 
         if (this.innerTarget) {
             return this.innerTarget.isValid();
         }
-
+        
         return true;
     }
 
@@ -155,9 +161,6 @@ export class ProtectTarget extends BaseTarget {
             let killCount = blacklist[killerID] || 0;
             killCount++;
             blacklist[killerID] = killCount;
-        }
-        if (killerID === this.env.myId() && killedID === this.target) {
-            this.env.sendChat('Oops, sorry!');
         }
     }
 

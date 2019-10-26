@@ -12,7 +12,8 @@ export interface IAirmashEnvironment {
     selectAircraft(type: number);
     getGameType(): number;
 
-    on(what: string, subscriber: (e: any) => any);
+    on(what: string, subscriber: (e: any) => any): number;
+    off(what: string, subscriberId);
 
     me(): PlayerInfo;
     myId(): number;
@@ -33,9 +34,12 @@ export interface IAirmashEnvironment {
 
     sendChat(msg: string);
     sendSay(msg: string);
+    sendTeam(msg: string);
+    sendWhisper(msg: string, targetPlayerId: number);
     sendCommand(command: string, args: string);
 
     getFlagInfo(team: number): FlagInfo;
+    getCtfScores(): { 1: number, 2: number };
 
     setDebugProperties(config: any);
 }

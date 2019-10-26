@@ -45,16 +45,24 @@ export class AirmashApiFacade implements IAirmashEnvironment {
         this.network.sendCommand("respawn", type.toString());
     }
 
-    on(what: string, subscriber: (e: any) => void) {
-        this.game.on(what, subscriber);
+    on(what: string, subscriber: (e: any) => void): number {
+        return this.game.on(what, subscriber);
     }
 
+    off(what: string, subscriptionID: number) {
+        this.game.off(what, subscriptionID);
+    }
+    
     getWalls(): number[][] {
         return walls;
     }
 
     getFlagInfo(team: number): FlagInfo {
         return team === 1 ? this.game.blueFlag : this.game.redFlag;
+    }
+
+    getCtfScores(): { 1: number, 2: number} {
+        return this.game.ctfScores;
     }
 
     me(): PlayerInfo {
@@ -71,17 +79,18 @@ export class AirmashApiFacade implements IAirmashEnvironment {
         }
 
         const isSuspiciouslyCentered = !p.posX && !p.posY && !p.rot;
+        const isStale = p.isStale() || p.leftHorizon;
 
         return {
             energy: p.energy,
             health: p.health,
             id: p.id,
             isHidden: p.dead || p.hidden || isSuspiciouslyCentered,
-            isInView: !p.isStale() && !p.leftHorizon,
+            isInView: !isStale,
             isStealthed: p.stealth,
             lowResPos: p.lowResPos,
             name: p.name,
-            pos: { x: p.posX, y: p.posY, isAccurate: true },
+            pos: isStale ? p.lowResPos : { x: p.posX, y: p.posY, isAccurate: true },
             rot: p.rot,
             speed: new Pos({ x: p.speedX, y: p.speedY }),
             team: p.team,
@@ -207,6 +216,14 @@ export class AirmashApiFacade implements IAirmashEnvironment {
 
     sendSay(msg: string) {
         this.network.chat(CHAT_TYPE.SAY, msg);
+    }
+
+    sendTeam(msg: string) {
+        this.network.chat(CHAT_TYPE.TEAM, msg);
+    }
+
+    sendWhisper(msg: string, targetPlayerId: number) {
+        this.network.chat(CHAT_TYPE.WHISPER, msg, targetPlayerId);
     }
 
     sendCommand(command: string, args: string) {

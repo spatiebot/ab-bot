@@ -8,5 +8,6 @@ export interface ITarget {
     getInfo(): { info: string, id: number, pos: Pos };
     goal: string;
     isActive: boolean;
+    isSticky: boolean;
     equals(other: ITarget): boolean;
 }

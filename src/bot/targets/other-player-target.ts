@@ -86,9 +86,6 @@ export class OtherPlayerTarget extends BaseTarget {
     private getTarget(): PlayerInfo {
         if (this.targetID) {
             var p = this.env.getPlayer(this.targetID);
-            if (!p) {
-                logger.info("Target disappeared");
-            }
             return p;
         }
         return null;
@@ -96,7 +93,6 @@ export class OtherPlayerTarget extends BaseTarget {
 
     onKill(killerID: number, killedID: number) {
         if (this.targetID === killedID) {
-            logger.info("Target was killed");
             this.shouldRecycle = true;
         }
         if (this.env.me().id === killedID) {

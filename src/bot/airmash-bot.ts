@@ -8,6 +8,8 @@ import logger = require("../helper/logger");
 import { ITargetSelection } from "./targetselection/itarget-selection";
 import { TargetSelectionFactory } from "./targetselection/target-selection-factory";
 import { StopWatch } from "../helper/timer";
+import { FlagHelpers } from "../helper/flaghelpers";
+import { TeamLeader } from "./team-leader";
 
 export class AirmashBot {
 
@@ -23,6 +25,8 @@ export class AirmashBot {
     private readonly tickStopwatch = new StopWatch();
     private readonly infoStopwatch = new StopWatch();
     private readonly upgradesStopwatch = new StopWatch();
+
+    private teamleader: TeamLeader;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter = null) {
 
@@ -76,6 +80,9 @@ export class AirmashBot {
             this.character = BotCharacter.get(myType);
         }
 
+        if (this.targetSelection) {
+            this.targetSelection.dispose();
+        }
         this.targetSelection = TargetSelectionFactory.createTargetSelection(this.env, this.character);
 
         this.steeringInstallation.start();
@@ -85,6 +92,24 @@ export class AirmashBot {
         const p = this.env.getPlayer(msg.id);
         const name = p ? p.name : "unknown";
         logger.info(name + ' says: "' + msg.text + '"');
+
+        // ... has been chosen as the new team leader.
+        // ... is still the team leader.
+        //     has made ... the new team leader
+        let teamLeaderMatch = /^(.*)\s(?:has\sbeen\schosen\sas\sthe\snew|is\sstill\sthe)\steam\sleader\./.exec(msg.text);
+        if (!teamLeaderMatch) {
+            teamLeaderMatch = /has\smade\s(.*)\sthe\snew\steam\sleader./.exec(msg.text);
+        }
+        if (teamLeaderMatch) {
+            const newTeamLeader = teamLeaderMatch[1];
+            if (newTeamLeader === this.env.me().name) {
+                if (!this.teamleader) {
+                    this.teamleader = new TeamLeader(this.env);
+                }
+            } else {
+                this.teamleader = null;
+            }
+        }
     }
 
     private logState() {
@@ -114,11 +139,17 @@ export class AirmashBot {
 
     private onTick() {
 
-        if (this.tickStopwatch.elapsedMs() > 300) {
+        if (this.tickStopwatch.elapsedMs() > 500) {
+            logger.warn("Delay between ticks is long: " + this.tickStopwatch.elapsedMs());
+        } else if (this.tickStopwatch.elapsedMs() > 1000) {
             logger.error("PANIC: delay between ticks too long: " + this.tickStopwatch.elapsedMs());
             this.reset();
         }
         this.tickStopwatch.start();
+
+        if (this.teamleader) {
+            this.teamleader.lead();
+        }
 
         if (!this.isSpawned) {
             return;
@@ -160,8 +191,7 @@ export class AirmashBot {
             //prowler should be as stealthed as possible
             const me = this.env.me();
             if (me.type === 5 && me.energy > 0.6 && !me.isStealthed) {
-                const flagInfo = this.env.getFlagInfo(me.team === 1 ? 2 : 1);
-                if (flagInfo.carrierId !== me.id) {
+                if (!FlagHelpers.isCarryingFlag(this.env)) {
                     const stealthInstruction = new SteeringInstruction();
                     stealthInstruction.stealth = true;
                     this.steeringInstallation.add(stealthInstruction);
