@@ -253,7 +253,7 @@ export class CtfTargetSelection implements ITargetSelection {
 
         if (!this.myRole) {
             const dieCast = Calculations.getRandomInt(1, 3);
-            this.myRole = "D"; // dieCast === 1 ? "A" : "D";
+            this.myRole = dieCast === 1 ? "A" : "D";
             logger.warn("My role is " + this.myRole);
         }
     }
