@@ -3,6 +3,7 @@
 This is an Airmash bot API + implementation based on the wight Airbattle API.
 
 The bot can do FFA and CTF.  
+In CTF it can be #leader
 In CTF it will randomly choose to be attacker or defend.  
 In FFA it can also run as a protecting bot, sticking to a player and defending the player from enemies.  
 
