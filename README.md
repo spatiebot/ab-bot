@@ -6,7 +6,7 @@ The bot can do FFA and CTF.
 In CTF it will randomly choose to be attacker or defend.  
 In FFA it can also run as a protecting bot, sticking to a player and defending the player from enemies.  
 
-To run the bot, you need Node v12 or more.
+To run the bot, you need Node v12 or more, and (to build it) the gulp-cli.
 
 1. clone repository and submodule (`git clone --recurse-submodules git://github.com/spatiebot/ab-bot.git`)
 2. npm i
