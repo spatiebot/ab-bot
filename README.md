@@ -11,12 +11,13 @@ To run the bot, you need Node v12 or more, and (to build it) the gulp-cli.
 1. clone repository and submodule (`git clone --recurse-submodules git://github.com/spatiebot/ab-bot.git`)
 2. npm i
 3. gulp
-4. node dist/app.js --name=SomeBot
+4. node dist/app.js --ws=euCtf
 
 Parameters:
 
-    --type: the type of aircraft used. Default = 1
-    --flag: the flag. Default = eu
+    --type: the type of aircraft used. Default = random
+    --flag: the flag. Default = random
+    --name: name of the bot. Default = random, based on flag.
     --ws: websocket to connect to. Use the full url or one of the shortcuts:
 
         local: "ws://127.0.0.1:3501/ffa",
