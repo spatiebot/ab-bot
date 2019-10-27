@@ -56,12 +56,18 @@ export class TeamLeader {
 
         if (!shouldSay) {
             const isOverAssistLine = (pos: Pos) => {
+                if (!pos) {
+                    return false;
+                }
                 if (me.team === 1) {
                     return pos.x > blueAssistLine;
                 }
                 return pos.x < redAssistLine;
             };
             const isAttacking = (pos: Pos) => {
+                if (!pos) {
+                    return false;
+                }
                 if (me.team === 1) {
                     return pos.x > centerLine;
                 }

@@ -15,6 +15,7 @@ import { StopWatch } from "../../helper/timer";
 import { CrateTarget } from "../targets/crate-target";
 import { BringFlagHomeTarget } from "../targets/bring-flag-home-target";
 import { PlayerInfo } from "../airmash/player-info";
+import { FlagHelpers } from "../../helper/flaghelpers";
 
 enum FlagStates {
     Unknown = "Unkown",
@@ -71,7 +72,6 @@ export class CtfTargetSelection implements ITargetSelection {
     }
 
     reset(): void {
-        this.myRole = null;
         this.targets = [];
         this.lastLog = null;
         this.stopwatch.start();
@@ -344,11 +344,13 @@ export class CtfTargetSelection implements ITargetSelection {
 
         if (msg.text.indexOf('#drop') !== -1) {
             if (player.team === me.team) {
-                const distance = Calculations.getDelta(me.pos, player.pos).distance;
-                if (distance < 300) {
-                    this.env.sendCommand("drop", "");
-                } else {
-                    this.env.sendTeam("too far away!");
+                if (FlagHelpers.isCarryingFlag(this.env)) {
+                    const distance = Calculations.getDelta(me.pos, player.pos).distance;
+                    if (distance < 300) {
+                        this.env.sendCommand("drop", "");
+                    } else {
+                        this.env.sendTeam("too far away!");
+                    }
                 }
             }
         }

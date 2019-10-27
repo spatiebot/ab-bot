@@ -58,7 +58,7 @@ export class GotoLocationInstruction implements IInstruction {
             if (shouldCalculate) {
                 const pathFindingStopwatch = new StopWatch();
                 pathFindingStopwatch.start();
-                lastPath = await doPathFinding(pathFindingConfig.missiles, myPos, pathFindingConfig.myType, targetPos, pathFindingConfig.distance);
+                lastPath = await doPathFinding(pathFindingConfig.missiles, myPos, pathFindingConfig.myType, targetPos);
                 lastPathFindingMs = pathFindingStopwatch.elapsedMs();
                 timeoutUntilNextPathFindingStopWatch.start();
             }
@@ -105,7 +105,7 @@ export class GotoLocationInstruction implements IInstruction {
         }
 
         let rotationTarget = firstPosToGoTo;
-        if (result.targetSpeed === 0) {
+        if (delta.distance < this.config.desiredDistanceToTarget) {
             // very close, turn towards the target, not towards the first pos in the path
             rotationTarget = this.config.targetPos;
         }

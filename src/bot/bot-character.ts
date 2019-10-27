@@ -51,8 +51,6 @@ export class BotCharacter {
     static Goli: BotCharacter = {
         ...BotCharacter.Default,
         name: 'Goli',
-        intimateRange: 500,
-        otherAircraftDistance: 200,
         fleeHealth: 0.8, // it takes some time to turn
         upgradePriority: [1, 3, 4, 2],
         type: 2

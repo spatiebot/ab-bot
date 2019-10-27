@@ -1,22 +1,10 @@
-/// <reference types="node" />
-
-import { parentPort } from "worker_threads";
 import { Pos } from "../pos";
 import easystarjs from "easystarjs";
 import { Missile } from "../airmash/missile";
 import { simplifyPath } from "./simplifyPath";
 import * as fs from 'fs';
-import logger from "../../helper/logger";
 
-const gridContainerSmall = gridContainerFromMountainData("data/mountains.json");
-const gridContainerLarge = gridContainerFromMountainData("data/mountains-large.json");
-
-const MAX_WIDTH = 800;
-const MAX_HEIGHT = 600;
-
-if (parentPort) {
-    parentPort.on("message", message => run(message));
-}
+const gridContainer = gridContainerFromMountainData("data/mountains.json");
 
 function gridContainerFromMountainData(path: string) {
     const json = fs.readFileSync(path, "utf-8");
@@ -42,52 +30,6 @@ function gridContainerFromMountainData(path: string) {
         scaleUp,
         posToGridPos,
         posToAirmashPos,
-
-        cutGrid(type: number, myPos: Pos, targetPos: Pos) {
-            const fullGrid = grids[type];
-            const pos1 = posToGridPos(myPos);
-            const pos2 = posToGridPos(targetPos);
-            const center = new Pos({
-                x: Math.round((pos1.x + pos2.x) / 2),
-                y: Math.round((pos1.y + pos2.y) / 2)
-            });
-            const topLeftCorner = new Pos({
-                x: Math.max(0, center.x - MAX_WIDTH / 2),
-                y: Math.max(0, center.y - MAX_HEIGHT / 2)
-            });
-
-            const bottomRightCorner = new Pos({
-                x: Math.min(center.x + MAX_WIDTH / 2, width),
-                y: Math.min(center.y + MAX_HEIGHT / 2, height)
-            });
-
-            const cutGrid: number[][] = [];
-            for (let x = topLeftCorner.x, cutGridX = 0; x < bottomRightCorner.x; x++ , cutGridX++) {
-                for (let y = topLeftCorner.y, cutGridY = 0; y < bottomRightCorner.y; y++ , cutGridY++) {
-                    if (!cutGrid[cutGridY]) {
-                        cutGrid[cutGridY] = [];
-                    }
-
-                    cutGrid[cutGridY][cutGridX] = fullGrid[y][x];
-                }
-            }
-
-            return {
-                cutGrid,
-                toCutGridPos(pos: Pos): Pos {
-                    return new Pos({
-                        x: pos.x - topLeftCorner.x,
-                        y: pos.y - topLeftCorner.y
-                    });
-                },
-                fromCutGridPos(pos: Pos): Pos {
-                    return new Pos({
-                        x: pos.x + topLeftCorner.x,
-                        y: pos.y + topLeftCorner.y
-                    });
-                }
-            };
-        }
     };
 
     function posToGridPos(pos: Pos): Pos {
@@ -128,48 +70,16 @@ function gridContainerFromMountainData(path: string) {
     }
 }
 
-async function run(workerData) {
-
-    const missiles: Missile[] = workerData.missiles;
-    const myPos: Pos = workerData.myPos;
-    const myType: number = workerData.myType;
-    const targetPos: Pos = workerData.targetPos;
-    const distance: number = workerData.distance;
-
-    try {
-        const path = await doPathFinding(missiles, myPos, myType, targetPos, distance);
-        parentPort.postMessage({ path });
-    } catch (error) {
-        parentPort.postMessage({ error });
-    }
-}
-
-async function doPathFinding(missiles: Missile[], myPos: Pos, myType: number, targetPos: Pos, distance: number): Promise<Pos[]> {
-
-    const maxDistanceOnDetailedMap = (MAX_HEIGHT / 2) * gridContainerLarge.scaleUp;
+async function doPathFinding(missiles: Missile[], myPos: Pos, myType: number, targetPos: Pos): Promise<Pos[]> {
 
     let grid: number[][];
-    let posToGridPos: (pos: Pos) => Pos;
-    let posToAirmashPos: (pos: Pos) => Pos;
 
-    if (distance < maxDistanceOnDetailedMap && myType !== 2) {
-        // cut grid from detailed map
-        const cutGridInfo = gridContainerLarge.cutGrid(myType, myPos, targetPos);
-        posToGridPos = function (pos: Pos) {
-            return cutGridInfo.toCutGridPos(gridContainerLarge.posToGridPos(pos))
-        };
-        posToAirmashPos = function (pos: any) {
-            return gridContainerLarge.posToAirmashPos(cutGridInfo.fromCutGridPos(pos));
-        }
+    grid = gridContainer.grids[myType];
 
-        grid = cutGridInfo.cutGrid;
-    } else {
-        grid = gridContainerSmall.grids[myType];
-        posToGridPos = gridContainerSmall.posToGridPos;
-        posToAirmashPos = gridContainerSmall.posToAirmashPos;
-    }
+    const pathFinding = new PathFinding(grid, missiles, 
+        pos => gridContainer.posToGridPos(pos), 
+        pos => gridContainer.posToAirmashPos(pos));
 
-    const pathFinding = new PathFinding(grid, missiles, posToGridPos, posToAirmashPos);
     const path = await pathFinding.findPath(myPos, targetPos);
     return path;
 }
