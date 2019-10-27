@@ -6,6 +6,7 @@
     },
     "dependencies": {
         "easystarjs": "^0.4.3",
+        "faker": "^4.1.0",
         "pino": "5.13.4",
         "pino-pretty": "3.2.0",
         "ws": "^7.1.2",

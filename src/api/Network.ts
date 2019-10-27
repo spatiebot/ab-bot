@@ -12,7 +12,7 @@ import { CHAT_TYPE } from './chat-type';
 import { Player } from './Player';
 import { Pos } from '../bot/pos';
 import { Upgrades } from './upgrades';
-import logger = require('../helper/logger');
+import { logger } from '../helper/logger';
 
 export class Network {
     private client: WebSocket;

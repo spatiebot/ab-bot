@@ -3,7 +3,7 @@ import { Player } from "./Player";
 import { Mob } from "./Mob";
 import { FlagInfo } from "./flagInfo";
 import { Pos } from "../bot/pos";
-import logger = require("../helper/logger");
+import { logger } from  '../helper/logger';
 import { Calculations } from "../bot/calculations";
 
 export class Game {

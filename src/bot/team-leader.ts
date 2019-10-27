@@ -1,7 +1,7 @@
 import { IAirmashEnvironment } from "./airmash/iairmash-environment";
 import { Pos } from "./pos";
 import { StopWatch } from "../helper/timer";
-import logger = require("../helper/logger");
+import { logger } from  '../helper/logger';
 
 const blueFlagPos = new Pos({ x: -9670, y: -1470 });
 const redFlagPos = new Pos({ x: 8600, y: -940 });

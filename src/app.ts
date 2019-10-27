@@ -3,7 +3,10 @@ import { argv } from 'yargs';
 import { AirmashBot } from './bot/airmash-bot';
 import { AirmashApiFacade } from "./bot/airmash/airmash-api";
 import { BotCharacter } from './bot/bot-character';
-import logger = require('./helper/logger');
+import { BotIdentityGenerator } from './bot-identity-generator';
+import { LoggerConfig, logger } from  './helper/logger';
+
+LoggerConfig.isDevelopment = !!argv.dev;
 
 const urls = {
     local: "ws://127.0.0.1:3501/ffa",
@@ -25,16 +28,23 @@ if (ws && !ws.startsWith('ws') && !ws.startsWith('http')) {
 }
 ws = ws || urls.euFfa;
 
-const name = <string>argv.name || 'Botsy';
-const type = <string>argv.type || '1';
-const flag = <string>argv.flag || 'eu';
+const flagConfig = <string>argv.flag || "random";
+const typeConfig = <string>argv.type || "random";
+
+const identity = BotIdentityGenerator.create(flagConfig, typeConfig);
+
+const type = identity.aircraftType;
+const flag = identity.flag;
+let name = <string>argv.name || identity.name;
 const character = <string>argv.character;
 const botCharacter = BotCharacter[character] || BotCharacter.get(Number(type));
 
-logger.info('Starting with the following configuration:', {
-    name: name,
-    type: type,
-    flag: flag,
+name = '🤖' + name, // always prefix the name with a bot character
+
+logger.warn('Starting with the following configuration:', {
+    name,
+    type,
+    flag,
     character: botCharacter.name,
     url: ws
 });

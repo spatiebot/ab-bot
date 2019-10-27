@@ -8,8 +8,8 @@ import { DoNothingTarget } from "../targets/do-nothing.target";
 import { DodgeEnemiesTarget } from "../targets/dodge-enemies-target";
 import { Pos } from "../pos";
 import { ProtectTarget } from "../targets/protect-target";
-import logger = require("../../helper/logger");
 import { ITargetSelection } from "./itarget-selection";
+import { logger } from "../../helper/logger";
 
 const TIME_OUT = 60 * 1000; // 1 min
 const PROTECT_TIME_OUT = 5 * TIME_OUT;

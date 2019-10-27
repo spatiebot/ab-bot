@@ -3,7 +3,6 @@ import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { BotCharacter } from "../bot-character";
 import { ITarget } from "../targets/itarget";
 import { FlagInfo } from "../../api/flagInfo";
-import logger = require("../../helper/logger");
 import { Calculations } from "../calculations";
 import { Pos } from "../pos";
 import { DoNothingTarget } from "../targets/do-nothing.target";
@@ -16,6 +15,7 @@ import { CrateTarget } from "../targets/crate-target";
 import { BringFlagHomeTarget } from "../targets/bring-flag-home-target";
 import { PlayerInfo } from "../airmash/player-info";
 import { FlagHelpers } from "../../helper/flaghelpers";
+import { logger } from "../../helper/logger";
 
 enum FlagStates {
     Unknown = "Unkown",

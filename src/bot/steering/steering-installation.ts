@@ -5,7 +5,7 @@ import { Speed } from "./speed";
 import { Fire } from "./fire";
 import { Fart } from "./fart";
 import { Stealth } from "./stealth";
-import logger = require("../../helper/logger");
+import { logger } from "../../helper/logger";
 
 export const steeringInstallationIntervalMs = 180;
 export const longThrottleInterval = 3.5 * steeringInstallationIntervalMs;

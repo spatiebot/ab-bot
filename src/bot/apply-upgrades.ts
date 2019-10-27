@@ -1,7 +1,7 @@
 import { IAirmashEnvironment } from "./airmash/iairmash-environment";
 import { Score } from "./airmash/score";
 import { BotCharacter } from "./bot-character";
-import logger = require("../helper/logger");
+import { logger } from  '../helper/logger';
 
 export class ApplyUpgrades {
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {

@@ -1,20 +1,32 @@
 import pino from 'pino';
-import * as fs from 'fs';
+
+class LoggerConfig {
+    static isDevelopment: boolean;
+}
 
 class Logger {
 
-    private logger: pino.Logger;
-    constructor() {
-        this.logger = pino({
+    private isDevelopment: boolean;
+    private _cachedLogger: pino.Logger;
+
+    private get logger(): pino.Logger {
+        if (this._cachedLogger && this.isDevelopment == LoggerConfig.isDevelopment) {
+            return this._cachedLogger;
+        }
+
+        const config = LoggerConfig.isDevelopment ? {
+            level: 'debug',
             prettyPrint: {
                 colorize: true,
                 translateTime: true,
                 ignore: 'pid,hostname'
             }
-        }, pino.destination());
-
+        } : { level: 'warn' };
+        this._cachedLogger = pino(config, pino.destination());
+        this.isDevelopment = LoggerConfig.isDevelopment;
+        return this._cachedLogger;
     }
-
+  
     debug(msg: string, ...args: any[]): void {
         this.logger['debug'](msg, ...args);
     }
@@ -34,12 +46,7 @@ class Logger {
     fatal(msg: string, ...args: any[]): void {
         this.logger['error'](msg, ...args);
     }
-
-    writeToFile(x: any) {
-        const s = JSON.stringify(x) + "\r\n";
-        fs.appendFile('log/bot.log', s, _ => {});
-    }
 }
 
 const logger = new Logger();
-export = logger
+export {logger, LoggerConfig}

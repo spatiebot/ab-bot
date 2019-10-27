@@ -4,12 +4,12 @@ import { BotCharacter } from "./bot-character";
 import { Score } from "./airmash/score";
 import { ApplyUpgrades } from "./apply-upgrades";
 import { SteeringInstruction } from "./steering/steering-instruction";
-import logger = require("../helper/logger");
 import { ITargetSelection } from "./targetselection/itarget-selection";
 import { TargetSelectionFactory } from "./targetselection/target-selection-factory";
 import { StopWatch } from "../helper/timer";
 import { FlagHelpers } from "../helper/flaghelpers";
 import { TeamLeader } from "./team-leader";
+import { logger } from "../helper/logger";
 
 export class AirmashBot {
 

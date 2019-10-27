@@ -10,8 +10,8 @@ import { BotCharacter } from "../bot-character";
 import { DoNothingInstruction } from "../instructions/do-nothing-instruction";
 import { BaseTarget } from "./base-target";
 import { PlayerInfo } from "../airmash/player-info";
-import logger = require("../../helper/logger");
 import { FlagHelpers } from "../../helper/flaghelpers";
+import { logger } from "../../helper/logger";
 
 const blacklist: any = {};
 const banThreshold = 4;
