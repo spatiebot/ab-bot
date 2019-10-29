@@ -62,23 +62,20 @@ export class CtfTargetSelection implements ITargetSelection {
     private distanceToMyFlag: number;
     private distanceToOtherFlag: number;
 
-    private chatSubscription: number;
     private playerKilledSubscription: number;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
         this.reset();
-        this.chatSubscription = this.env.on('chat', msg => this.onChat(msg));
         this.playerKilledSubscription = this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
     }
 
     reset(): void {
-        this.targets = [];
+        this.clearAllTargets();
         this.lastLog = null;
         this.stopwatch.start();
     }
 
     dispose(): void {
-        this.env.off('chat', this.chatSubscription);
         this.env.off('playerkilled', this.playerKilledSubscription);
     }
 
@@ -88,7 +85,7 @@ export class CtfTargetSelection implements ITargetSelection {
         const flagstate = this.determineFlagState();
 
         if (flagstate !== this.flagState) {
-            logger.warn("Most urgent flagstate: " + flagstate);
+            logger.info("Most urgent flagstate: " + flagstate);
             this.flagState = flagstate;
         }
 
@@ -182,7 +179,7 @@ export class CtfTargetSelection implements ITargetSelection {
 
         const info = this.peek().getInfo();
         if (info.info !== this.lastLog) {
-            logger.warn("CTF target: " + info.info);
+            logger.info("CTF target: " + info.info);
             this.lastLog = info.info;
         }
     }
@@ -252,10 +249,14 @@ export class CtfTargetSelection implements ITargetSelection {
         }
 
         if (!this.myRole) {
-            const dieCast = Calculations.getRandomInt(1, 3);
-            this.myRole = dieCast === 1 ? "A" : "D";
-            logger.warn("My role is " + this.myRole);
+            this.selectRole();
         }
+    }
+
+    private selectRole() {
+        const dieCast = Calculations.getRandomInt(1, 3);
+        this.myRole = dieCast === 1 ? "A" : "D";
+        logger.warn("My role is " + this.myRole);
     }
 
     private determineFlagState(): FlagStates {
@@ -335,15 +336,21 @@ export class CtfTargetSelection implements ITargetSelection {
         }
     }
 
-    private onChat(msg) {
-        if (msg.id === this.myId) {
-            return;
-        }
-        const player = this.env.getPlayer(msg.id);
+    private clearAllTargets() {
+        this.targets = [];
+    }
+
+    execCtfCommand(playerID: number, command: string, param: string) {
+
+        const player = this.env.getPlayer(playerID);
         const me = this.env.me();
 
-        if (msg.text.indexOf('#drop') !== -1) {
-            if (player.team === me.team) {
+        if (player.team !== me.team) {
+            return;
+        }
+
+        switch (command) {
+            case 'drop':
                 if (FlagHelpers.isCarryingFlag(this.env)) {
                     const distance = Calculations.getDelta(me.pos, player.pos).distance;
                     if (distance < 300) {
@@ -352,26 +359,36 @@ export class CtfTargetSelection implements ITargetSelection {
                         this.env.sendTeam("too far away!");
                     }
                 }
-            }
-        }
+                break;
 
-        const assistMatch = /^\s*#assist\s+(.+)$/.exec(msg.text);
-        if (assistMatch) {
-            if (this.myRole === "A" && player.team === this.myTeam) {
-                const playerName = assistMatch[1];
-                let playerToAssist: PlayerInfo;
-                if (playerName === 'me') {
-                    playerToAssist = player;
-                } else {
-                    playerToAssist = this.env.getPlayers().find(x => x.name.toLowerCase() === playerName.toLowerCase())
-                }
+            case 'assist':
+                const playerToAssist = this.env.getPlayer(Number(param));
 
-                if (playerToAssist && playerToAssist.team === this.myTeam) {
+                this.clearAllTargets();
+                if (playerToAssist && playerToAssist.team === this.myTeam && playerToAssist.id !== me.id) {
                     const target = new ProtectTarget(this.env, this.character, playerToAssist.id, 200);
                     target.isSticky = true;
                     this.targets.push(target);
                 }
-            }
+                break;
+
+            case 'defend':
+            case 'def':
+                this.clearAllTargets();
+                this.myRole = "D";
+                break;
+
+            case 'cap':
+            case 'capture':
+            case 'escort':
+                this.clearAllTargets();
+                this.myRole = "A";
+                break;
+
+            case 'auto':
+                this.clearAllTargets();
+                this.selectRole();
+                break;
         }
     }
 

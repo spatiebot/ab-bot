@@ -1,31 +1,29 @@
 import { IAirmashEnvironment } from "./airmash/iairmash-environment";
 import { Pos } from "./pos";
 import { StopWatch } from "../helper/timer";
-import { logger } from  '../helper/logger';
 
 const blueFlagPos = new Pos({ x: -9670, y: -1470 });
 const redFlagPos = new Pos({ x: 8600, y: -940 });
 const blueAssistLine = 6000;
 const redAssistLine = -7000;
 const centerLine = 500;
-const leadTimer = new StopWatch();
-
-let lastSaid = "";
 
 export class TeamLeader {
+    private leadTimer = new StopWatch();
     private assistID: number;
+    private lastSaid = "";
 
     constructor(private env: IAirmashEnvironment) {
-        leadTimer.start();
+        this.leadTimer.start();
     }
 
     lead() {
 
-        if (leadTimer.elapsedMs() < 1000) {
+        if (this.leadTimer.elapsedMs() < 1000) {
             return;
         }
 
-        leadTimer.start();
+        this.leadTimer.start();
 
         const me = this.env.me();
         const otherTeam = me.team === 1 ? 2 : 1;
@@ -105,9 +103,9 @@ export class TeamLeader {
             shouldSay = "#capture"
         }
 
-        if (lastSaid !== shouldSay) {
+        if (this.lastSaid !== shouldSay) {
             this.env.sendTeam(shouldSay);
-            lastSaid = shouldSay;
+            this.lastSaid = shouldSay;
         }
     }
 

@@ -8,21 +8,29 @@ import { GotoLocationConfig } from "./goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { PlayerInfo } from "../airmash/player-info";
 import { Pos } from "../pos";
-import logger = require("../../helper/logger");
 import { StopWatch } from "../../helper/timer";
 import { doPathFinding } from "../pathfinding/path-finding";
 import { FlagHelpers } from "../../helper/flaghelpers";
-import { DoNothingInstruction } from "./do-nothing-instruction";
+import { Worker } from "worker_threads";
+import { Missile } from "../airmash/missile";
 
-const timeoutUntilNextPathFindingStopWatch = new StopWatch();
-let lastPathFindingMs: number;
-let lastPath: Pos[];
+declare const __dirname: string;
+let pfWorkers = {};
+
+function createNewWorker(id: number) {
+    if (pfWorkers[id]) {
+        pfWorkers[id].terminate();
+    }
+
+    pfWorkers[id] = new Worker(__dirname + '/../pathfinding/path-finding.js');
+}
 
 export class GotoLocationInstruction implements IInstruction {
 
     private config: GotoLocationConfig;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter, private targetPlayerId = null) {
+        createNewWorker(env.myId());
     }
 
     private async getNextPos(me: PlayerInfo, deltaToTarget: { diffX: number, diffY: number, distance: number }): Promise<Pos> {
@@ -44,33 +52,65 @@ export class GotoLocationInstruction implements IInstruction {
             targetPos = this.config.targetPos;
         }
 
-        const pathFindingConfig = {
-            missiles: this.env.getMissiles(),
-            myPos,
-            myType: me.type,
-            targetPos,
-            distance: deltaToTarget.distance
-        };
-
         try {
-            const timeoutMs = Math.max(lastPathFindingMs, 200);
-            const shouldCalculate = !lastPath || timeoutUntilNextPathFindingStopWatch.elapsedMs() > timeoutMs;
-            if (shouldCalculate) {
+            if (this.config.shouldCalculatePath()) {
                 const pathFindingStopwatch = new StopWatch();
                 pathFindingStopwatch.start();
-                lastPath = await doPathFinding(pathFindingConfig.missiles, myPos, pathFindingConfig.myType, targetPos);
-                lastPathFindingMs = pathFindingStopwatch.elapsedMs();
-                timeoutUntilNextPathFindingStopWatch.start();
+                const path = await this.findPath(this.env.getMissiles(), myPos, me.type, targetPos, me.id);
+                this.config.setLastPath(path, pathFindingStopwatch.elapsedMs());
             }
             this.config.errors = 0;
 
-            return lastPath[1]; // first pos is always my own pos
+            return this.config.lastPath[1]; // first pos is always my own pos
         } catch (error) {
             this.config.errors++;
             if (this.config.errors > 20) {
                 throw error;
             }
         }
+    }
+
+    private findPath(missiles: Missile[], myPos: Pos, myType: number, targetPos: Pos, myID: number): Promise<Pos[]> {
+        const pfWorker = pfWorkers[myID];
+        pfWorker.removeAllListeners();
+
+        const pfPromise = new Promise<Pos[]>((resolve, reject) => {
+
+            function cleanUp() {
+                clearTimeout(timeOut);
+                pfWorker.removeAllListeners();
+            }
+
+            const timeOut = setTimeout(() => {
+                cleanUp();
+                reject(new Error('pathFinding timeout'));
+            }, 800);
+
+            pfWorker.on("error", err => {
+                reject(err);
+                cleanUp();
+            });
+
+            pfWorker.on("message", message => {
+                if (message.path) {
+                    resolve(message.path);
+                }
+                if (message.error) {
+                    reject(message.error);
+                }
+                reject(message);
+                cleanUp();
+            });
+
+            pfWorker.postMessage({
+                missiles,
+                myPos,
+                targetPos,
+                myType
+            });
+        });
+
+        return pfPromise;
     }
 
     configure(config: GotoLocationConfig) {

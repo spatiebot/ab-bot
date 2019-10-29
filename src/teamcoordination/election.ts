@@ -1,0 +1,96 @@
+import { IAirmashEnvironment } from "../bot/airmash/iairmash-environment";
+import { Calculations } from "../bot/calculations";
+
+export class Election {
+    private candidates: {};
+    private chatSubscr: number;
+    private electionResultResolver: (value?: number | PromiseLike<number>) => void;
+
+    constructor(private env: IAirmashEnvironment) {
+        this.chatSubscr = this.env.on('chat', x => this.onChat(x));
+    }
+
+    dispose() {
+        this.env.off('chat', this.chatSubscr);
+        this.electionResultResolver = null;
+    }
+
+    doElection(): Promise<number> {
+        this.env.sendTeam("Type #yes in the next 30 seconds if you want to be team leader. Type #vote <name> to vote for someone who is a candidate.");
+        this.candidates = {};
+        setTimeout(() => this.endElection(), 30 * 1000);
+        return new Promise((resolve) => {
+            this.electionResultResolver = resolve;
+        })
+    }
+
+    private onChat(ev: any) {
+
+        const playerId = ev.id as number;
+        const player = this.env.getPlayer(playerId);
+        const message = ev.text;
+
+        const me = this.env.me();
+
+        if (player.team !== me.team) {
+            return;
+        }
+
+        if (message === "#yes") {
+            if (!this.candidates[playerId + '']) {
+                this.candidates[playerId + ''] = 1;
+                this.env.sendWhisper("Your vote has been counted", playerId);
+            }
+        } else {
+            let m = /#vote\s(.+)$/.exec(message);
+            if (m) {
+                const name = m[1];
+                const victim = this.env.getPlayers().find(x => x.name === name);
+                if (victim && victim.id !== player.id) {
+                    if (this.candidates[victim.id + '']) {
+                        this.candidates[victim.id + '']++;
+                        this.env.sendWhisper("Your vote for " + victim.name + " has been counted", playerId);
+                    }
+                }
+            }
+        }
+    }
+    
+    private endElection() {
+        let ids = Object.keys(this.candidates);
+        const me = this.env.me();
+        if (ids.length === 0) {
+            const allTeamPlayers = this.env.getPlayers().filter(x => x.team === me.team && !x.isHidden);
+            ids = allTeamPlayers.map(x => '' + x.id);
+            for (var i = 0; i < ids.length; i++) {
+                this.candidates[ids[i]] = 1;
+            }
+        }
+
+        let highestVotes = 0;
+        for (let i = 0; i < ids.length; i++) {
+            const id = ids[i];
+            if (this.candidates[id] > highestVotes) {
+                highestVotes = this.candidates[id];
+            }
+        }
+
+        const topCandidates = [];
+        for (let i = 0; i < ids.length; i++) {
+            const id = ids[i];
+            if (this.candidates[id] === highestVotes) {
+                topCandidates.push(id);
+            }
+        }
+
+        if (topCandidates.length > 0) {
+            const teamLeaderId = topCandidates[Calculations.getRandomInt(0, topCandidates.length)];
+            const winner = this.env.getPlayer(teamLeaderId);
+            this.env.sendTeam(winner.name + " has been chosen as the new team leader.");
+
+            this.electionResultResolver(Number(teamLeaderId));
+        }
+
+        this.dispose();
+    }
+}

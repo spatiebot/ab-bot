@@ -4,7 +4,8 @@ import { AirmashBot } from './bot/airmash-bot';
 import { AirmashApiFacade } from "./bot/airmash/airmash-api";
 import { BotCharacter } from './bot/bot-character';
 import { BotIdentityGenerator } from './bot-identity-generator';
-import { LoggerConfig, logger } from  './helper/logger';
+import { LoggerConfig, logger } from './helper/logger';
+import { Calculations } from './bot/calculations';
 
 LoggerConfig.isDevelopment = !!argv.dev;
 
@@ -31,24 +32,29 @@ ws = ws || urls.euFfa;
 const flagConfig = <string>argv.flag || "random";
 const typeConfig = <string>argv.type || "random";
 
-const identity = BotIdentityGenerator.create(flagConfig, typeConfig);
+const numBots = <number>argv.num || 1;
 
-const type = identity.aircraftType;
-const flag = identity.flag;
-let name = <string>argv.name || identity.name;
-const character = <string>argv.character;
-const botCharacter = BotCharacter[character] || BotCharacter.get(Number(type));
+for (let i = 0; i < numBots; i++) {
+    const identity = BotIdentityGenerator.create(flagConfig, typeConfig);
 
-name = '🤖' + name, // always prefix the name with a bot character
+    const type = identity.aircraftType;
+    const flag = identity.flag;
+    let name = <string>argv.name || identity.name;
+    const character = <string>argv.character;
+    const botCharacter = BotCharacter[character] || BotCharacter.get(Number(type));
 
-logger.warn('Starting with the following configuration:', {
-    name,
-    type,
-    flag,
-    character: botCharacter.name,
-    url: ws
-});
+    logger.warn('Starting bot ' + i + ' with the following configuration:', {
+        name,
+        type,
+        flag,
+        character: botCharacter.name,
+        url: ws
+    });
 
-var env = new AirmashApiFacade(ws);
-const bot = new AirmashBot(env, botCharacter);
-bot.start(name, flag, Number(type));
+    const env = new AirmashApiFacade(ws);
+    const bot = new AirmashBot(env, botCharacter);
+
+    // use a random timeout to prevent hiccups when X bots join the server at once
+    const randomTimeout = Calculations.getRandomInt(numBots * 200, numBots * 2000);
+    setTimeout(() => bot.start(name, flag, Number(type)), randomTimeout);
+}

@@ -1,4 +1,3 @@
-import { ITarget } from "./itarget";
 import { IInstruction } from "../instructions/iinstruction";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { BotCharacter } from "../bot-character";

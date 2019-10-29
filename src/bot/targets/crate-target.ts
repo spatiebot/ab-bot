@@ -1,11 +1,9 @@
-import { ITarget } from "./itarget";
 import { GotoLocationInstruction } from "../instructions/goto-location";
 import { IInstruction } from "../instructions/iinstruction";
 import { Calculations } from "../calculations";
 import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { Crate } from "../airmash/crate";
-import logger = require("../../helper/logger");
 import { BaseTarget } from "./base-target";
 
 export class CrateTarget extends BaseTarget {

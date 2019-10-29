@@ -1,5 +1,4 @@
 import { PlayerInfo } from "../airmash/player-info";
-import { ITarget } from "./itarget";
 import { GotoLocationInstruction } from "../instructions/goto-location";
 import { IInstruction } from "../instructions/iinstruction";
 import { Calculations } from "../calculations";
@@ -9,7 +8,6 @@ import { Pos } from "../pos";
 import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { getPlayersSortedByDistance } from "./get-closest-player";
-import logger = require("../../helper/logger");
 import { BaseTarget } from "./base-target";
 
 export class OtherPlayerTarget extends BaseTarget {

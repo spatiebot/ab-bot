@@ -1,3 +1,6 @@
+/// <reference types="node" />
+
+import { parentPort } from "worker_threads";
 import { Pos } from "../pos";
 import easystarjs from "easystarjs";
 import { Missile } from "../airmash/missile";
@@ -5,6 +8,10 @@ import { simplifyPath } from "./simplifyPath";
 import * as fs from 'fs';
 
 const gridContainer = gridContainerFromMountainData("data/mountains.json");
+
+if (parentPort) {
+    parentPort.on("message", message => run(message));
+}
 
 function gridContainerFromMountainData(path: string) {
     const json = fs.readFileSync(path, "utf-8");
@@ -123,6 +130,21 @@ class PathFinding {
             });
             easystar.calculate();
         });
+    }
+}
+
+async function run(workerData) {
+
+    const missiles: Missile[] = workerData.missiles;
+    const myPos: Pos = workerData.myPos;
+    const myType: number = workerData.myType;
+    const targetPos: Pos = workerData.targetPos;
+
+    try {
+        const path = await doPathFinding(missiles, myPos, myType, targetPos);
+        parentPort.postMessage({ path });
+    } catch (error) {
+        parentPort.postMessage({ error });
     }
 }
 

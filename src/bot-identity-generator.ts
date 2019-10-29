@@ -12,23 +12,22 @@ const localesForFlag = {
     be: 'nl',
     de: 'de',
     fr: 'fr',
-    cz: 'cz',
+    // cz: 'cz',
     pt: 'pt_BR',
-    sk: 'sk',
+    // sk: 'sk',
     ch: 'de_CH',
-    tr: 'tr',
-    ua: 'uk',
+    // tr: 'tr',
     gb: 'en_GB',
     at: 'de_AT',
     it: 'it',
     no: 'nb_NO',
-    pl: 'pl',
-    ru: 'ru',
+    // pl: 'pl',
+    // ru: 'ru',
     es: 'es',
     se: 'sv',
     us: 'en_US',
-    communist: 'zh_CN',
-    imperial: 'ja'
+    // communist: 'zh_CN',
+    // imperial: 'ja'
 };
 const flagCodes = Object.keys(localesForFlag);
 
@@ -63,7 +62,7 @@ export class BotIdentityGenerator {
         }
 
         const x = require('faker/locale/' + lang);
-        name = x.name.findName();
+        name = '[b]_' + x.name.firstName();
 
         return {
             name,

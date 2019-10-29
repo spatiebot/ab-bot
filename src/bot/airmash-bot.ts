@@ -10,10 +10,10 @@ import { StopWatch } from "../helper/timer";
 import { FlagHelpers } from "../helper/flaghelpers";
 import { TeamLeader } from "./team-leader";
 import { logger } from "../helper/logger";
+import { TeamCoordination } from "../teamcoordination/team-coordination";
+import { Slave } from "../teamcoordination/slave";
 
 export class AirmashBot {
-
-    static current: AirmashBot;
 
     private readonly steeringInstallation: SteeringInstallation;
     private targetSelection: ITargetSelection;
@@ -26,9 +26,11 @@ export class AirmashBot {
     private readonly infoStopwatch = new StopWatch();
     private readonly upgradesStopwatch = new StopWatch();
 
-    private teamleader: TeamLeader;
+    private teamleader: TeamLeader; // for leading as if i was a player
+    private teamCoordination: TeamCoordination; // for coordinating the ctf bots
+    private slave: Slave; // for executing commands from the teamleader via the teamcoordinator
 
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter = null) {
+    constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
 
         this.env.on('spawned', (x) => this.onSpawned(x));
         this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
@@ -39,8 +41,9 @@ export class AirmashBot {
         this.env.on('ctfGameOver', () => this.onCtfGameOver());
 
         this.steeringInstallation = new SteeringInstallation(this.env);
-
-        AirmashBot.current = this;
+        this.teamCoordination = new TeamCoordination(this.env);
+        this.slave = new Slave();
+        this.teamCoordination.addSlave(this.slave);
     }
 
     start(name: string, flag: string, aircraftType: number) {
@@ -83,7 +86,7 @@ export class AirmashBot {
         if (this.targetSelection) {
             this.targetSelection.dispose();
         }
-        this.targetSelection = TargetSelectionFactory.createTargetSelection(this.env, this.character);
+        this.targetSelection = TargetSelectionFactory.createTargetSelection(this.env, this.character, this.slave);
 
         this.steeringInstallation.start();
     }
@@ -114,10 +117,10 @@ export class AirmashBot {
 
     private logState() {
         const me = this.env.me();
-        logger.info(`Name: ${me.name}, Ping: ${this.env.getPing()}, upgrades: ${this.score.upgrades}`);
-        logger.info(`Score: ${this.score.score}, energy: ${me.energy}, health: ${me.health}`);
+        logger.info('BotInfo', { name: me.name, ping: this.env.getPing() });
+        logger.info('BotInfo', { score: this.score.score, energy: me.energy, health: me.health });
         if (me.upgrades && (me.upgrades.speed === 0 || me.upgrades.speed > 0)) {
-            logger.info(`Upgrade levels: speed ${me.upgrades.speed}, defense ${me.upgrades.defense}, energy ${me.upgrades.energy}, missile ${me.upgrades.missile}`);
+            logger.info('Upgrade levels', me.upgrades);
         }
     }
 

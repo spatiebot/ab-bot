@@ -1,4 +1,3 @@
-import { ITarget } from "./itarget";
 import { GotoLocationInstruction } from "../instructions/goto-location";
 import { IInstruction } from "../instructions/iinstruction";
 import { GotoLocationConfig } from "../instructions/goto-location-config";
