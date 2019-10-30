@@ -106,6 +106,7 @@ export class ProtectTarget extends BaseTarget {
             .filter(x => x.player.id !== this.target)
             .filter(x => x.player.team !== me.team)
             .filter(x => x.player.name.indexOf('BrexitBot') === -1)
+            .filter(x => x.player.name.indexOf('GreenlandBot') === -1)
             .filter(x => !x.player.isHidden && x.player.isInView);
 
         const enemy = enemies[0];
