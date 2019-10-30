@@ -55,3 +55,46 @@ Parameters:
         - Shy
         - Protective (will listen to '#protect me' commands)
 
+# CTF behavior and commands
+
+## Bot behavior
+
+In the default mode (auto), the bots will split up between defending and attacking. 
+
+Defenders will stick to the flag, attack intruders, and try to recover if the flag was taken or displaced.
+
+Attackers will try to grab the enemy flag, and protect the flag carrier if the flag was taken.
+
+## Team leader selection
+
+Commands to the bots can only be issued by the team leader. When the bots join, at the start of each game, and each 15 minutes an election will be held to select the team leader. You can propose yourself as team leader by saying #yes during an election. Other people can vote for you during the election by saying #vote (name).
+
+If a bot is selected as team leader, it will direct the bots into an aggressive mode, only being more defensive if the enemy has 2 points already.
+
+## Commands
+
+Commands are issued in the team chat (or public chat, or whispering, whatever you like).
+
+Commands are always prefixed by a # sign.
+
+**#def, #defend, #recap, #recover**  
+Any of these commands will switch all bots to "D"-mode, defending the base and recapturing the flag.
+
+**#cap, #capture, #escort**  
+Any of these commands will switch all bots to "A"-mode; they will try to grab the enemy flag and escort the flag carrier.
+
+**#auto**  
+The default mode will be activated: bots will be split up between A and D mode.  
+
+**#assist playerName, #assist me**  
+Will join the player requesting assistance: in case of "me" the team leader, otherwise the mentioned player. 
+
+**#drop**  
+If one of the bots is carrying the flag, this command will make the bot fly towards you and drop the flag at your feet. It will only do so if you're within reach, and it will only try to do so for 10 seconds.
+
+
+
+
+
+
+

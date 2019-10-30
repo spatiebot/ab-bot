@@ -222,8 +222,7 @@ export class AirmashBot {
                     this.steeringInstallation.add(steeringInstruction);
                 }
             } catch (err) {
-                logger.error(err);
-                logger.warn("Get steeringinstructions failed. Resetting target.");
+                logger.info("Get steeringinstructions failed. Resetting target.", err);
                 this.reset();
             }
 

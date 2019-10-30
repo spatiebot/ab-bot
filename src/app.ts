@@ -43,7 +43,7 @@ for (let i = 0; i < numBots; i++) {
     const character = <string>argv.character;
     const botCharacter = BotCharacter[character] || BotCharacter.get(Number(type));
 
-    logger.warn('Starting bot ' + i + ' with the following configuration:', {
+    logger.info('Starting bot no ' + i + ' with the following configuration:', {
         name,
         type,
         flag,
