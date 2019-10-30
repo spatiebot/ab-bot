@@ -74,7 +74,7 @@ export class ProtectTarget extends BaseTarget {
         if (this.innerTarget) {
             return this.innerTarget.isValid();
         }
-        
+
         return true;
     }
 
@@ -105,6 +105,7 @@ export class ProtectTarget extends BaseTarget {
         const enemies = getPlayersSortedByDistance(this.env, true, pos)
             .filter(x => x.player.id !== this.target)
             .filter(x => x.player.team !== me.team)
+            .filter(x => x.player.name.indexOf('BrexitBot') === -1)
             .filter(x => !x.player.isHidden && x.player.isInView);
 
         const enemy = enemies[0];
