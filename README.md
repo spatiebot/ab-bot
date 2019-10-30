@@ -79,11 +79,14 @@ Any of these commands will switch all bots to "A"-mode; they will try to grab th
 **#auto**  
 The default mode will be activated: bots will be split up between A and D mode.  
 
-**#assist playerName, #assist me**  
-Will join the player requesting assistance: in case of "me" the team leader, otherwise the mentioned player. 
+**#assist, #protect**  
+Needs the playername as parameter, or "me" as a shortcut for the speaker.  
+Example: `#assist Spatie`  
+Will go to the player requesting assistance and defend him: in case of "me" the team leader, otherwise the mentioned player. 
 
 **#drop**  
-If one of the bots is carrying the flag, this command will make the bot fly towards you and drop the flag at your feet. It will only do so if you're within reach, and it will only try to do so for 10 seconds.
+If one of the bots is carrying the flag, this command will make the bot fly towards you and drop the flag at your feet. It will only do so if you're within reach, and it will only try to do so for 10 seconds.  
+This is the only command that non-team leaders can issue.
 
 
 
