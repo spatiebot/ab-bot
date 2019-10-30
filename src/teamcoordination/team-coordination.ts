@@ -145,7 +145,8 @@ export class TeamCoordination {
 
             if (command === 'leader' && speakerIsTeamLeader) {
                 const victim = this.env.getPlayers().find(x => x.name === param);
-                if (victim && victim.team === me.team) {
+                // don't allow me to be leader: i will be banned for spam
+                if (victim && victim.team === me.team && victim.id !== me.id) {
                     this.teamLeaderId = victim.id;
                     this.env.sendTeam(player.name + " has made " + victim.name + " the new team leader.");
                 }

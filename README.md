@@ -91,7 +91,9 @@ This is the only command that non-team leaders can issue.
 **#type**  
 Needs a number or "random" as parameter. Makes the bot switch to a given aircraft type. Example: `#type 2` will make the bots switch to Goliaths. Use `#type random` to make them select a random aircraft. 
 
-
+**#leader**  
+Needs the playername as parameter. Makes the mentioned player the new leader. You can't make the masterbot the leader, because he will be muted
+for spamming if you do. Example: `#leader rookie`.
 
 
 
