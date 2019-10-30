@@ -13,6 +13,7 @@ import { FlagHelpers } from "../../helper/flaghelpers";
 import { Missile } from "../airmash/missile";
 import * as workerpool from "workerpool";
 import { logger } from "../../helper/logger";
+import { MissileHelper } from "../../helper/missilehelper";
 
 declare const __dirname: string;
 
@@ -51,7 +52,7 @@ export class GotoLocationInstruction implements IInstruction {
 
         try {
             if (this.config.shouldCalculatePath()) {
-                const path = await this.findPath(this.env.getMissiles(), myPos, me.type, targetPos, me.id);
+                const path = await this.findPath(MissileHelper.getHostileMissiles(this.env), myPos, me.type, targetPos, me.id);
                 this.config.setLastPath(path);
                 honoredPathFindingRequests++;
             }

@@ -20,7 +20,7 @@ function gridContainerFromMountainData(path: string) {
     const scaleUp = 33000 / width; // scale relative to airmash map
     const transX = width / 2; // translation: airmash has it's center at 0,0
     const transY = height / 2;
-    
+
     return {
         width,
         height,
@@ -30,7 +30,7 @@ function gridContainerFromMountainData(path: string) {
         posToAirmashPos,
     };
 
-    function initialize()  {
+    function initialize() {
         const json = fs.readFileSync(path, "utf-8");
 
         const mountains = JSON.parse(json);
@@ -101,6 +101,7 @@ async function doPathFinding(workerData): Promise<Pos[]> {
 }
 
 class PathFinding {
+
     constructor(
         private grid: number[][],
         private missiles: Missile[],
@@ -108,14 +109,16 @@ class PathFinding {
         private posToAirmashPos: (pos: any) => Pos) {
     }
 
-    findPath(firstPos: Pos, targetPos: Pos): Promise<Pos[]> {
+    findPath(firstPos: Pos, targetPos: Pos, ignoreMissiles = false): Promise<Pos[]> {
         return new Promise((resolve, reject) => {
             var easystar = new easystarjs.js();
             easystar.setGrid(this.grid);
 
-            for (let m of this.missiles) {
-                const missilePos = this.posToGridPos(m.pos);
-                easystar.avoidAdditionalPoint(missilePos.x, missilePos.y);
+            if (!ignoreMissiles) {
+                for (let m of this.missiles) {
+                    const missilePos = this.posToGridPos(m.pos);
+                    easystar.avoidAdditionalPoint(missilePos.x, missilePos.y);
+                }
             }
 
             easystar.setAcceptableTiles([0, 1, 2]);
@@ -128,9 +131,19 @@ class PathFinding {
             const gridFirstPos = this.posToGridPos(firstPos);
             const gridTargetPos = this.posToGridPos(targetPos);
 
-            easystar.findPath(gridFirstPos.x, gridFirstPos.y, gridTargetPos.x, gridTargetPos.y, path => {
+            easystar.findPath(gridFirstPos.x, gridFirstPos.y, gridTargetPos.x, gridTargetPos.y, async path => {
                 if (!path) {
-                    reject('no path found');
+                    // try again without missiles
+                    if (!ignoreMissiles) {
+                        try {
+                            const path2 = await this.findPath(firstPos, targetPos, true);
+                            resolve(path2);
+                        } catch (error) {
+                            reject(error)
+                        }
+                    } else {
+                        reject('no path found');
+                    }
                     return;
                 }
                 const airmashPath = path.map(x => this.posToAirmashPos(x));

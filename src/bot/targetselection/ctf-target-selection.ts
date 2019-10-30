@@ -13,10 +13,8 @@ import { ProtectTarget } from "../targets/protect-target";
 import { StopWatch } from "../../helper/timer";
 import { CrateTarget } from "../targets/crate-target";
 import { BringFlagHomeTarget } from "../targets/bring-flag-home-target";
-import { PlayerInfo } from "../airmash/player-info";
 import { FlagHelpers } from "../../helper/flaghelpers";
 import { logger } from "../../helper/logger";
-import { PlaneTypeSelection } from "../plane-type-selection";
 import { AirmashBot } from "../airmash-bot";
 import { Slave } from "../../teamcoordination/slave";
 import { TOO_FAR_AWAY_FOR_POOPING_FLAG, HandOverFlagTarget } from "../targets/hand-over-flag-target";
@@ -44,7 +42,8 @@ const redFlagPositions = {
 const REEVALUATION_TIME_MS = 1500;
 const CRATE_DISTANCE_THRESHOLD = 500;
 const FIGHT_DISTANCE_THRESHOLD = 300;
-const PROTECT_ZONE = 700;
+const PROTECT_FLAG_DISTANCE = 700;
+const PROTECT_PLAYER_DISTANCE = 100;
 
 export class CtfTargetSelection implements ITargetSelection {
 
@@ -215,7 +214,7 @@ export class CtfTargetSelection implements ITargetSelection {
 
         if (this.myRole === "A") {
             if (this.flagState === FlagStates.OtherFlagTaken) {
-                const protectCarrier = new ProtectTarget(this.env, this.character, Number(this.otherFlagInfo.carrierId), 300);
+                const protectCarrier = new ProtectTarget(this.env, this.character, Number(this.otherFlagInfo.carrierId), PROTECT_PLAYER_DISTANCE);
                 protectCarrier.setInfo("protect flag carrier");
                 return protectCarrier;
             }
@@ -224,7 +223,7 @@ export class CtfTargetSelection implements ITargetSelection {
             grabFlag.setInfo("Go grab flag");
             return grabFlag;
         } else {
-            const protectFlag = new ProtectTarget(this.env, this.character, this.myFlagInfo.pos, PROTECT_ZONE);
+            const protectFlag = new ProtectTarget(this.env, this.character, this.myFlagInfo.pos, PROTECT_FLAG_DISTANCE);
             protectFlag.setInfo("protect my flag");
             return protectFlag;
         }
@@ -378,7 +377,7 @@ export class CtfTargetSelection implements ITargetSelection {
 
                 this.clearAllTargets();
                 if (playerToAssist && playerToAssist.team === this.myTeam && playerToAssist.id !== me.id) {
-                    const target = new ProtectTarget(this.env, this.character, playerToAssist.id, 200);
+                    const target = new ProtectTarget(this.env, this.character, playerToAssist.id, PROTECT_PLAYER_DISTANCE);
                     target.isSticky = true;
                     this.targets.push(target);
                 }

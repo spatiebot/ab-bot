@@ -88,7 +88,8 @@ Will go to the player requesting assistance and defend him: in case of "me" the 
 If one of the bots is carrying the flag, this command will make the bot fly towards you and drop the flag at your feet. It will only do so if you're within reach, and it will only try to do so for 10 seconds.  
 This is the only command that non-team leaders can issue.
 
-
+**#type**  
+Needs a number or "random" as parameter. Makes the bot switch to a given aircraft type. Example: `#type 2` will make the bots switch to Goliaths. Use `#type random` to make them select a random aircraft. 
 
 
 

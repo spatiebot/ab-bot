@@ -6,6 +6,7 @@ import { AvoidObjectInstruction } from "../instructions/avoid-object-instruction
 import { Missile } from "../airmash/missile";
 import { FartInstruction } from "../instructions/fart-instruction";
 import { BaseTarget } from "./base-target";
+import { MissileHelper } from "../../helper/missilehelper";
 
 export class DodgeMissileTarget extends BaseTarget {
     goal = 'dodge';
@@ -15,27 +16,8 @@ export class DodgeMissileTarget extends BaseTarget {
     constructor(private env: IAirmashEnvironment, private character: BotCharacter, private blacklist: number[]) {
         super();
 
-        const me = env.me();
-        const myTeam = me.team;
-        const allMissiles = env.getMissiles();
-        const hostileMissiles = allMissiles.filter(x => {
-            if (blacklist.indexOf(x.id) > -1) {
-                return false;
-            }
-            if (!x.playerID) {
-                // assume hostile
-                return true;
-            }
-            if (x.playerID === me.id) {
-                // my own missile
-                return false;
-            }
-            var missileShooter = env.getPlayer(x.playerID);
-            if (!missileShooter) {
-                return true;
-            }
-            return missileShooter.team !== myTeam;
-        });
+        const hostileMissiles = MissileHelper.getHostileMissiles(this.env)
+            .filter(x => blacklist.indexOf(x.id) === -1);
 
         let closestObject: {
             distance: number,
