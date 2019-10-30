@@ -81,14 +81,14 @@ export class BotCharacter {
         ...BotCharacter.Aggressive,
         name: 'Brexit',
         goal: 'brexit',
-        type: 1
+        type: 0
     };
 
     static Greenland: BotCharacter = {
         ...BotCharacter.Aggressive,
         name: 'Greenland',
         goal: 'greenland',
-        type: 1
+        type: 0
     };
 
     static get(type: number): BotCharacter {
