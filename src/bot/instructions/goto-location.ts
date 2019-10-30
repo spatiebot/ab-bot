@@ -20,6 +20,7 @@ declare const __dirname: string;
 let pfPool = workerpool.pool(__dirname + '/../pathfinding/path-finding.js');
 let pathfindingRequests = 0;
 let pathfindingRequestsFailed = 0;
+let fatalPathFindingFailures = 0;
 let honoredPathFindingRequests = 0;
 let pathFindingRequestTimer = new StopWatch();
 pathFindingRequestTimer.start();
@@ -67,6 +68,7 @@ export class GotoLocationInstruction implements IInstruction {
             this.config.errors++;
             pathfindingRequestsFailed++;
             if (this.config.errors > 20) {
+                fatalPathFindingFailures++;
                 throw error;
             }
         } finally {
@@ -74,15 +76,20 @@ export class GotoLocationInstruction implements IInstruction {
             pathfindingRequests++;
             const secs = pathFindingRequestTimer.elapsedSeconds();
             if (secs > 3) {
-                logger.info(
+                logger.warn(
                     "Pathfindingrequests/s: " + Math.round(pathfindingRequests / secs) +
                     ", honored: " + Math.round(honoredPathFindingRequests / secs) +
-                    ", failed: " + Math.round(pathfindingRequestsFailed / secs));
+                    ", failed: " + Math.round(pathfindingRequestsFailed / secs) +
+                    ", fatal: " + Math.round(fatalPathFindingFailures / secs)
+                );
+
+                logger.warn("Pool stats", pfPool.stats());
 
                 pathFindingRequestTimer.start();
                 pathfindingRequests = 0;
                 pathfindingRequestsFailed = 0;
                 honoredPathFindingRequests = 0;
+                fatalPathFindingFailures = 0;
             }
         }
     }

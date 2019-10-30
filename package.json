@@ -17,7 +17,11 @@
         "@types/pino": "^5.8.11",
         "@types/workerpool": "^5.0.0",
         "@types/yargs": "^13.0.2",
+        "@typescript-eslint/eslint-plugin": "^2.6.0",
+        "@typescript-eslint/parser": "^2.6.0",
+        "eslint": "^6.6.0",
         "gulp": "^4.0.0",
+        "gulp-eslint": "^6.0.0",
         "gulp-typescript": "^5.0.1",
         "typescript": "^3.6.4"
     }

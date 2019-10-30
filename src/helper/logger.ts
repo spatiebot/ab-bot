@@ -15,7 +15,7 @@ class Logger {
         }
 
         const config = LoggerConfig.isDevelopment ? {
-            level: 'debug',
+            level: 'warn',
             prettyPrint: {
                 colorize: true,
                 translateTime: true,
