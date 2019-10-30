@@ -19,6 +19,7 @@ import { logger } from "../../helper/logger";
 import { PlaneTypeSelection } from "../plane-type-selection";
 import { AirmashBot } from "../airmash-bot";
 import { Slave } from "../../teamcoordination/slave";
+import { TOO_FAR_AWAY_FOR_POOPING_FLAG, HandOverFlagTarget } from "../targets/hand-over-flag-target";
 
 enum FlagStates {
     Unknown = "Unkown",
@@ -354,12 +355,19 @@ export class CtfTargetSelection implements ITargetSelection {
 
         switch (command) {
             case 'drop':
+                const currentTarget = this.peek();
+                if (currentTarget && currentTarget.goal === 'handoverflag') {
+                    return;
+                }
                 if (FlagHelpers.isCarryingFlag(this.env)) {
                     const distance = Calculations.getDelta(me.pos, player.pos).distance;
-                    if (distance < 300) {
-                        this.env.sendCommand("drop", "");
+                    if (distance > TOO_FAR_AWAY_FOR_POOPING_FLAG) {
+                        this.env.sendTeam("Too far away!");
                     } else {
-                        this.env.sendTeam("too far away!");
+                        const target = new HandOverFlagTarget(this.env, playerID);
+                        target.isSticky = true;
+                        this.targets.push(target);
+                        this.env.sendTeam("I'll try bringing you the flag during 10 seconds.");
                     }
                 }
                 break;
