@@ -3,8 +3,11 @@
 This is an Airmash bot API + implementation based on the wight Airbattle API.
 
 The bot can do FFA and CTF.  
-In CTF it can be #leader of the other bots  
-In CTF it will randomly choose to be attacker or defend.  
+
+In CTF one bot will appoint one player as the leader, who can issue commands to manage the bots, mostly compatible with the commands of the existing CTF bots.
+
+A CTF bot can be #leader of the other bots  
+
 In FFA it can also run as a protecting bot, sticking to a player and defending the player from enemies.  
 
 To run the bot, you need Node v12 or more, and (to build it) the gulp-cli.
@@ -12,10 +15,13 @@ To run the bot, you need Node v12 or more, and (to build it) the gulp-cli.
 1. clone repository and submodule (`git clone --recurse-submodules git://github.com/spatiebot/ab-bot.git`)
 2. npm i
 3. gulp
-4. node dist/app.js --ws=euCtf
+4. node dist/app.js --ws=euCtf --num=5
+
+(this starts 5 bots in eu ctf.)
 
 Parameters:
 
+    --num: the number of bots. Default = 1
     --type: the type of aircraft used. Default = random
     --flag: the flag. Default = random
     --name: name of the bot. Default = random, based on flag.
