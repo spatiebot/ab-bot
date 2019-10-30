@@ -16,4 +16,8 @@ export class StopWatch {
     elapsedSeconds() {
         return this.elapsedMs() / 1000;
     }
+
+    elapsedMinutes() {
+        return this.elapsedSeconds() / 60;
+    }
 }

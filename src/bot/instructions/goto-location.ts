@@ -9,28 +9,25 @@ import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { PlayerInfo } from "../airmash/player-info";
 import { Pos } from "../pos";
 import { StopWatch } from "../../helper/timer";
-import { doPathFinding } from "../pathfinding/path-finding";
 import { FlagHelpers } from "../../helper/flaghelpers";
-import { Worker } from "worker_threads";
 import { Missile } from "../airmash/missile";
+import * as workerpool from "workerpool";
+import { logger } from "../../helper/logger";
 
 declare const __dirname: string;
-let pfWorkers = {};
 
-function createNewWorker(id: number) {
-    if (pfWorkers[id]) {
-        pfWorkers[id].terminate();
-    }
-
-    pfWorkers[id] = new Worker(__dirname + '/../pathfinding/path-finding.js');
-}
+let pfPool = workerpool.pool(__dirname + '/../pathfinding/path-finding.js');
+let pathfindingRequests = 0;
+let pathfindingRequestsFailed = 0;
+let honoredPathFindingRequests = 0;
+let pathFindingRequestTimer = new StopWatch();
+pathFindingRequestTimer.start();
 
 export class GotoLocationInstruction implements IInstruction {
 
     private config: GotoLocationConfig;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter, private targetPlayerId = null) {
-        createNewWorker(env.myId());
     }
 
     private async getNextPos(me: PlayerInfo, deltaToTarget: { diffX: number, diffY: number, distance: number }): Promise<Pos> {
@@ -54,63 +51,51 @@ export class GotoLocationInstruction implements IInstruction {
 
         try {
             if (this.config.shouldCalculatePath()) {
-                const pathFindingStopwatch = new StopWatch();
-                pathFindingStopwatch.start();
                 const path = await this.findPath(this.env.getMissiles(), myPos, me.type, targetPos, me.id);
-                this.config.setLastPath(path, pathFindingStopwatch.elapsedMs());
+                this.config.setLastPath(path);
+                honoredPathFindingRequests++;
             }
-            this.config.errors = 0;
 
+            if (!this.config.lastPath || this.config.lastPath.length === 0) {
+                throw new Error("did not find a path");
+            }
+
+            this.config.errors = 0;
             return this.config.lastPath[1]; // first pos is always my own pos
         } catch (error) {
             this.config.errors++;
+            pathfindingRequestsFailed++;
             if (this.config.errors > 20) {
                 throw error;
+            }
+        } finally {
+
+            pathfindingRequests++;
+            const secs = pathFindingRequestTimer.elapsedSeconds();
+            if (secs > 3) {
+                logger.info(
+                    "Pathfindingrequests/s: " + Math.round(pathfindingRequests / secs) +
+                    ", honored: " + Math.round(honoredPathFindingRequests / secs) +
+                    ", failed: " + Math.round(pathfindingRequestsFailed / secs));
+
+                pathFindingRequestTimer.start();
+                pathfindingRequests = 0;
+                pathfindingRequestsFailed = 0;
+                honoredPathFindingRequests = 0;
             }
         }
     }
 
-    private findPath(missiles: Missile[], myPos: Pos, myType: number, targetPos: Pos, myID: number): Promise<Pos[]> {
-        const pfWorker = pfWorkers[myID];
-        pfWorker.removeAllListeners();
+    private async findPath(missiles: Missile[], myPos: Pos, myType: number, targetPos: Pos, myID: number): Promise<Pos[]> {
+        const params = {
+            missiles,
+            myPos,
+            targetPos,
+            myType
+        };
 
-        const pfPromise = new Promise<Pos[]>((resolve, reject) => {
-
-            function cleanUp() {
-                clearTimeout(timeOut);
-                pfWorker.removeAllListeners();
-            }
-
-            const timeOut = setTimeout(() => {
-                cleanUp();
-                reject(new Error('pathFinding timeout'));
-            }, 800);
-
-            pfWorker.on("error", err => {
-                reject(err);
-                cleanUp();
-            });
-
-            pfWorker.on("message", message => {
-                if (message.path) {
-                    resolve(message.path);
-                }
-                if (message.error) {
-                    reject(message.error);
-                }
-                reject(message);
-                cleanUp();
-            });
-
-            pfWorker.postMessage({
-                missiles,
-                myPos,
-                targetPos,
-                myType
-            });
-        });
-
-        return pfPromise;
+        const path = await pfPool.exec('doPathFinding', [params]).timeout(800);
+        return path;
     }
 
     configure(config: GotoLocationConfig) {

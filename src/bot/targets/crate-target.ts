@@ -8,13 +8,15 @@ import { BaseTarget } from "./base-target";
 
 export class CrateTarget extends BaseTarget {
     private readonly targetID: number;
-    private gotoLocationConfig = new GotoLocationConfig();
+    private gotoLocationConfig: GotoLocationConfig;
 
     private maxDistance: number;
     goal = "stealCrates";
 
     constructor(private env: IAirmashEnvironment, blacklist: number[]) {
         super();
+        this.gotoLocationConfig = new GotoLocationConfig(env.myId());
+        
         const crates = env.getCrates().filter(x => blacklist.indexOf(x.id) === -1);
         const myPos = env.me().pos;
 

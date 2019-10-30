@@ -53,6 +53,16 @@ export class SteeringInstallation {
         this.instructions.push(instruction);
     }
 
+    stopAllSteering() {
+        this.stop();
+        this.env.sendKey('FIRE', false);
+        this.env.sendKey('LEFT', false);
+        this.env.sendKey('RIGHT', false);
+        this.env.sendKey('UP', false);
+        this.env.sendKey('DOWN', false);
+        this.env.sendKey('SPECIAL', false);
+    }
+
     executeWhenReady() {
         if (!this.isStarted) {
             return;
@@ -66,7 +76,6 @@ export class SteeringInstallation {
         if (now - this.lastExecuted < steeringInstallationIntervalMs) {
             return;
         }
-
         this.isExecuting = true;
 
         try {

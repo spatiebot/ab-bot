@@ -87,15 +87,33 @@ export class TeamLeader {
                 .filter(x => !x.isStealthed && !x.isHidden)
                 .filter(x => x.team === me.team && isAttacking(x.pos));
 
-            attackingPlayers.sort((a, b) => a.pos.x - b.pos.x);
+            attackingPlayers.sort((a, b) => {
+                // give the already assisted player an advantage, 
+                // to prevent switching back and forth in case of nearby players
+                let aX = a.pos.x;
+                let bX = b.pos.x;
+                let advantage = 500;
+                if (me.team === 2) {
+                    advantage = -advantage;
+                }
+                if (a.id === this.assistID) {
+                    aX += advantage;
+                }
+                if (b.id === this.assistID) {
+                    bX += advantage;
+                }
+
+                if (me.team === 1) {
+                    return bX - aX;
+                } 
+                return aX - bX;
+            });
 
             const firstPlayer = attackingPlayers[0];
             if (firstPlayer) {
                 shouldSay = "#assist " + firstPlayer.name;
 
-                if (isOverAssistLine(firstPlayer.pos)) {
-                    this.assistID = firstPlayer.id;
-                }
+                this.assistID = firstPlayer.id;
             }
         }
 

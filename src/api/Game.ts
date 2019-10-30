@@ -128,12 +128,14 @@ export class Game {
         this.myID = myID;
         this.type = gameType;
         logger.debug("My id: " + myID);
-        this.trigger("spawned", { id: myID, gameType });
+        this.trigger("spawned", { id: myID, respawn: false });
     }
 
     onRespawn(playerId: number) {
         this.getPlayer(playerId).reset();
-        this.trigger("spawned", { id: playerId, respawn: true });
+        // delay this trigger, because the message to change player type is later than
+        // this message if respawning is done for changing the plane.
+        setTimeout(() => this.trigger("spawned", { id: playerId, respawn: true }), 10);
     }
 
     onPlayerInfo(player: Player) {

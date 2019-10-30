@@ -7,13 +7,14 @@ import { Pos } from "../pos";
 import { BaseTarget } from "./base-target";
 
 export class GotoLocationTarget extends BaseTarget {
-    private gotoLocationConfig = new GotoLocationConfig();
+    private gotoLocationConfig: GotoLocationConfig;
 
     goal = "gotoLocation";
     private manualInfo: string;
     
     constructor(private env: IAirmashEnvironment, private readonly targetPos: Pos) {
         super();
+        this.gotoLocationConfig = new GotoLocationConfig(env.myId());
     }
 
     onKill(killerID: number, killedID: number) {
@@ -45,6 +46,6 @@ export class GotoLocationTarget extends BaseTarget {
     }
 
     isValid(): boolean {
-        return !this.gotoLocationConfig.needNewPath;
+        return true;
     }
 }

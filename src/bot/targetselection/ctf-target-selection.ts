@@ -16,6 +16,9 @@ import { BringFlagHomeTarget } from "../targets/bring-flag-home-target";
 import { PlayerInfo } from "../airmash/player-info";
 import { FlagHelpers } from "../../helper/flaghelpers";
 import { logger } from "../../helper/logger";
+import { PlaneTypeSelection } from "../plane-type-selection";
+import { AirmashBot } from "../airmash-bot";
+import { Slave } from "../../teamcoordination/slave";
 
 enum FlagStates {
     Unknown = "Unkown",
@@ -61,10 +64,9 @@ export class CtfTargetSelection implements ITargetSelection {
     private stopwatch = new StopWatch();
     private distanceToMyFlag: number;
     private distanceToOtherFlag: number;
-
     private playerKilledSubscription: number;
 
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
+    constructor(private env: IAirmashEnvironment, private character: BotCharacter, private bot: AirmashBot, private slave: Slave) {
         this.reset();
         this.playerKilledSubscription = this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
     }
@@ -73,6 +75,8 @@ export class CtfTargetSelection implements ITargetSelection {
         this.clearAllTargets();
         this.lastLog = null;
         this.stopwatch.start();
+
+        this.slave.repeatLastCommand();
     }
 
     dispose(): void {
@@ -151,7 +155,6 @@ export class CtfTargetSelection implements ITargetSelection {
 
         const currentTargetIsOK = this.peek() && this.peek().isValid();
         const shouldReevaluateTarget = this.stopwatch.elapsedMs() > REEVALUATION_TIME_MS || !currentTargetIsOK;
-
 
         if (!shouldReevaluateTarget) {
             return;
@@ -232,7 +235,7 @@ export class CtfTargetSelection implements ITargetSelection {
         this.myId = me.id;
 
         if (this.myTeam !== me.team) {
-            logger.warn(`I am on the ${me.team === 1 ? "blue" : "red"} team`);
+            logger.info(`I am on the ${me.team === 1 ? "blue" : "red"} team`);
             this.myTeam = me.team;
             this.otherTeam = me.team === 1 ? 2 : 1;
         }
@@ -243,7 +246,7 @@ export class CtfTargetSelection implements ITargetSelection {
         this.defaultMyFlagPos = this.myTeam === 1 ? blueFlagPositions.defaultPos : redFlagPositions.defaultPos;
         this.defaultOtherFlagPos = this.myTeam === 1 ? redFlagPositions.defaultPos : blueFlagPositions.defaultPos;
 
-        if (this.myFlagInfo.pos) {
+        if (this.myFlagInfo.pos && this.otherFlagInfo.pos && me.pos) {
             this.distanceToMyFlag = Calculations.getDelta(this.myFlagInfo.pos, me.pos).distance;
             this.distanceToOtherFlag = Calculations.getDelta(this.otherFlagInfo.pos, me.pos).distance;
         }
@@ -253,10 +256,10 @@ export class CtfTargetSelection implements ITargetSelection {
         }
     }
 
-    private selectRole() {
+    private selectRole(newRole: string = null) {
         const dieCast = Calculations.getRandomInt(1, 3);
-        this.myRole = dieCast === 1 ? "A" : "D";
-        logger.warn("My role is " + this.myRole);
+        this.myRole = newRole || (dieCast === 1 ? "A" : "D");
+        logger.info("My role is " + this.myRole);
     }
 
     private determineFlagState(): FlagStates {
@@ -362,6 +365,7 @@ export class CtfTargetSelection implements ITargetSelection {
                 break;
 
             case 'assist':
+            case 'protect':
                 const playerToAssist = this.env.getPlayer(Number(param));
 
                 this.clearAllTargets();
@@ -374,6 +378,8 @@ export class CtfTargetSelection implements ITargetSelection {
 
             case 'defend':
             case 'def':
+            case 'recap':
+            case 'recover':
                 this.clearAllTargets();
                 this.myRole = "D";
                 break;
@@ -385,11 +391,24 @@ export class CtfTargetSelection implements ITargetSelection {
                 this.myRole = "A";
                 break;
 
+            case 'type':
+                let planeType = Number(param);
+                if (!planeType) {
+                    planeType = Calculations.getRandomInt(1, 6);
+                }
+
+                this.switchPlane(planeType);
+                break;
+
             case 'auto':
                 this.clearAllTargets();
-                this.selectRole();
+                this.selectRole(param);
                 break;
         }
+    }
+
+    switchPlane(newPlaneType: number) {
+        this.bot.switchTo(newPlaneType);
     }
 
 }

@@ -9,11 +9,13 @@
         "faker": "^4.1.0",
         "pino": "5.13.4",
         "pino-pretty": "3.2.0",
+        "workerpool": "^5.0.1",
         "ws": "^7.1.2",
         "yargs": "^14.0.0"
     },
     "devDependencies": {
         "@types/pino": "^5.8.11",
+        "@types/workerpool": "^5.0.0",
         "@types/yargs": "^13.0.2",
         "gulp": "^4.0.0",
         "gulp-typescript": "^5.0.1",

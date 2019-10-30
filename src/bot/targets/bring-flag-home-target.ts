@@ -5,14 +5,16 @@ import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { Pos } from "../pos";
 import { BaseTarget } from "./base-target";
 import { FireInstruction } from "../instructions/fire-instruction";
+import { FlagHelpers } from "../../helper/flaghelpers";
 
 export class BringFlagHomeTarget extends BaseTarget {
-    private gotoLocationConfig = new GotoLocationConfig();
+    private gotoLocationConfig: GotoLocationConfig;
 
     goal = "gotoLocation";
     
     constructor(private env: IAirmashEnvironment, private readonly targetPos: Pos, private readonly isInDangerZone) {
         super();
+        this.gotoLocationConfig = new GotoLocationConfig(env.myId());
     }
 
     onKill(killerID: number, killedID: number) {
@@ -42,6 +44,6 @@ export class BringFlagHomeTarget extends BaseTarget {
     }
 
     isValid(): boolean {
-        return !this.gotoLocationConfig.needNewPath;
+        return FlagHelpers.isCarryingFlag(this.env);
     }
 }

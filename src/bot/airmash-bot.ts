@@ -12,12 +12,12 @@ import { TeamLeader } from "./team-leader";
 import { logger } from "../helper/logger";
 import { TeamCoordination } from "../teamcoordination/team-coordination";
 import { Slave } from "../teamcoordination/slave";
+import { PlaneTypeSelection } from "./plane-type-selection";
 
 export class AirmashBot {
 
     private readonly steeringInstallation: SteeringInstallation;
     private targetSelection: ITargetSelection;
-    private aircraftType: number;
     private isSpawned: boolean;
     private score: Score;
     private isPreparingSteeringInstructions = false;
@@ -29,6 +29,7 @@ export class AirmashBot {
     private teamleader: TeamLeader; // for leading as if i was a player
     private teamCoordination: TeamCoordination; // for coordinating the ctf bots
     private slave: Slave; // for executing commands from the teamleader via the teamcoordinator
+    private planeTypeSelection: PlaneTypeSelection;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
 
@@ -42,33 +43,39 @@ export class AirmashBot {
 
         this.steeringInstallation = new SteeringInstallation(this.env);
         this.teamCoordination = new TeamCoordination(this.env);
-        this.slave = new Slave();
+        this.slave = new Slave(this.env);
         this.teamCoordination.addSlave(this.slave);
+        this.planeTypeSelection = new PlaneTypeSelection();
     }
 
-    start(name: string, flag: string, aircraftType: number) {
-        this.env.startMainLoop();
-        this.aircraftType = aircraftType;
+    join(name: string, flag: string, aircraftType: number) {
+        this.planeTypeSelection.aircraftType = aircraftType;
         this.env.joinGame(name, flag);
     }
 
     private onSpawned(data: any) {
-        setTimeout(() => this.onEnvironmentReady(data), 100);
-    }
+        var me = this.env.me();
 
-    private onEnvironmentReady(data): void {
-
-        if (data.id !== this.env.myId()) {
+        if (me.id !== data.id) {
+            // another player (re)spawned
             return;
         }
+
+        this.startBot();
+    }
+
+    private async startBot() {
+
+        const me = this.env.me();
 
         logger.info("i spawned");
         logger.info("Game type: " + this.env.getGameType());
 
-        if (this.env.me().type !== this.aircraftType) {
-            logger.info("... in the wrong body. Respawning as a different aircraft...");
-            setTimeout(() => this.env.selectAircraft(this.aircraftType), 2000);
-            return;
+        if (me.type !== this.planeTypeSelection.aircraftType) {
+            logger.info("... in the wrong body. Respawning as a different aircraft...", { me: me.type, sel: this.planeTypeSelection.aircraftType });
+
+            await this.planeTypeSelection.switch(this.env);
+            return; // this method will be called again
         }
 
         this.isSpawned = true;
@@ -86,9 +93,29 @@ export class AirmashBot {
         if (this.targetSelection) {
             this.targetSelection.dispose();
         }
-        this.targetSelection = TargetSelectionFactory.createTargetSelection(this.env, this.character, this.slave);
+        this.targetSelection = TargetSelectionFactory.createTargetSelection(this.env, this.character, this.slave, this);
 
         this.steeringInstallation.start();
+    }
+
+    async switchTo(aircraftType: number) {
+        if (!this.isSpawned) {
+            return;
+        }
+
+        this.stop();
+        this.planeTypeSelection.aircraftType = aircraftType;
+        this.startBot();
+
+        // restart bot if this didn't work
+        setTimeout(() => {
+            if (this.isSpawned) {
+                return; // it worked.
+            }
+            // prevent switching again, this obviously didn't work
+            this.planeTypeSelection.aircraftType = this.env.me().type;
+            this.startBot();
+        }, 10000);
     }
 
     private onChat(msg) {
@@ -133,14 +160,19 @@ export class AirmashBot {
         this.targetSelection.reset();
     }
 
-    private onCtfGameOver() {
+    private stop() {
         this.isSpawned = false;
-        this.steeringInstallation.stop();
+        this.steeringInstallation.stopAllSteering();
         this.targetSelection.reset();
+    }
+
+    private onCtfGameOver() {
+        this.stop();
+        this.teamleader = null;
         logger.info("CTF game over");
     }
 
-    private onTick() {
+    private async onTick() {
 
         if (this.tickStopwatch.elapsedMs() > 500) {
             logger.warn("Delay between ticks is long: " + this.tickStopwatch.elapsedMs());
@@ -168,7 +200,11 @@ export class AirmashBot {
             this.infoStopwatch.start();
         }
 
-        this.prepareSteering();
+        try {
+            await this.prepareSteering();
+        } catch (err) {
+            logger.error('error preparing steering', err);
+        }
     }
 
     private async prepareSteering(): Promise<any> {

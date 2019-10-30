@@ -13,10 +13,11 @@ export class DodgeEnemiesTarget extends BaseTarget {
     goal = 'avoid';
 
     private playerToAvoidID: number;
-    private gotoLocationConfig = new GotoLocationConfig();
+    private gotoLocationConfig: GotoLocationConfig;
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter, blacklist: number[]) {
         super();
+        this.gotoLocationConfig = new GotoLocationConfig(env.myId());
         
         const me = env.me();
         const otherAircrafts = env.getPlayers()

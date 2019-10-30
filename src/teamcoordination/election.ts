@@ -2,6 +2,7 @@ import { IAirmashEnvironment } from "../bot/airmash/iairmash-environment";
 import { Calculations } from "../bot/calculations";
 
 export class Election {
+    private existingLeaderId: number;
     private candidates: {};
     private chatSubscr: number;
     private electionResultResolver: (value?: number | PromiseLike<number>) => void;
@@ -15,7 +16,8 @@ export class Election {
         this.electionResultResolver = null;
     }
 
-    doElection(): Promise<number> {
+    doElection(existingLeaderId: number): Promise<number> {
+        this.existingLeaderId = existingLeaderId;
         this.env.sendTeam("Type #yes in the next 30 seconds if you want to be team leader. Type #vote <name> to vote for someone who is a candidate.");
         this.candidates = {};
         setTimeout(() => this.endElection(), 30 * 1000);
@@ -55,13 +57,28 @@ export class Election {
             }
         }
     }
-    
+
     private endElection() {
         let ids = Object.keys(this.candidates);
+
+        if (this.existingLeaderId && ids.length === 0) {
+            ids.push(this.existingLeaderId + '');
+        }
+
         const me = this.env.me();
+
+        // remove inactive players
+        ids = ids.filter(x=> {
+            const player = this.env.getPlayer(Number(x));
+            return player && !player.isHidden && player.team === me.team;
+        });
+
         if (ids.length === 0) {
             const allTeamPlayers = this.env.getPlayers().filter(x => x.team === me.team && !x.isHidden);
-            ids = allTeamPlayers.map(x => '' + x.id);
+            ids = allTeamPlayers
+                .filter(x => x.id !== me.id) // don't choose myself, because server frowns upon my spamming if i'm both instructing and answering.
+                .map(x => '' + x.id);
+
             for (var i = 0; i < ids.length; i++) {
                 this.candidates[ids[i]] = 1;
             }
@@ -84,11 +101,17 @@ export class Election {
         }
 
         if (topCandidates.length > 0) {
-            const teamLeaderId = topCandidates[Calculations.getRandomInt(0, topCandidates.length)];
-            const winner = this.env.getPlayer(teamLeaderId);
-            this.env.sendTeam(winner.name + " has been chosen as the new team leader.");
+            const newLeaderId = topCandidates[Calculations.getRandomInt(0, topCandidates.length)];
 
-            this.electionResultResolver(Number(teamLeaderId));
+            const winner = this.env.getPlayer(newLeaderId);
+            this.electionResultResolver(Number(newLeaderId));
+            if (newLeaderId !== this.existingLeaderId) {
+                this.env.sendTeam(winner.name + " has been chosen as the new team leader.");
+            } else {
+                this.env.sendTeam(winner.name + " is still the team leader.");
+            }
+        } else {
+            this.electionResultResolver(null);
         }
 
         this.dispose();

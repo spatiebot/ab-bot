@@ -1,35 +1,26 @@
 /// <reference types="node" />
-
-import { parentPort } from "worker_threads";
 import { Pos } from "../pos";
 import easystarjs from "easystarjs";
 import { Missile } from "../airmash/missile";
 import { simplifyPath } from "./simplifyPath";
 import * as fs from 'fs';
+import * as workerpool from 'workerpool';
 
 const gridContainer = gridContainerFromMountainData("data/mountains.json");
 
-if (parentPort) {
-    parentPort.on("message", message => run(message));
-}
-
 function gridContainerFromMountainData(path: string) {
-    const json = fs.readFileSync(path, "utf-8");
 
-    const mountains = JSON.parse(json);
+    let width;
+    let height;
+    const grids = {};
 
-    const width = mountains.grid.width;
-    const height = mountains.grid.height;
+    initialize();
+
     const scaleDown = width / 33000; // scale relative to airmash map
     const scaleUp = 33000 / width; // scale relative to airmash map
     const transX = width / 2; // translation: airmash has it's center at 0,0
     const transY = height / 2;
-    const grids = {};
-
-    for (let type = 1; type <= 5; type++) {
-        grids[type] = createGrid(type, mountains);
-    }
-
+    
     return {
         width,
         height,
@@ -38,6 +29,19 @@ function gridContainerFromMountainData(path: string) {
         posToGridPos,
         posToAirmashPos,
     };
+
+    function initialize()  {
+        const json = fs.readFileSync(path, "utf-8");
+
+        const mountains = JSON.parse(json);
+        width = mountains.grid.width;
+        height = mountains.grid.height;
+
+
+        for (let type = 1; type <= 5; type++) {
+            grids[type] = createGrid(type, mountains);
+        }
+    }
 
     function posToGridPos(pos: Pos): Pos {
         return new Pos({
@@ -77,14 +81,19 @@ function gridContainerFromMountainData(path: string) {
     }
 }
 
-async function doPathFinding(missiles: Missile[], myPos: Pos, myType: number, targetPos: Pos): Promise<Pos[]> {
+async function doPathFinding(workerData): Promise<Pos[]> {
+
+    const missiles: Missile[] = workerData.missiles;
+    const myPos: Pos = workerData.myPos;
+    const myType: number = workerData.myType;
+    const targetPos: Pos = workerData.targetPos;
 
     let grid: number[][];
 
     grid = gridContainer.grids[myType];
 
-    const pathFinding = new PathFinding(grid, missiles, 
-        pos => gridContainer.posToGridPos(pos), 
+    const pathFinding = new PathFinding(grid, missiles,
+        pos => gridContainer.posToGridPos(pos),
         pos => gridContainer.posToAirmashPos(pos));
 
     const path = await pathFinding.findPath(myPos, targetPos);
@@ -133,19 +142,4 @@ class PathFinding {
     }
 }
 
-async function run(workerData) {
-
-    const missiles: Missile[] = workerData.missiles;
-    const myPos: Pos = workerData.myPos;
-    const myType: number = workerData.myType;
-    const targetPos: Pos = workerData.targetPos;
-
-    try {
-        const path = await doPathFinding(missiles, myPos, myType, targetPos);
-        parentPort.postMessage({ path });
-    } catch (error) {
-        parentPort.postMessage({ error });
-    }
-}
-
-export { doPathFinding }
+workerpool.worker({ doPathFinding });

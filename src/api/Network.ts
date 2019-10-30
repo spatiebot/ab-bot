@@ -89,7 +89,7 @@ export class Network {
             }
         };
         ws.onerror = (ev) => {
-            this.game.onError(new Error((config.isPrimary ? 'primary' : 'backup') + ' socket error' + ev));
+            this.game.onError(ev);
         };
         ws.onclose = () => {
             logger.warn('socket closed');
@@ -149,6 +149,7 @@ export class Network {
             text,
             id: targetPlayerID
         };
+
         this.send(msg);
     }
 
@@ -333,6 +334,8 @@ export class Network {
             case SERVER_PACKETS.SERVER_CUSTOM:
                 if (msg.type === 2) {
                     this.game.onCtfGameOver();
+                } else {
+                    logger.warn("Custom server message", msg);
                 }
                 break;
 

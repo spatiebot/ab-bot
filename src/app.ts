@@ -52,9 +52,10 @@ for (let i = 0; i < numBots; i++) {
     });
 
     const env = new AirmashApiFacade(ws);
+    env.startMainLoop();
     const bot = new AirmashBot(env, botCharacter);
 
-    // use a random timeout to prevent hiccups when X bots join the server at once
-    const randomTimeout = Calculations.getRandomInt(numBots * 200, numBots * 2000);
-    setTimeout(() => bot.start(name, flag, Number(type)), randomTimeout);
+    // throttle joining of the bots to prevent spamming the server.
+    const timeOutMs = i * 500;
+    setTimeout(() => bot.join(name, flag, Number(type)), timeOutMs);
 }

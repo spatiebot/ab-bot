@@ -25,23 +25,60 @@ function startGame(bot: PlayerInfo) {
     return false;
 }
 
+function teamSlaves(team: number): Slave[] {
+    return slaves.filter(x => x.getTeam() === team);
+}
+
+function execAuto(playerId: number, team: number) {
+    const ts = teamSlaves(team);
+    const slavesCount = ts.length;
+    const attackers = slavesCount / 2 + 1; // try to have more attackers than defense
+
+    for (let i = 0; i < slavesCount; i++) {
+        ts[i].execCtfCommand(playerId, "auto", i < attackers ? "A" : "D");
+    }
+}
+
 export class TeamCoordination {
     private nextElectionStopwatch = new StopWatch();
+    private tickStopwatch = new StopWatch();
 
     private teamLeaderId: number;
     private isBotLeader: boolean;
+    private isElectionOngoing: boolean;
 
     constructor(private env: IAirmashEnvironment) {
         this.env.on('chat', x => this.onChat(x));
         this.env.on('start', _ => this.onStart());
-        this.env.on('ctfGameOver', () => stopGame());
+        this.env.on('ctfGameOver', () => this.onStop());
+        this.env.on('serverMessage', (x) => this.onServerMessage(x.text as string));
+        this.env.on('tick', () => this.onTick());
     }
 
     addSlave(s: Slave) {
         slaves.push(s);
     }
 
-    private async onStart() {
+    private onTick() {
+        if (!this.isBotLeader) {
+            return;
+        }
+        if (this.isElectionOngoing) {
+            return;
+        }
+        if (this.tickStopwatch.isStarted && this.tickStopwatch.elapsedSeconds() <= 1) {
+            return;
+        }
+
+        const teamLeader = this.env.getPlayer(this.teamLeaderId);
+        if (!teamLeader || this.nextElectionStopwatch.elapsedMinutes() > 15) {
+            this.electLeader();
+        }
+
+        this.tickStopwatch.start();
+    }
+
+    private onStart() {
         const me = this.env.me();
         if (!me) {
             setTimeout(() => this.onStart(), 500);
@@ -52,12 +89,36 @@ export class TeamCoordination {
             return;
         }
 
+        this.initialize();
+    }
+
+    private async initialize() {
+        const me = this.env.me();
         const isLeader = startGame(me);
         this.isBotLeader = isLeader;
         if (this.isBotLeader) {
-            const election = new Election(this.env);
-            this.teamLeaderId = await election.doElection();
+            await this.electLeader();
+            execAuto(me.id, me.team);
         }
+    }
+
+    private onStop() {
+        stopGame();
+        this.isBotLeader = false;
+    }
+
+    private onServerMessage(text: string) {
+        if (text.indexOf('shuffling teams') > -1) {
+            setTimeout(() => this.initialize(), 1000);
+        }
+    }
+
+    private async electLeader() {
+        this.isElectionOngoing = true;
+        const election = new Election(this.env);
+        this.teamLeaderId = await election.doElection(this.teamLeaderId);
+        this.nextElectionStopwatch.start();
+        this.isElectionOngoing = false;
     }
 
     private onChat(ev: any) {
@@ -75,36 +136,40 @@ export class TeamCoordination {
             return;
         }
 
-        if (this.isBotLeader) {
-            logger.warn("botleaderCommand", { teamLeader: this.teamLeaderId, playerId });
-        }
+        const speakerIsTeamLeader = this.teamLeaderId === playerId;
 
-        if (this.teamLeaderId === playerId) {
+        const ctfCommandMatch = /^\s*#(\w+)(?:\s(.*))?$/.exec(message);
+        if (ctfCommandMatch) {
+            const command = ctfCommandMatch[1];
+            const param = ctfCommandMatch[2];
 
-            const ctfCommandMatch = /^\s*#(\w+)(?:\s(.*))?$/.exec(message);
-            if (ctfCommandMatch) {
-                const command = ctfCommandMatch[1];
-                const param = ctfCommandMatch[2];
-
-                if (command === 'leader') {
-                    const victim = this.env.getPlayers().find(x => x.name === param);
-                    if (victim && victim.team === me.team) {
-                        this.teamLeaderId = victim.id;
-                        this.env.sendTeam(player.name + " has made " + victim.name + " the new team leader.");
-                    }
+            if (command === 'leader' && speakerIsTeamLeader) {
+                const victim = this.env.getPlayers().find(x => x.name === param);
+                if (victim && victim.team === me.team) {
+                    this.teamLeaderId = victim.id;
+                    this.env.sendTeam(player.name + " has made " + victim.name + " the new team leader.");
                 }
-
-                this.execCtfCommand(playerId, command, param);
             }
 
+            this.execCtfCommand(playerId, command, param, speakerIsTeamLeader);
         }
     }
 
-    private execCtfCommand(playerId: number, command: string, param: string) {
+    private execCtfCommand(playerId: number, command: string, param: string, speakerIsTeamLeader: boolean) {
+
+        if (!speakerIsTeamLeader && command !== 'drop') {
+            // the only command non-teamleaders can issue, is 'drop'
+            return;
+        }
+
+        const me = this.env.me();
+
         switch (command) {
 
             case 'defend':
             case 'def':
+            case 'recap':
+            case 'recover':
                 this.env.sendTeam("defend mode enabled");
                 break;
 
@@ -119,8 +184,8 @@ export class TeamCoordination {
                 break;
 
             case 'assist':
+            case 'protect':
                 const speaker = this.env.getPlayer(playerId);
-                const me = this.env.me();
 
                 const targetPlayerName = param;
                 let playerToAssist: PlayerInfo;
@@ -136,6 +201,10 @@ export class TeamCoordination {
                 }
         }
 
-        slaves.forEach(x => x.execCtfCommand(playerId, command, param));
+        if (command === 'auto') {
+            execAuto(playerId, me.team);
+        } else {
+            teamSlaves(me.team).forEach(x => x.execCtfCommand(playerId, command, param));
+        }
     }
 }

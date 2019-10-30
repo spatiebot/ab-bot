@@ -14,7 +14,7 @@ export class OtherPlayerTarget extends BaseTarget {
 
     private readonly targetID: number;
     private shouldRecycle: boolean;
-    private gotoLocationConfig = new GotoLocationConfig();
+    private gotoLocationConfig: GotoLocationConfig;
     private manualInfo: string;
     private maxDistance: number;
 
@@ -22,6 +22,7 @@ export class OtherPlayerTarget extends BaseTarget {
 
     constructor(private env: IAirmashEnvironment, private character: BotCharacter, blacklist: number[], victimId: number = null, private peaceful = false) {
         super();
+        this.gotoLocationConfig = new GotoLocationConfig(env.myId());
 
         let victim: PlayerInfo;
         const me = env.me();
@@ -146,9 +147,6 @@ export class OtherPlayerTarget extends BaseTarget {
 
     isValid(): boolean {
         if (this.shouldRecycle) {
-            return false;
-        }
-        if (this.gotoLocationConfig.needNewPath) {
             return false;
         }
 
