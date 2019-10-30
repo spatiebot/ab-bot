@@ -29,20 +29,13 @@ Parameters:
     --type: the type of aircraft used. Default = random
     --flag: the flag. Default = random
     --name: name of the bot. Default = random firstname based on the flag, prefixed by [b]_ for bot
-    --ws: websocket to connect to. Use the full url or one of the shortcuts:
-
+    --ws: websocket to connect to. Use the full url or one of the shortcuts:  
         local: "ws://127.0.0.1:3501/ffa",
-        euFfa: "wss://eu.airmash.online/ffa",
-        euFfa2: "wss://eu-airmash1-foo.westeurope.cloudapp.azure.com/ffa",
+        euFfa1: "wss://eu.airmash.online/ffa1",
+        euFfa2: "wss://eu.airmash.online/ffa2",
         euCtf: "wss://lags.win/ctf",
-        euCtf2: "wss://eu-airmash1-foo.westeurope.cloudapp.azure.com/ctf",
-        euCtf3: "wss://eu.airmash.online/ctf",
-        fooDev: "ws://eu-airmash1-foo.westeurope.cloudapp.azure.com/dev?1",
-        ukDev: "wss://uk.test.airmash.online/dev",
         usFfa: "wss://game.airmash.steamroller.tk/ffa",
-        usCtf: "wss://game.airmash.steamroller.tk/ctf",
-        usDev: "wss://game.airmash.steamroller.tk/dev"
-
+        usCtf: "wss://game.airmash.steamroller.tk/ctf"
     Default is euFfa.
 
     --character: characteristics of this bot. Default a character will be selected based on type. Available characters:
