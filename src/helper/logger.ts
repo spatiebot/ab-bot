@@ -1,32 +1,36 @@
 import pino from 'pino';
 
-class LoggerConfig {
-    static isDevelopment: boolean;
-}
+export class Logger {
+    private logger: pino.Logger;
 
-class Logger {
+    constructor(botIndex: number, botName: string, isDevelopment: boolean, level: string) {
 
-    private isDevelopment: boolean;
-    private _cachedLogger: pino.Logger;
+        let config: any = {
+            level,
+            base: { bot: `${botIndex}(${botName})` }
+        };
 
-    private get logger(): pino.Logger {
-        if (this._cachedLogger && this.isDevelopment == LoggerConfig.isDevelopment) {
-            return this._cachedLogger;
+        if (isDevelopment) {
+            config = {
+                ...config,
+                prettyPrint: {
+                    colorize: true,
+                    translateTime: true,
+                    ignore: 'pid,hostname'
+                }
+            };
         }
 
-        const config = LoggerConfig.isDevelopment ? {
-            level: 'warn',
-            prettyPrint: {
-                colorize: true,
-                translateTime: true,
-                ignore: 'pid,hostname'
-            }
-        } : { level: 'warn' };
-        this._cachedLogger = pino(config, pino.destination());
-        this.isDevelopment = LoggerConfig.isDevelopment;
-        return this._cachedLogger;
+        this.logger = pino(config, pino.destination());
     }
-  
+
+    levelPlusPlus() {
+        this.debug = this.info;
+        this.info = this.warn;
+        this.warn = this.error;
+        this.error = this.fatal;
+    }
+
     debug(msg: string, ...args: any[]): void {
         this.logger['debug'](msg, ...args);
     }
@@ -47,6 +51,3 @@ class Logger {
         this.logger['error'](msg, ...args);
     }
 }
-
-const logger = new Logger();
-export {logger, LoggerConfig}

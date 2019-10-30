@@ -12,7 +12,7 @@ import { CHAT_TYPE } from './chat-type';
 import { Player } from './Player';
 import { Pos } from '../bot/pos';
 import { Upgrades } from './upgrades';
-import { logger } from '../helper/logger';
+import { Logger } from '../helper/logger';
 
 export class Network {
     private client: WebSocket;
@@ -21,11 +21,11 @@ export class Network {
     private ackToBackup: boolean;
     private ackInterval: any;
     private game: Game;
-    private keyCount: number = 0;
+    private keyCount = 0;
     private token: string;
     private lastChat: string;
 
-    constructor(private ws: string) {
+    constructor(private ws: string, private logger: Logger) {
     }
 
     start(game: Game, name: string, flag: string) {
@@ -57,7 +57,7 @@ export class Network {
         ws.onopen = () => {
             tries -= 1;
             if (config.isPrimary) {
-                logger.debug("Primary socket connecting");
+                this.logger.debug("Primary socket connecting");
                 this.send({
                     c: CLIENT_PACKETS.LOGIN,
                     protocol: 5,
@@ -68,7 +68,7 @@ export class Network {
                     flag: config.flag
                 });
             } else {
-                logger.debug("Backup socket connecting");
+                this.logger.debug("Backup socket connecting");
                 this.backupClientIsConnected = true;
                 this.send({
                     c: CLIENT_PACKETS.BACKUP,
@@ -80,7 +80,7 @@ export class Network {
             try {
                 const result = unmarshaling.unmarshalServerMessage(msg.data);
                 if (!result) {
-                    logger.warn('no result', msg);
+                    this.logger.warn('no result', msg);
                 }
                 this.onServerMessage(result, config.isPrimary);
 
@@ -92,7 +92,7 @@ export class Network {
             this.game.onError(ev);
         };
         ws.onclose = () => {
-            logger.warn('socket closed');
+            this.logger.warn('socket closed');
             this.game.onError(new Error((config.isPrimary ? 'primary' : 'backup') + ' socket closed'));
         };
         return ws;
@@ -100,7 +100,7 @@ export class Network {
 
     sendKey(key: KEY_CODES, value: boolean) {
         this.keyCount++;
-        var msg = {
+        const msg = {
             c: CLIENT_PACKETS.KEY,
             seq: this.keyCount,
             key: key,
@@ -113,7 +113,7 @@ export class Network {
     }
 
     sendCommand(command: string, params: string) {
-        var msg = {
+        const msg = {
             c: CLIENT_PACKETS.COMMAND,
             com: command,
             data: params
@@ -128,7 +128,7 @@ export class Network {
         }
         this.lastChat = text;
 
-        var c: number;
+        let c: number;
         switch (type) {
             case CHAT_TYPE.CHAT:
                 c = CLIENT_PACKETS.CHAT;
@@ -144,7 +144,7 @@ export class Network {
                 break;
         }
 
-        var msg = {
+        const msg = {
             c,
             text,
             id: targetPlayerID
@@ -156,7 +156,7 @@ export class Network {
     private onServerMessage(msg: ProtocolPacket, isPrimary: boolean) {
         switch (msg.c) {
             case SERVER_PACKETS.BACKUP:
-                logger.info("backup client connected");
+                this.logger.info("backup client connected");
                 this.backupClientIsConnected = true;
                 break;
 
@@ -335,12 +335,12 @@ export class Network {
                 if (msg.type === 2) {
                     this.game.onCtfGameOver();
                 } else {
-                    logger.warn("Custom server message", msg);
+                    this.logger.warn("Custom server message", msg);
                 }
                 break;
 
             default:
-                logger.warn("Unknown message type", msg);
+                this.logger.warn("Unknown message type", msg);
                 break;
         }
     }
@@ -388,7 +388,7 @@ export class Network {
         this.game.onStart(msg.id as number, msg.type as number);
     }
 
-    private send(msg: ProtocolPacket, sendToBackup: boolean = false) {
+    private send(msg: ProtocolPacket, sendToBackup = false) {
         const clientMgs = marshaling.marshalClientMessage(msg);
         try {
             if (sendToBackup) {

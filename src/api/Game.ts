@@ -3,15 +3,15 @@ import { Player } from "./Player";
 import { Mob } from "./Mob";
 import { FlagInfo } from "./flagInfo";
 import { Pos } from "../bot/pos";
-import { logger } from  '../helper/logger';
 import { Calculations } from "../bot/calculations";
+import { Logger } from "../helper/logger";
 
 export class Game {
 
     public type: number;
     public readonly blueFlag = new FlagInfo(1);
     public readonly redFlag = new FlagInfo(2);
-    public readonly ctfScores = { 1: 0, 2: 0};
+    public readonly ctfScores = { 1: 0, 2: 0 };
 
     private myID: number;
     private players = {};
@@ -20,16 +20,16 @@ export class Game {
     private score: number;
     private previousTickTime: number;
     private readonly subscribers = {};
-    private ping: number = 30;
+    private ping = 30;
     private tickDurations: any = {};
-
+    
     private debugConfig: any;
 
-    constructor(private readonly network: Network) {
+    constructor(private readonly network: Network, private readonly logger: Logger) {
     }
 
     on(eventName: string, subscriber: (x: any) => void): number {
-        var subs = this.subscribers[eventName];
+        let subs = this.subscribers[eventName];
         subs = subs || {};
         const subscriptionID = Calculations.getRandomInt(1, 100000);
         subs[subscriptionID] = subscriber;
@@ -38,13 +38,13 @@ export class Game {
     }
 
     off(eventName, subscriptionID) {
-        var subs = this.subscribers[eventName];
+        let subs = this.subscribers[eventName];
         subs = subs || {};
         delete subs[subscriptionID];
     }
 
     private trigger(eventName: string, data: any) {
-        var subs = this.subscribers[eventName];
+        let subs = this.subscribers[eventName];
         subs = subs || {};
 
         for (const key of Object.keys(subs)) {
@@ -108,6 +108,7 @@ export class Game {
         this.tickDurations.updateMobs = Date.now() - now;
 
         this.trigger("tick", {});
+        this.trigger('afterTick', {});
 
         this.tickDurations.tick = Date.now() - now;
 
@@ -118,7 +119,7 @@ export class Game {
     }
 
     onError(error: Error) {
-        logger.error("error occurred", error.message, error.stack);
+        this.logger.error("error occurred", error.message, error.stack);
         this.network.stop();
         this.trigger("error", error);
     }
@@ -127,7 +128,7 @@ export class Game {
         this.trigger("start", {});
         this.myID = myID;
         this.type = gameType;
-        logger.debug("My id: " + myID);
+        this.logger.debug("My id: " + myID);
         this.trigger("spawned", { id: myID, respawn: false });
     }
 
@@ -201,7 +202,7 @@ export class Game {
     }
 
     onServerMessage(text: string) {
-        logger.debug("Server message: " + text);
+        this.logger.debug("Server message: " + text);
         this.trigger("serverMessage", { text });
     }
 
@@ -219,7 +220,7 @@ export class Game {
         if (flag === 2) {
             flagInfo = this.redFlag;
         }
-        flagInfo.carrierId = !!playerId ? playerId : null;
+        flagInfo.carrierId = playerId ? playerId : null;
         flagInfo.pos = new Pos({ x: posX, y: posY });
 
         this.trigger("flag", {

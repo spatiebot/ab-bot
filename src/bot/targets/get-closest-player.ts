@@ -6,13 +6,13 @@ import { Pos } from "../pos";
 class Result {
     player: PlayerInfo;
     delta: {
-        diffX: number,
-        diffY: number,
+        diffX: number;
+        diffY: number;
         distance: number;
     };
 }
 
-function getPlayersSortedByDistance(env: IAirmashEnvironment, excludeHidden: boolean = false, pos: Pos = null): Result[] {
+function getPlayersSortedByDistance(env: IAirmashEnvironment, excludeHidden = false, pos: Pos = null): Result[] {
     const me = env.me();
     pos = pos || me.pos;
 
@@ -45,8 +45,8 @@ function getPlayersSortedByDistance(env: IAirmashEnvironment, excludeHidden: boo
     return list;
 }
 
-function getClosestPlayer(env: IAirmashEnvironment, excludeHidden: boolean = false): Result {
-    let list = getPlayersSortedByDistance(env, excludeHidden);
+function getClosestPlayer(env: IAirmashEnvironment, excludeHidden = false): Result {
+    const list = getPlayersSortedByDistance(env, excludeHidden);
     return list[0];
 }
 

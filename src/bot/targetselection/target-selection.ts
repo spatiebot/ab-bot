@@ -9,7 +9,7 @@ import { DodgeEnemiesTarget } from "../targets/dodge-enemies-target";
 import { Pos } from "../pos";
 import { ProtectTarget } from "../targets/protect-target";
 import { ITargetSelection } from "./itarget-selection";
-import { logger } from "../../helper/logger";
+import { Logger } from "../../helper/logger";
 
 const TIME_OUT = 60 * 1000; // 1 min
 const PROTECT_TIME_OUT = 5 * TIME_OUT;
@@ -18,16 +18,16 @@ export class TargetSelection implements ITargetSelection {
     private target: ITarget;
     private tempTarget: ITarget;
     private lastLoggedTarget: string;
-    private lastSelectedTime: number = 0;
+    private lastSelectedTime = 0;
     private lastTargetId: number;
     private dontSelectId: number;
-    private timeout: number = 0;
-    private protectId: number = 0;
+    private timeout = 0;
+    private protectId = 0;
 
     private chatSubscription: number;
     private playerKilledSubscription: number;
 
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, private character: BotCharacter) {
         this.chatSubscription = this.env.on('chat', msg => this.onChat(msg));
         this.playerKilledSubscription = this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
     }
@@ -64,30 +64,30 @@ export class TargetSelection implements ITargetSelection {
             const player = this.env.getPlayer(msg.id);
             if (player.team === this.env.me().team) {
                 this.env.sendCommand("drop", "");
-                this.tempTarget = new ProtectTarget(this.env, this.character, msg.id, 300);
+                this.tempTarget = new ProtectTarget(this.env, this.logger, this.character, msg.id, 300);
                 this.timeout = Date.now() + 10000; // wait a few sec before next target
             }
         }
         if (this.character.goal === 'protect') {
             if (msg.text.indexOf('#protect me') !== -1) {
-                logger.debug('Protect me instruction received');
+                this.logger.debug('Protect me instruction received');
                 if (!this.protectId) {
                     this.protectId = msg.id;
-                    logger.debug('ProtectID: ' + this.protectId);
+                    this.logger.debug('ProtectID: ' + this.protectId);
                     const player = this.env.getPlayer(this.protectId);
                     if (player) {
                         this.env.sendChat("OK, " + player.name + ", I'm heading your way. Say '#unprotect' to stop me from following you.")
                     } else {
-                        logger.debug('ProtectID apparently invalid');
+                        this.logger.debug('ProtectID apparently invalid');
                         this.protectId = null;
                     }
                 } else {
-                    logger.debug("ignoring: already on another target");
+                    this.logger.debug("ignoring: already on another target");
                 }
             } else if (msg.text.indexOf('#unprotect') !== -1) {
-                logger.debug('Unprotect message');
+                this.logger.debug('Unprotect message');
                 if (this.protectId === msg.id) {
-                    logger.debug('From protectplayer');
+                    this.logger.debug('From protectplayer');
                     const player = this.env.getPlayer(this.protectId);
                     this.env.sendChat("I'll stop following you, " + player.name);
                     this.protectId = null;
@@ -112,7 +112,7 @@ export class TargetSelection implements ITargetSelection {
         const targetInfo = target.getInfo();
         if (this.lastLoggedTarget !== targetInfo.info) {
             this.lastLoggedTarget = targetInfo.info
-            logger.info("Target: " + targetInfo.info);
+            this.logger.info("Target: " + targetInfo.info);
         }
 
         if (targetInfo.id) {
@@ -133,7 +133,7 @@ export class TargetSelection implements ITargetSelection {
         if (this.protectId) {
             dontSelect.push(this.protectId);
         }
-        const avoid = new DodgeEnemiesTarget(this.env, this.character, dontSelect);
+        const avoid = new DodgeEnemiesTarget(this.env, this.logger, this.character, dontSelect);
         if (avoid.isValid()) {
             return avoid;
         }
@@ -156,27 +156,27 @@ export class TargetSelection implements ITargetSelection {
         }
 
         if (isTargetTimedOut) {
-            logger.warn("Target timed out. Select a new one");
+            this.logger.warn("Target timed out. Select a new one");
 
             this.protectId = null;
         }
 
         let potentialNewTarget: ITarget;
         if (this.character.goal === 'stealCrates') {
-            potentialNewTarget = new CrateTarget(this.env, [this.dontSelectId]);
+            potentialNewTarget = new CrateTarget(this.env, this.logger, [this.dontSelectId]);
         } else if (this.character.goal === 'fight') {
-            potentialNewTarget = new OtherPlayerTarget(this.env, this.character, [this.dontSelectId]);
+            potentialNewTarget = new OtherPlayerTarget(this.env, this.logger, this.character, [this.dontSelectId]);
         } else if (this.character.goal === "nothing") {
             potentialNewTarget = new DoNothingTarget();
         } else if (this.character.goal === "protect") {
-            potentialNewTarget = new ProtectTarget(this.env, this.character, this.protectId, 300);
+            potentialNewTarget = new ProtectTarget(this.env, this.logger, this.character, this.protectId, 300);
         } else if (this.character.goal === "brexit") {
-            potentialNewTarget = new ProtectTarget(this.env, this.character, new Pos({
+            potentialNewTarget = new ProtectTarget(this.env, this.logger, this.character, new Pos({
                 x: -403.046875, y: -3182.646484375 // UK
             }), 400);
             potentialNewTarget.goal = "brexit";
         } else if (this.character.goal === "greenland") {
-            potentialNewTarget = new ProtectTarget(this.env, this.character, new Pos({
+            potentialNewTarget = new ProtectTarget(this.env, this.logger, this.character, new Pos({
                 x: -5246.271484375, y: -7008.716796875 // Greenland
             }), 400);
             potentialNewTarget.goal = "greenland";
@@ -196,7 +196,7 @@ export class TargetSelection implements ITargetSelection {
         }
 
         // so take the default target then
-        this.target = new OtherPlayerTarget(this.env, this.character, [this.dontSelectId]);
+        this.target = new OtherPlayerTarget(this.env, this.logger, this.character, [this.dontSelectId]);
         this.lastSelectedTime = Date.now();
 
         if (!this.target.isValid()) {

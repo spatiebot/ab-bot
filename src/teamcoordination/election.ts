@@ -19,7 +19,14 @@ export class Election {
     doElection(existingLeaderId: number): Promise<number> {
         this.existingLeaderId = existingLeaderId;
         this.env.sendTeam("Type #yes in the next 30 seconds if you want to be team leader. Type #vote <name> to vote for someone who is a candidate.");
+
         this.candidates = {};
+
+        // const spatie = this.env.getPlayers().find(x => x.name === 'Spatie');
+        // if (spatie) {
+        //     this.candidates[spatie.id + ''] = 1;
+        // }
+        
         setTimeout(() => this.endElection(), 30 * 1000);
         return new Promise((resolve) => {
             this.electionResultResolver = resolve;
@@ -44,7 +51,7 @@ export class Election {
                 this.env.sendWhisper("Your vote has been counted", playerId);
             }
         } else {
-            let m = /#vote\s(.+)$/.exec(message);
+            const m = /#vote\s(.+)$/.exec(message);
             if (m) {
                 const name = m[1];
                 const victim = this.env.getPlayers().find(x => x.name === name);
@@ -68,7 +75,7 @@ export class Election {
         const me = this.env.me();
 
         // remove inactive players
-        ids = ids.filter(x=> {
+        ids = ids.filter(x => {
             const player = this.env.getPlayer(Number(x));
             return player && !player.isHidden && player.team === me.team;
         });
@@ -79,7 +86,7 @@ export class Election {
                 .filter(x => x.id !== me.id) // don't choose myself, because server frowns upon my spamming if i'm both instructing and answering.
                 .map(x => '' + x.id);
 
-            for (var i = 0; i < ids.length; i++) {
+            for (let i = 0; i < ids.length; i++) {
                 this.candidates[ids[i]] = 1;
             }
         }
@@ -96,7 +103,7 @@ export class Election {
         for (let i = 0; i < ids.length; i++) {
             const id = ids[i];
             if (this.candidates[id] === highestVotes) {
-                topCandidates.push(id);
+                topCandidates.push(Number(id));
             }
         }
 

@@ -1,19 +1,19 @@
 // from: https://gist.github.com/adammiller/826148
-var simplifyPath = function (points, tolerance) {
+const simplifyPath = function (points, tolerance) {
 
     // helper classes 
-    var Vector = function (x, y) {
+    const Vector = function (x, y) {
         this.x = x;
         this.y = y;
 
     };
-    var Line = function (p1, p2) {
+    const Line = function (p1, p2) {
         this.p1 = p1;
         this.p2 = p2;
 
         this.distanceToPoint = function (point) {
             // slope
-            var m = (this.p2.y - this.p1.y) / (this.p2.x - this.p1.x),
+            const m = (this.p2.y - this.p1.y) / (this.p2.x - this.p1.x),
                 // y offset
                 b = this.p1.y - (m * this.p1.x),
                 d = [];
@@ -34,15 +34,15 @@ var simplifyPath = function (points, tolerance) {
         if (points.length <= 2) {
             return [points[0]];
         }
-        var returnPoints = [],
+        let returnPoints = [],
             // make line from start to end 
             line = new Line(points[0], points[points.length - 1]),
             // find the largest distance from intermediate poitns to this line
             maxDistance = 0,
             maxDistanceIndex = 0,
             p;
-        for (var i = 1; i <= points.length - 2; i++) {
-            var distance = line.distanceToPoint(points[i]);
+        for (let i = 1; i <= points.length - 2; i++) {
+            const distance = line.distanceToPoint(points[i]);
             if (distance > maxDistance) {
                 maxDistance = distance;
                 maxDistanceIndex = i;
@@ -64,7 +64,7 @@ var simplifyPath = function (points, tolerance) {
         }
         return returnPoints;
     };
-    var arr = douglasPeucker(points, tolerance);
+    const arr = douglasPeucker(points, tolerance);
     // always have to push the very last point on so it doesn't get left off
     arr.push(points[points.length - 1]);
     return arr;

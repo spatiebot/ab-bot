@@ -11,7 +11,7 @@ import { DoNothingInstruction } from "../instructions/do-nothing-instruction";
 import { BaseTarget } from "./base-target";
 import { PlayerInfo } from "../airmash/player-info";
 import { FlagHelpers } from "../../helper/flaghelpers";
-import { logger } from "../../helper/logger";
+import { Logger } from "../../helper/logger";
 
 const blacklist: any = {};
 const banThreshold = 4;
@@ -25,7 +25,7 @@ export class ProtectTarget extends BaseTarget {
     private manualInfo: string;
     private isInvalid = false;
 
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter, target: Pos | number, private distance: number) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, private character: BotCharacter, target: Pos | number, private distance: number) {
         super();
 
         const now = Date.now();
@@ -85,7 +85,7 @@ export class ProtectTarget extends BaseTarget {
 
         const logPrefix = (this.manualInfo || "protect");
 
-        const log = (x: string, ...args: any[]) => this.isActive && logger.info(x, ...args);
+        const log = (x: string, ...args: any[]) => this.isActive && this.logger.info(x, ...args);
 
         if (this.target instanceof Pos) {
             pos = this.target;
@@ -109,7 +109,7 @@ export class ProtectTarget extends BaseTarget {
 
         const enemy = enemies[0];
         if (enemy && enemy.delta.distance < this.distance * 3) {
-            const newTarget = new OtherPlayerTarget(this.env, this.character, [], enemy.player.id);
+            const newTarget = new OtherPlayerTarget(this.env, this.logger, this.character, [], enemy.player.id);
             if (!newTarget.equals(this.innerTarget)) {
                 log(logPrefix + " has new attack otherplayer target: " + newTarget.getInfo().info);
 
@@ -123,7 +123,7 @@ export class ProtectTarget extends BaseTarget {
         if (delta.distance > this.distance) {
 
             if (otherPlayer) {
-                const newTarget = new OtherPlayerTarget(this.env, this.character, [], otherPlayer.id, true);
+                const newTarget = new OtherPlayerTarget(this.env, this.logger, this.character, [], otherPlayer.id, true);
                 if (!newTarget.equals(this.innerTarget)) {
                     log(logPrefix + " has new defend other player target: " + newTarget.getInfo().info);
                 }
@@ -131,7 +131,7 @@ export class ProtectTarget extends BaseTarget {
 
                 return;
             } else {
-                const newTarget = new GotoLocationTarget(this.env, pos);
+                const newTarget = new GotoLocationTarget(this.env, this.logger, pos);
                 if (!newTarget.equals(this.innerTarget)) {
                     log(logPrefix + " has new goto location target: " + newTarget.getInfo().info);
                     this.innerTarget = newTarget;
@@ -168,7 +168,7 @@ export class ProtectTarget extends BaseTarget {
         this.manualInfo = info;
     }
 
-    getInfo(): { info: string; id: number; pos: Pos; } {
+    getInfo(): { info: string; id: number; pos: Pos } {
 
         const prefix = this.manualInfo || "protect";
         if (this.target instanceof Pos) {

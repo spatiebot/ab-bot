@@ -50,7 +50,7 @@ function gridContainerFromMountainData(path: string) {
         });
     }
 
-    function posToAirmashPos(pos: { x: number, y: number }): Pos {
+    function posToAirmashPos(pos: { x: number; y: number }): Pos {
         return new Pos({
             x: (pos.x - transX) * scaleUp,
             y: (pos.y - transY) * scaleUp
@@ -73,7 +73,7 @@ function gridContainerFromMountainData(path: string) {
             }
         }
 
-        for (let m of mountains[type]) {
+        for (const m of mountains[type]) {
             grid[m.y][m.x] = Math.round(m.v / 10);
         }
 
@@ -111,11 +111,11 @@ class PathFinding {
 
     findPath(firstPos: Pos, targetPos: Pos, ignoreMissiles = false): Promise<Pos[]> {
         return new Promise((resolve, reject) => {
-            var easystar = new easystarjs.js();
+            const easystar = new easystarjs.js();
             easystar.setGrid(this.grid);
 
             if (!ignoreMissiles) {
-                for (let m of this.missiles) {
+                for (const m of this.missiles) {
                     const missilePos = this.posToGridPos(m.pos);
                     easystar.avoidAdditionalPoint(missilePos.x, missilePos.y);
                 }

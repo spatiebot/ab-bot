@@ -9,7 +9,7 @@ import { TargetSelectionFactory } from "./targetselection/target-selection-facto
 import { StopWatch } from "../helper/timer";
 import { FlagHelpers } from "../helper/flaghelpers";
 import { TeamLeader } from "./team-leader";
-import { logger } from "../helper/logger";
+import { Logger } from "../helper/logger";
 import { TeamCoordination } from "../teamcoordination/team-coordination";
 import { Slave } from "../teamcoordination/slave";
 import { PlaneTypeSelection } from "./plane-type-selection";
@@ -31,7 +31,7 @@ export class AirmashBot {
     private slave: Slave; // for executing commands from the teamleader via the teamcoordinator
     private planeTypeSelection: PlaneTypeSelection;
 
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, private character: BotCharacter) {
 
         this.env.on('spawned', (x) => this.onSpawned(x));
         this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
@@ -41,8 +41,8 @@ export class AirmashBot {
         this.env.on('score', (score: Score) => this.onScore(score));
         this.env.on('ctfGameOver', () => this.onCtfGameOver());
 
-        this.steeringInstallation = new SteeringInstallation(this.env);
-        this.teamCoordination = new TeamCoordination(this.env);
+        this.steeringInstallation = new SteeringInstallation(this.env, this.logger);
+        this.teamCoordination = new TeamCoordination(this.env, this.logger);
         this.slave = new Slave(this.env);
         this.teamCoordination.addSlave(this.slave);
         this.planeTypeSelection = new PlaneTypeSelection();
@@ -54,7 +54,7 @@ export class AirmashBot {
     }
 
     private onSpawned(data: any) {
-        var me = this.env.me();
+        const me = this.env.me();
 
         if (me.id !== data.id) {
             // another player (re)spawned
@@ -68,11 +68,11 @@ export class AirmashBot {
 
         const me = this.env.me();
 
-        logger.info("i spawned");
-        logger.info("Game type: " + this.env.getGameType());
+        this.logger.info("i spawned");
+        this.logger.info("Game type: " + this.env.getGameType());
 
         if (me.type !== this.planeTypeSelection.aircraftType) {
-            logger.info("... in the wrong body. Respawning as a different aircraft...", { me: me.type, sel: this.planeTypeSelection.aircraftType });
+            this.logger.info("... in the wrong body. Respawning as a different aircraft...", { me: me.type, sel: this.planeTypeSelection.aircraftType });
 
             await this.planeTypeSelection.switch(this.env);
             return; // this method will be called again
@@ -86,14 +86,14 @@ export class AirmashBot {
 
         const myType = this.env.me().type;
         if (!this.character || this.character.type !== 0 && this.character.type !== myType) {
-            logger.warn('new char selected because this character is not my type');
+            this.logger.warn('new char selected because this character is not my type');
             this.character = BotCharacter.get(myType);
         }
 
         if (this.targetSelection) {
             this.targetSelection.dispose();
         }
-        this.targetSelection = TargetSelectionFactory.createTargetSelection(this.env, this.character, this.slave, this);
+        this.targetSelection = TargetSelectionFactory.createTargetSelection(this.env, this.logger, this.character, this.slave, this);
 
         this.steeringInstallation.start();
     }
@@ -121,7 +121,7 @@ export class AirmashBot {
     private onChat(msg) {
         const p = this.env.getPlayer(msg.id);
         const name = p ? p.name : "unknown";
-        logger.info(name + ' says: "' + msg.text + '"');
+        this.logger.info(name + ' says: "' + msg.text + '"');
 
         // ... has been chosen as the new team leader.
         // ... is still the team leader.
@@ -144,10 +144,10 @@ export class AirmashBot {
 
     private logState() {
         const me = this.env.me();
-        logger.info('BotInfo', { name: me.name, ping: this.env.getPing() });
-        logger.info('BotInfo', { score: this.score.score, energy: me.energy, health: me.health });
+        this.logger.info('BotInfo', { name: me.name, ping: this.env.getPing() });
+        this.logger.info('BotInfo', { score: this.score.score, energy: me.energy, health: me.health });
         if (me.upgrades && (me.upgrades.speed === 0 || me.upgrades.speed > 0)) {
-            logger.info('Upgrade levels', me.upgrades);
+            this.logger.info('Upgrade levels', me.upgrades);
         }
     }
 
@@ -169,15 +169,15 @@ export class AirmashBot {
     private onCtfGameOver() {
         this.stop();
         this.teamleader = null;
-        logger.info("CTF game over");
+        this.logger.info("CTF game over");
     }
 
     private async onTick() {
 
         if (this.tickStopwatch.elapsedMs() > 500) {
-            logger.warn("Delay between ticks is long: " + this.tickStopwatch.elapsedMs());
+            this.logger.warn("Delay between ticks is long: " + this.tickStopwatch.elapsedMs());
         } else if (this.tickStopwatch.elapsedMs() > 1000) {
-            logger.error("PANIC: delay between ticks too long: " + this.tickStopwatch.elapsedMs());
+            this.logger.error("PANIC: delay between ticks too long: " + this.tickStopwatch.elapsedMs());
             this.reset();
         }
         this.tickStopwatch.start();
@@ -191,7 +191,7 @@ export class AirmashBot {
         }
 
         if (this.upgradesStopwatch.elapsedMs() > 5000) {
-            const applyUpgrades = new ApplyUpgrades(this.env, this.character);
+            const applyUpgrades = new ApplyUpgrades(this.env, this.logger, this.character);
             applyUpgrades.execute(this.score);
         }
 
@@ -203,7 +203,7 @@ export class AirmashBot {
         try {
             await this.prepareSteering();
         } catch (err) {
-            logger.error('error preparing steering', err);
+            this.logger.error('error preparing steering', err);
         }
     }
 
@@ -217,12 +217,12 @@ export class AirmashBot {
             const target = this.targetSelection.exec();
             const instructions = target.getInstructions();
             try {
-                for (let i of instructions) {
+                for (const i of instructions) {
                     const steeringInstruction = await i.getSteeringInstruction();
                     this.steeringInstallation.add(steeringInstruction);
                 }
             } catch (err) {
-                logger.info("Get steeringinstructions failed. Resetting target.", err);
+                this.logger.info("Get steeringinstructions failed. Resetting target.", err);
                 this.reset();
             }
 
@@ -245,18 +245,18 @@ export class AirmashBot {
 
     private onPlayerKilled(data: any) {
         if (data.killedID === this.env.myId()) {
-            logger.info('I was killed or removed from the game');
+            this.logger.info('I was killed or removed from the game');
             this.isSpawned = false;
             this.steeringInstallation.stop();
         } else if (data.killerID === this.env.myId()) {
             const other = this.env.getPlayer(data.killedID);
-            const otherName = !!other ? other.name : "an unknown player";
-            logger.info("I killed " + otherName);
+            const otherName = other ? other.name : "an unknown player";
+            this.logger.info("I killed " + otherName);
         }
     }
 
     private onError(data: any) {
-        logger.error('Error', data);
+        this.logger.error('Error', data);
         this.env.stopMainLoop();
         this.steeringInstallation.stop();
     }

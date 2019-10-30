@@ -7,7 +7,7 @@ export class SteeringInstruction {
     boost: boolean;
 
     toString(): string {
-        let results = [];
+        const results = [];
         if (this.rotDelta) {
             results.push(`Turn ${this.rotDelta}`);
         }

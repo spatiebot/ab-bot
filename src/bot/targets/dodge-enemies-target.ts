@@ -8,6 +8,7 @@ import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { GotoLocationInstruction } from "../instructions/goto-location";
 import { FireInstruction } from "../instructions/fire-instruction";
 import { BaseTarget } from "./base-target";
+import { Logger } from "../../helper/logger";
 
 export class DodgeEnemiesTarget extends BaseTarget {
     goal = 'avoid';
@@ -15,7 +16,7 @@ export class DodgeEnemiesTarget extends BaseTarget {
     private playerToAvoidID: number;
     private gotoLocationConfig: GotoLocationConfig;
 
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter, blacklist: number[]) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, private character: BotCharacter, blacklist: number[]) {
         super();
         this.gotoLocationConfig = new GotoLocationConfig(env.myId());
         
@@ -26,12 +27,12 @@ export class DodgeEnemiesTarget extends BaseTarget {
             .filter(x => !x.isHidden && x.isInView && !x.isStealthed);
 
         let closestAircraft: {
-            distance: number,
-            player: PlayerInfo,
+            distance: number;
+            player: PlayerInfo;
         };
         const myPos = me.pos;
 
-        for (var i = 0; i < otherAircrafts.length; i++) {
+        for (let i = 0; i < otherAircrafts.length; i++) {
             const p = otherAircrafts[i];
 
             const delta = Calculations.getDelta(myPos, p.pos);
@@ -89,7 +90,7 @@ export class DodgeEnemiesTarget extends BaseTarget {
         this.gotoLocationConfig.targetPos = enemyPos;
         this.gotoLocationConfig.shouldFleeFrom = true;
 
-        var instruction = new GotoLocationInstruction(this.env, this.character);
+        const instruction = new GotoLocationInstruction(this.env, this.logger, this.character);
         instruction.configure(this.gotoLocationConfig);
         result.push(instruction);
 
@@ -115,7 +116,7 @@ export class DodgeEnemiesTarget extends BaseTarget {
     }
 
     private getEnemyPos(predictPositions: boolean): Pos {
-        var enemy = this.env.getPlayer(this.playerToAvoidID);
+        const enemy = this.env.getPlayer(this.playerToAvoidID);
         if (enemy) {
             let pos = PlayerInfo.getMostReliablePos(enemy);
 

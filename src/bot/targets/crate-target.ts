@@ -5,6 +5,7 @@ import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { Crate } from "../airmash/crate";
 import { BaseTarget } from "./base-target";
+import { Logger } from "../../helper/logger";
 
 export class CrateTarget extends BaseTarget {
     private readonly targetID: number;
@@ -13,7 +14,7 @@ export class CrateTarget extends BaseTarget {
     private maxDistance: number;
     goal = "stealCrates";
 
-    constructor(private env: IAirmashEnvironment, blacklist: number[]) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, blacklist: number[]) {
         super();
         this.gotoLocationConfig = new GotoLocationConfig(env.myId());
         
@@ -22,7 +23,7 @@ export class CrateTarget extends BaseTarget {
 
         let closestCrate;
         let closestDistance;
-        for (var i = 0; i < crates.length; i++) {
+        for (let i = 0; i < crates.length; i++) {
             const delta = Calculations.getDelta(myPos, crates[i].pos);
             if (!closestCrate || delta.distance < closestDistance) {
                 closestCrate = crates[i];
@@ -41,7 +42,7 @@ export class CrateTarget extends BaseTarget {
 
     private getTarget(): Crate {
         if (this.targetID) {
-            var crate = this.env.getCrate(this.targetID);
+            const crate = this.env.getCrate(this.targetID);
             if (!crate) {
                 return null;
             }
@@ -83,7 +84,7 @@ export class CrateTarget extends BaseTarget {
         this.gotoLocationConfig.desiredDistanceToTarget = 0;
         this.gotoLocationConfig.targetPos = targetPos;
 
-        var instruction = new GotoLocationInstruction(this.env, null, this.targetID);
+        const instruction = new GotoLocationInstruction(this.env, this.logger, null, this.targetID);
         instruction.configure(this.gotoLocationConfig);
         result.push(instruction);
 
@@ -91,13 +92,13 @@ export class CrateTarget extends BaseTarget {
     }
 
     isValid(): boolean {
-        var target = this.getTarget();
+        const target = this.getTarget();
         if (!target) {
             return false;
         }
 
         if (this.maxDistance) {
-            var distance = Calculations.getDelta(this.env.me().pos, target.pos).distance;
+            const distance = Calculations.getDelta(this.env.me().pos, target.pos).distance;
             return (distance < this.maxDistance);
         }
 

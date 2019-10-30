@@ -20,11 +20,11 @@ export class DodgeMissileTarget extends BaseTarget {
             .filter(x => blacklist.indexOf(x.id) === -1);
 
         let closestObject: {
-            distance: number,
-            object: Missile
+            distance: number;
+            object: Missile;
         };
         const myPos = env.me().pos;
-        for (var i = 0; i < hostileMissiles.length; i++) {
+        for (let i = 0; i < hostileMissiles.length; i++) {
             const delta = Calculations.getDelta(myPos, hostileMissiles[i].pos);
             if (!closestObject || delta.distance < closestObject.distance) {
                 closestObject = {
@@ -64,7 +64,7 @@ export class DodgeMissileTarget extends BaseTarget {
     }
 
     private getMissileToAvoid(): Missile {
-        var missile = this.env.getMissile(this.missileToAvoidId);
+        const missile = this.env.getMissile(this.missileToAvoidId);
         return missile;
     }
 
@@ -85,7 +85,7 @@ export class DodgeMissileTarget extends BaseTarget {
             return result;
         }
 
-        var me = this.env.me();
+        const me = this.env.me();
 
         if (!missile.rot && missile.rot !== 0) {
             let rot = Math.atan2(missile.speed.y, missile.speed.x) + (Math.PI / 2);

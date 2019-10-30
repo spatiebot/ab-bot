@@ -5,7 +5,7 @@ export interface ITarget {
     isValid(): boolean;
     getInstructions(): IInstruction[];
     onKill(killerID: number, killedID: number);
-    getInfo(): { info: string, id: number, pos: Pos };
+    getInfo(): { info: string; id: number; pos: Pos };
     goal: string;
     isActive: boolean;
     isSticky: boolean;

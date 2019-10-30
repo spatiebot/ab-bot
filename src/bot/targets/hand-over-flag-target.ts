@@ -1,7 +1,6 @@
 
 import { IInstruction } from "../instructions/iinstruction";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
-import { Score } from "../airmash/score";
 import { PlayerInfo } from "../airmash/player-info";
 import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { GotoLocationInstruction } from "../instructions/goto-location";
@@ -9,7 +8,7 @@ import { Calculations } from "../calculations";
 import { BaseTarget } from "./base-target";
 import { StopWatch } from "../../helper/timer";
 import { Pos } from "../pos";
-import { logger } from "../../helper/logger";
+import { Logger } from "../../helper/logger";
 
 const TIME_OUT_SECS = 10;
 const POOP_DISTANCE = 150;
@@ -24,7 +23,7 @@ class HandOverFlagTarget extends BaseTarget {
     private shouldRecycle: boolean;
     private timer = new StopWatch();
 
-    constructor(private env: IAirmashEnvironment, playerID: number) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, playerID: number) {
         super();
 
         this.gotoLocationConfig = new GotoLocationConfig(this.env.myId());
@@ -60,7 +59,7 @@ class HandOverFlagTarget extends BaseTarget {
         return p;
     }
 
-    getInfo(): { info: string; id: number; pos: Pos; } {
+    getInfo(): { info: string; id: number; pos: Pos } {
         return {
             info: "hand over flag to " + this.targetID,
             id: this.targetID,
@@ -84,7 +83,7 @@ class HandOverFlagTarget extends BaseTarget {
             this.env.sendSay("Good luck!");
             this.env.sendCommand("drop", "");
 
-            logger.info("pooped the flag");
+            this.logger.info("pooped the flag");
 
             this.shouldRecycle = true;
         } else if (delta.distance > TOO_FAR_AWAY_FOR_POOPING_FLAG) {
@@ -93,7 +92,7 @@ class HandOverFlagTarget extends BaseTarget {
             this.gotoLocationConfig.desiredDistanceToTarget = 0;
             this.gotoLocationConfig.targetPos = targetPos;
 
-            var instruction = new GotoLocationInstruction(this.env, null, this.targetID);
+            const instruction = new GotoLocationInstruction(this.env, this.logger, null, this.targetID);
             instruction.configure(this.gotoLocationConfig);
             result.push(instruction);
         }
@@ -110,5 +109,5 @@ class HandOverFlagTarget extends BaseTarget {
     }
 }
 
-export {HandOverFlagTarget, TOO_FAR_AWAY_FOR_POOPING_FLAG}
+export { HandOverFlagTarget, TOO_FAR_AWAY_FOR_POOPING_FLAG }
 

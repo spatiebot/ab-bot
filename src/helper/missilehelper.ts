@@ -14,7 +14,7 @@ export class MissileHelper {
                 // my own missile
                 return false;
             }
-            var missileShooter = env.getPlayer(x.playerID);
+            const missileShooter = env.getPlayer(x.playerID);
             if (!missileShooter) {
                 return true;
             }

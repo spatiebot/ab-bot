@@ -1,10 +1,10 @@
 import { IAirmashEnvironment } from "./airmash/iairmash-environment";
 import { Score } from "./airmash/score";
 import { BotCharacter } from "./bot-character";
-import { logger } from  '../helper/logger';
+import { Logger } from  '../helper/logger';
 
 export class ApplyUpgrades {
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, private character: BotCharacter) {
     }
 
     execute(score: Score): void {
@@ -24,7 +24,7 @@ export class ApplyUpgrades {
             };
             const upgradeToApply = getUpgradeToApply();
             if (upgradeToApply > 0) {
-                logger.info("apply upgrade " + upgradeToApply);
+                this.logger.info("apply upgrade " + upgradeToApply);
                 this.env.sendCommand("upgrade", upgradeToApply.toString());
 
                 score.upgrades -= 1;

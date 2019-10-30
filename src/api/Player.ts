@@ -23,19 +23,19 @@ export class Player extends Mob {
     flag: number;
     powerUps: PowerUps = new PowerUps();
     appliedUpgrades: Upgrades = new Upgrades();
-    stealth: boolean = false;
-    hidden: boolean = false;
-    dead: boolean = false;
-    energy: number = 1;
-    energyRegen: number = 0;
-    health: number = 1;
-    healthRegen: number = 0;
+    stealth = false;
+    hidden = false;
+    dead = false;
+    energy = 1;
+    energyRegen = 0;
+    health = 1;
+    healthRegen = 0;
     lowResPos: Pos = null;
     boost: boolean;
     strafe: boolean;
     keystate: Keystate;
     flagspeed: boolean;
-    leftHorizon: boolean = false;
+    leftHorizon = false;
 
     update(timeFactor: number) {
         this.updater.exec(timeFactor);

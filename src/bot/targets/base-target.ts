@@ -6,7 +6,7 @@ export abstract class BaseTarget implements ITarget {
     abstract isValid(): boolean;
     abstract getInstructions(): IInstruction[];
     abstract onKill(killerID: number, killedID: number);
-    abstract getInfo(): { info: string, id: number, pos: Pos };
+    abstract getInfo(): { info: string; id: number; pos: Pos };
     abstract goal: string;
 
     isActive: boolean;

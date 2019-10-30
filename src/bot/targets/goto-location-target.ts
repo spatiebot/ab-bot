@@ -5,6 +5,7 @@ import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { Pos } from "../pos";
 import { BaseTarget } from "./base-target";
+import { Logger } from "../../helper/logger";
 
 export class GotoLocationTarget extends BaseTarget {
     private gotoLocationConfig: GotoLocationConfig;
@@ -12,7 +13,7 @@ export class GotoLocationTarget extends BaseTarget {
     goal = "gotoLocation";
     private manualInfo: string;
     
-    constructor(private env: IAirmashEnvironment, private readonly targetPos: Pos) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, private readonly targetPos: Pos) {
         super();
         this.gotoLocationConfig = new GotoLocationConfig(env.myId());
     }
@@ -26,7 +27,7 @@ export class GotoLocationTarget extends BaseTarget {
         this.gotoLocationConfig.desiredDistanceToTarget = 0;
         this.gotoLocationConfig.targetPos = this.targetPos;
 
-        var instruction = new GotoLocationInstruction(this.env, null);
+        const instruction = new GotoLocationInstruction(this.env, this.logger, null);
         instruction.configure(this.gotoLocationConfig);
         result.push(instruction);
 

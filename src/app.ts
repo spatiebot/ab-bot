@@ -4,9 +4,7 @@ import { AirmashBot } from './bot/airmash-bot';
 import { AirmashApiFacade } from "./bot/airmash/airmash-api";
 import { BotCharacter } from './bot/bot-character';
 import { BotIdentityGenerator } from './bot-identity-generator';
-import { LoggerConfig, logger } from './helper/logger';
-
-LoggerConfig.isDevelopment = !!argv.dev;
+import { Logger } from './helper/logger';
 
 const urls = {
     local: "ws://127.0.0.1:3501/ffa",
@@ -33,9 +31,11 @@ for (let i = 0; i < numBots; i++) {
 
     const type = identity.aircraftType;
     const flag = identity.flag;
-    let name = <string>argv.name || identity.name;
-    const character = <string>argv.character;
+    const name = argv.name as string || identity.name;
+    const character = argv.character as string;
     const botCharacter = BotCharacter[character] || BotCharacter.get(Number(type));
+
+    const logger = new Logger(i, name, !!argv.dev, (argv.level as string) || "warn");
 
     logger.info('Starting bot no ' + i + ' with the following configuration:', {
         name,
@@ -45,9 +45,9 @@ for (let i = 0; i < numBots; i++) {
         url: ws
     });
 
-    const env = new AirmashApiFacade(ws);
+    const env = new AirmashApiFacade(ws, logger);
     env.startMainLoop();
-    const bot = new AirmashBot(env, botCharacter);
+    const bot = new AirmashBot(env, logger, botCharacter);
 
     // throttle joining of the bots to prevent spamming the server.
     const timeOutMs = i * 500;

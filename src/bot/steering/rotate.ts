@@ -1,9 +1,8 @@
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { SteeringState } from "./steering-state";
-import { steeringInstallationIntervalMs } from "./steering-installation";
 import { PlayerInfo } from "../airmash/player-info";
 
-const precision: number = 0.05;
+const precision = 0.05;
 
 const rotationSpeeds = {
     1: 0.39, // predator

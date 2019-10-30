@@ -1,5 +1,5 @@
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
-import { steeringInstallationIntervalMs, longThrottleInterval } from "./steering-installation";
+import { STEERING_INTERVAL, LONG_STEERING_INTERVAL } from "./steering-installation";
 
 export class SteeringState {
     private sent: number = Date.now();
@@ -9,16 +9,16 @@ export class SteeringState {
     }
 
     canSend(): boolean {
-        return (Date.now() > this.sent + steeringInstallationIntervalMs);
+        return (Date.now() > this.sent + STEERING_INTERVAL);
     }
 
     send(env: IAirmashEnvironment, value: boolean) {
-        var keystate = env.getMyKeyState();
+        const keystate = env.getMyKeyState();
         if (keystate[this.key] === value && this.key !== 'SPECIAL' && this.key !== 'FIRE') {
             return;
         }        
 
-        const timeOut = this.sent + longThrottleInterval;
+        const timeOut = this.sent + LONG_STEERING_INTERVAL;
         const hasTimedOut = Date.now() > timeOut;
         if (this.lastValue === value && !hasTimedOut) {
             return;

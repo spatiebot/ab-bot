@@ -39,7 +39,7 @@ export interface IAirmashEnvironment {
     sendCommand(command: string, args: string);
 
     getFlagInfo(team: number): FlagInfo;
-    getCtfScores(): { 1: number, 2: number };
+    getCtfScores(): { 1: number; 2: number };
 
     setDebugProperties(config: any);
 }

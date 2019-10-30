@@ -6,13 +6,14 @@ import { Pos } from "../pos";
 import { BaseTarget } from "./base-target";
 import { FireInstruction } from "../instructions/fire-instruction";
 import { FlagHelpers } from "../../helper/flaghelpers";
+import { Logger } from "../../helper/logger";
 
 export class BringFlagHomeTarget extends BaseTarget {
     private gotoLocationConfig: GotoLocationConfig;
 
     goal = "gotoLocation";
     
-    constructor(private env: IAirmashEnvironment, private readonly targetPos: Pos, private readonly isInDangerZone) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, private readonly targetPos: Pos, private readonly isInDangerZone) {
         super();
         this.gotoLocationConfig = new GotoLocationConfig(env.myId());
     }
@@ -27,7 +28,7 @@ export class BringFlagHomeTarget extends BaseTarget {
         this.gotoLocationConfig.targetPos = this.targetPos;
         this.gotoLocationConfig.flyBackwards = !this.isInDangerZone;
 
-        var instruction = new GotoLocationInstruction(this.env, null);
+        const instruction = new GotoLocationInstruction(this.env, this.logger, null);
         instruction.configure(this.gotoLocationConfig);
         result.push(instruction);
         result.push(new FireInstruction());

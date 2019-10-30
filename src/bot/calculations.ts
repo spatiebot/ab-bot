@@ -2,7 +2,7 @@ import { Pos } from "./pos";
 
 export class Calculations {
 
-    static getDelta(first: Pos, second: Pos): { diffX: number, diffY: number, distance: number } {
+    static getDelta(first: Pos, second: Pos): { diffX: number; diffY: number; distance: number } {
         if (!first || !second) {
             return null;
         }

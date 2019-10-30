@@ -12,27 +12,27 @@ import { StopWatch } from "../../helper/timer";
 import { FlagHelpers } from "../../helper/flaghelpers";
 import { Missile } from "../airmash/missile";
 import * as workerpool from "workerpool";
-import { logger } from "../../helper/logger";
+import { Logger } from "../../helper/logger";
 import { MissileHelper } from "../../helper/missilehelper";
 
 declare const __dirname: string;
 
-let pfPool = workerpool.pool(__dirname + '/../pathfinding/path-finding.js');
+const pfPool = workerpool.pool(__dirname + '/../pathfinding/path-finding.js');
 let pathfindingRequests = 0;
 let pathfindingRequestsFailed = 0;
 let fatalPathFindingFailures = 0;
 let honoredPathFindingRequests = 0;
-let pathFindingRequestTimer = new StopWatch();
+const pathFindingRequestTimer = new StopWatch();
 pathFindingRequestTimer.start();
 
 export class GotoLocationInstruction implements IInstruction {
 
     private config: GotoLocationConfig;
 
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter, private targetPlayerId = null) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, private character: BotCharacter, private targetPlayerId = null) {
     }
 
-    private async getNextPos(me: PlayerInfo, deltaToTarget: { diffX: number, diffY: number, distance: number }): Promise<Pos> {
+    private async getNextPos(me: PlayerInfo, deltaToTarget: { diffX: number; diffY: number; distance: number }): Promise<Pos> {
 
         let myPos = me.pos;
         if (this.character && this.character.predictPositions) {
@@ -76,14 +76,14 @@ export class GotoLocationInstruction implements IInstruction {
             pathfindingRequests++;
             const secs = pathFindingRequestTimer.elapsedSeconds();
             if (secs > 3) {
-                logger.warn(
+                this.logger.debug(
                     "Pathfindingrequests/s: " + Math.round(pathfindingRequests / secs) +
                     ", honored: " + Math.round(honoredPathFindingRequests / secs) +
                     ", failed: " + Math.round(pathfindingRequestsFailed / secs) +
                     ", fatal: " + Math.round(fatalPathFindingFailures / secs)
                 );
 
-                logger.warn("Pool stats", pfPool.stats());
+                this.logger.debug("Pool stats", pfPool.stats());
 
                 pathFindingRequestTimer.start();
                 pathfindingRequests = 0;

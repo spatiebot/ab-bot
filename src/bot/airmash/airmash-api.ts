@@ -11,6 +11,7 @@ import { Missile } from "./missile";
 import { KEY_CODES } from "../../ab-protocol/src/types/client";
 import { CHAT_TYPE } from "../../api/chat-type";
 import { FlagInfo } from "../../api/flagInfo";
+import { Logger } from "../../helper/logger";
 
 export class AirmashApiFacade implements IAirmashEnvironment {
 
@@ -18,9 +19,16 @@ export class AirmashApiFacade implements IAirmashEnvironment {
     private game: Game;
     private mainLoop: any;
 
-    constructor(url: string) {
-        this.network = new Network(url);
-        this.game = new Game(this.network);
+    private isCacheFilled: boolean;
+    private cachedPlayers: PlayerInfo[];
+    private cachedCrates: Crate[];
+    private cachedMissiles: Missile[];
+
+    constructor(url: string, logger: Logger) {
+        this.network = new Network(url, logger);
+        this.game = new Game(this.network, logger);
+
+        this.on('afterTick', () => this.afterTick());
     }
 
     startMainLoop() {
@@ -35,6 +43,31 @@ export class AirmashApiFacade implements IAirmashEnvironment {
         } catch (error) {
             this.game.onError(error);
         }
+    }
+
+    private initCache() {
+        // cache some stuff which will be queried often
+        if (this.isCacheFilled) {
+            return;
+        }
+
+        this.cachedPlayers = this.game.getPlayers().map(x => this.getPlayerFrom(x));
+
+        const mobs = this.game.getMobs();
+        const crates = mobs.filter(x => x.stationary);
+        const missiles = mobs.filter(x => !x.stationary);
+
+        this.cachedCrates = crates.map(x => this.getCrateFrom(x));
+        this.cachedMissiles = missiles.map(x => this.getMissileFrom(x));
+
+        this.isCacheFilled = true;
+    }
+
+    private afterTick() {
+        this.cachedPlayers = [];
+        this.cachedCrates = [];
+        this.cachedMissiles = [];
+        this.isCacheFilled = false;
     }
 
     joinGame(name: string, flag: string) {
@@ -52,7 +85,7 @@ export class AirmashApiFacade implements IAirmashEnvironment {
     off(what: string, subscriptionID: number) {
         this.game.off(what, subscriptionID);
     }
-    
+
     getWalls(): number[][] {
         return walls;
     }
@@ -61,12 +94,12 @@ export class AirmashApiFacade implements IAirmashEnvironment {
         return team === 1 ? this.game.blueFlag : this.game.redFlag;
     }
 
-    getCtfScores(): { 1: number, 2: number} {
+    getCtfScores(): { 1: number; 2: number } {
         return this.game.ctfScores;
     }
 
     me(): PlayerInfo {
-        return this.getPlayerFrom(this.game.getPlayer(this.game.getMyId()));
+        return this.getPlayer(this.game.getMyId());
     }
 
     getGameType(): number {
@@ -120,17 +153,18 @@ export class AirmashApiFacade implements IAirmashEnvironment {
     }
 
     getPlayers(): PlayerInfo[] {
-        return this.game.getPlayers().map(x => this.getPlayerFrom(x));
+        this.initCache();
+        return this.cachedPlayers;
     }
 
     getPlayer(id: number): PlayerInfo {
-        return this.getPlayerFrom(this.game.getPlayer(id));
+        this.initCache();
+        return this.cachedPlayers.find(x => x.id === id);
     }
 
     getCrates(): Crate[] {
-        const mobs = this.game.getMobs();
-        const crates = mobs.filter(x => x.stationary);
-        return crates.map(x => this.getCrateFrom(x));
+        this.initCache();
+        return this.cachedCrates;
     }
 
     private getCrateFrom(m: Mob): Crate {
@@ -145,15 +179,13 @@ export class AirmashApiFacade implements IAirmashEnvironment {
     }
 
     getCrate(id: number): Crate {
-        return this.getCrateFrom(this.game.getMob(id));
+        this.initCache();
+        return this.cachedCrates.find(x => x.id === id);
     }
 
     getMissiles(): Missile[] {
-        const mobs = this.game.getMobs();
-        const missiles = mobs.filter(x => !x.stationary);
-
-        const mapped = missiles.map(x => this.getMissileFrom(x));
-        return mapped;
+        this.initCache();
+        return this.cachedMissiles;
     }
 
     private getMissileFrom(m: Mob): Missile {
@@ -172,7 +204,8 @@ export class AirmashApiFacade implements IAirmashEnvironment {
     }
 
     getMissile(id: number): Missile {
-        return this.getMissileFrom(this.game.getMob(id));
+        this.initCache();
+        return this.cachedMissiles.find(x => x.id === id);
     }
 
     sendKey(keyName: string, value: boolean) {

@@ -5,10 +5,11 @@ import { Speed } from "./speed";
 import { Fire } from "./fire";
 import { Fart } from "./fart";
 import { Stealth } from "./stealth";
-import { logger } from "../../helper/logger";
+import { Logger } from "../../helper/logger";
+import { StopWatch } from "../../helper/timer";
 
-export const steeringInstallationIntervalMs = 180;
-export const longThrottleInterval = 3.5 * steeringInstallationIntervalMs;
+export const STEERING_INTERVAL = 180;
+export const LONG_STEERING_INTERVAL = 3.5 * STEERING_INTERVAL;
 
 function isNullOrUndefined(obj: any): boolean {
     return obj === null || typeof (obj) === 'undefined';
@@ -24,15 +25,17 @@ export class SteeringInstallation {
     private fart: Fart;
     private stealth: Stealth;
     private isStarted: boolean;
-    private lastExecuted: number = 0;
+    private executionTimer = new StopWatch();
     private isExecuting: boolean;
 
-    constructor(private env: IAirmashEnvironment) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger) {
         this.rotation = new Rotate(env);
         this.speed = new Speed(env);
         this.fire = new Fire(env);
         this.fart = new Fart(env);
         this.stealth = new Stealth(env);
+    
+        this.executionTimer.start();
     }
 
     start() {
@@ -68,12 +71,11 @@ export class SteeringInstallation {
             return;
         }
         if (this.isExecuting) {
-            logger.warn("Steeringinterval started twice!");
+            this.logger.warn("Steeringinterval started twice!");
             return;
         }
 
-        const now = Date.now();
-        if (now - this.lastExecuted < steeringInstallationIntervalMs) {
+        if (this.executionTimer.elapsedMs() < STEERING_INTERVAL) {
             return;
         }
         this.isExecuting = true;
@@ -90,9 +92,9 @@ export class SteeringInstallation {
             this.stealth.execute(instruction.stealth);
             this.fart.execute(instruction.fart);
             this.fire.execute(me, instruction.fire);
-            
+
         } finally {
-            this.lastExecuted = now;
+            this.executionTimer.start();
             this.isExecuting = false;
         }
     }
@@ -111,7 +113,4 @@ export class SteeringInstallation {
 
         return result;
     }
-
-
-
 }

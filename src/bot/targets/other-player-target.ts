@@ -9,6 +9,7 @@ import { GotoLocationConfig } from "../instructions/goto-location-config";
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { getPlayersSortedByDistance } from "./get-closest-player";
 import { BaseTarget } from "./base-target";
+import { Logger } from "../../helper/logger";
 
 export class OtherPlayerTarget extends BaseTarget {
 
@@ -20,7 +21,7 @@ export class OtherPlayerTarget extends BaseTarget {
 
     goal = "fight";
 
-    constructor(private env: IAirmashEnvironment, private character: BotCharacter, blacklist: number[], victimId: number = null, private peaceful = false) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, private character: BotCharacter, blacklist: number[], victimId: number = null, private peaceful = false) {
         super();
         this.gotoLocationConfig = new GotoLocationConfig(env.myId());
 
@@ -84,7 +85,7 @@ export class OtherPlayerTarget extends BaseTarget {
 
     private getTarget(): PlayerInfo {
         if (this.targetID) {
-            var p = this.env.getPlayer(this.targetID);
+            const p = this.env.getPlayer(this.targetID);
             return p;
         }
         return null;
@@ -110,7 +111,7 @@ export class OtherPlayerTarget extends BaseTarget {
         this.gotoLocationConfig.desiredDistanceToTarget = this.character.intimateRange;
         this.gotoLocationConfig.targetPos = targetPos;
 
-        var instruction = new GotoLocationInstruction(this.env, this.character, this.targetID);
+        const instruction = new GotoLocationInstruction(this.env, this.logger, this.character, this.targetID);
         instruction.configure(this.gotoLocationConfig);
         result.push(instruction);
 
@@ -128,7 +129,7 @@ export class OtherPlayerTarget extends BaseTarget {
     }
 
     private getTargetPos(predictPositions: boolean): Pos {
-        var t = this.getTarget();
+        const t = this.getTarget();
         if (t) {
             let pos = PlayerInfo.getMostReliablePos(t);
 

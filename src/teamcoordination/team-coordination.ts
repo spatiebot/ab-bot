@@ -3,11 +3,11 @@ import { StopWatch } from "../helper/timer";
 import { PlayerInfo } from "../bot/airmash/player-info";
 import { Election } from "./election";
 import { Slave } from "./slave";
-import { logger } from "../helper/logger";
+import { Logger } from "../helper/logger";
 
 let leaderRed: number;
 let leaderBlue: number;
-let slaves: Slave[] = [];
+const slaves: Slave[] = [];
 
 function stopGame() {
     leaderBlue = null;
@@ -47,7 +47,7 @@ export class TeamCoordination {
     private isBotLeader: boolean;
     private isElectionOngoing: boolean;
 
-    constructor(private env: IAirmashEnvironment) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger) {
         this.env.on('chat', x => this.onChat(x));
         this.env.on('start', _ => this.onStart());
         this.env.on('ctfGameOver', () => this.onStop());
@@ -98,7 +98,11 @@ export class TeamCoordination {
         this.isBotLeader = isLeader;
         if (this.isBotLeader) {
             await this.electLeader();
-            execAuto(me.id, me.team);
+            try {
+                execAuto(me.id, me.team);
+            } catch (error) {
+                this.logger.error("error #auto-ing", error);
+            }
         }
     }
 
@@ -166,6 +170,12 @@ export class TeamCoordination {
         const me = this.env.me();
 
         switch (command) {
+            case 'log':
+                const botName = param;
+                const bot = this.env.getPlayers().find(x => x.name.toLowerCase() === botName.toLowerCase());
+                param = !!bot ? bot.id +'' : '';
+                this.logger.warn("Log", {botName, param});
+                break;
 
             case 'defend':
             case 'def':
@@ -193,7 +203,7 @@ export class TeamCoordination {
                 if (targetPlayerName === 'me') {
                     playerToAssist = speaker;
                 } else {
-                    playerToAssist = this.env.getPlayers().find(x => x.name.toLowerCase() === targetPlayerName.toLowerCase())
+                    playerToAssist = this.env.getPlayers().find(x => x.name.toLowerCase() === targetPlayerName.toLowerCase());
                 }
 
                 if (playerToAssist && playerToAssist.team === me.team) {

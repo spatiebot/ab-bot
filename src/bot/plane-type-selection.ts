@@ -1,5 +1,4 @@
 import { IAirmashEnvironment } from "./airmash/iairmash-environment";
-import { logger } from "../helper/logger";
 import { StopWatch } from "../helper/timer";
 
 export class PlaneTypeSelection {
