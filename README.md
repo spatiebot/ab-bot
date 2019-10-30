@@ -17,7 +17,7 @@ You'll need Node v12 or more, and the gulp-cli.
 2. `npm i`
 3. `gulp`
 
-#Running 
+# Running 
 
 `node dist/app.js --ws=euCtf --num=5`
 
