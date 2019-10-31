@@ -259,7 +259,7 @@ export class TeamCoordination {
                 break;
         }
 
-        if (shouldSay && shouldSay !== this.lastSaid) {
+        if (shouldSay && shouldSay !== this.lastSaid && !this.isSecondaryTeamCoordinator) {
             if (this.env.sendTeam(shouldSay, false)) {
                 this.lastSaid = shouldSay;
             }
