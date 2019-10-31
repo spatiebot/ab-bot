@@ -409,7 +409,7 @@ export class CtfTargetSelection implements ITargetSelection {
             case 'type':
                 let planeType = Number(param);
                 if (!planeType) {
-                    if (param = 'distribute') {
+                    if (param === 'distribute') {
                         lastSelectedPlaneType++;
                         if (lastSelectedPlaneType === 6) {
                             lastSelectedPlaneType = 1;
