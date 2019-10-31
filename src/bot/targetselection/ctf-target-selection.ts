@@ -348,7 +348,7 @@ export class CtfTargetSelection implements ITargetSelection {
         const player = this.env.getPlayer(playerID);
         const me = this.env.me();
 
-        if (player.team !== me.team) {
+        if (!player || !me || player.team !== me.team) {
             return;
         }
 
