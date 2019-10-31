@@ -188,7 +188,9 @@ export class TeamCoordination {
                 // don't allow me to be leader: i will be banned for spam
                 if (victim && victim.team === me.team && victim.id !== me.id) {
                     this.teamLeaderId = victim.id;
-                    this.env.sendTeam(player.name + " has made " + victim.name + " the new team leader.", true);
+                    if (!this.isSecondaryTeamCoordinator) {
+                        this.env.sendTeam(player.name + " has made " + victim.name + " the new team leader.", true);
+                    }
                 }
             }
 
