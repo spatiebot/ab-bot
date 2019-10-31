@@ -64,9 +64,11 @@ Attackers will try to grab the enemy flag, and protect the flag carrier if the f
 
 ## Team leader selection
 
-Commands to the bots can only be issued by the team leader. When the bots join, at the start of each game, and each 15 minutes an election will be held to select the team leader. You can propose yourself as team leader by saying #yes during an election. Other people can vote for you during the election by saying #vote (name).
+Commands to the bots can only be issued by the team leader. When the bots join, at the start of each game, and each 10 minutes an election will be held to select the team leader. You can propose yourself as team leader by saying #yes during an election. Other people can vote for you during the election by saying #vote (name).
 
 If a bot is selected as team leader, it will direct the bots into an aggressive mode, only being more defensive if the enemy has 2 points already.
+
+You can challenge an existing team leader, see below.
 
 ## Commands
 
@@ -90,7 +92,7 @@ Will go to the player requesting assistance and defend him: in case of "me" the 
 
 **#drop**  
 If one of the bots is carrying the flag, this command will make the bot fly towards you and drop the flag at your feet. It will only do so if you're within reach, and it will only try to do so for 10 seconds.  
-This is the only command that non-team leaders can issue.
+This is one of the commands that non-team leaders can issue.
 
 **#type**  
 Needs a number or "random" as parameter. Makes the bot switch to a given aircraft type. Example: `#type 2` will make the bots switch to Goliaths. Use `#type random` to make them select a random aircraft. 
@@ -100,5 +102,6 @@ Needs the playername as parameter. Makes the mentioned player the new leader. Yo
 for spamming if you do. Example: `#leader rookie`.
 
 **#leader-challenge**  
-This will call for the leader to reply. If (s)he doesn't reply after 30 seconds, a new election is held. This command can only be issued 2.5 minutes after the previous one / an election, and not within 1 minute of an upcoming election. Bots should never reply to the challenge. 
+This will call for the leader to reply. If (s)he doesn't reply after 30 seconds, a new election is held. This command can only be issued 2.5 minutes after the previous one / an election, and not within 1 minute of an upcoming election. Bots should never reply to the challenge.  
+This is one of the commands that non-team leaders can issue.
 
