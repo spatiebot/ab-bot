@@ -45,6 +45,8 @@ const FIGHT_DISTANCE_THRESHOLD = 300;
 const PROTECT_FLAG_DISTANCE = 700;
 const PROTECT_PLAYER_DISTANCE = 100;
 
+let lastSelectedPlaneType = 0;
+
 export class CtfTargetSelection implements ITargetSelection {
 
     // cached state
@@ -407,7 +409,15 @@ export class CtfTargetSelection implements ITargetSelection {
             case 'type':
                 let planeType = Number(param);
                 if (!planeType) {
-                    planeType = Calculations.getRandomInt(1, 6);
+                    if (param = 'distribute') {
+                        lastSelectedPlaneType++;
+                        if (lastSelectedPlaneType === 6) {
+                            lastSelectedPlaneType = 1;
+                        }
+                        planeType = lastSelectedPlaneType;
+                    } else {
+                        planeType = Calculations.getRandomInt(1, 6);
+                    }
                 }
 
                 this.switchPlane(planeType);

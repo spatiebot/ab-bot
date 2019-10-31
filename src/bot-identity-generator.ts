@@ -46,7 +46,7 @@ export class BotIdentityGenerator {
 
         if (planeTypeConfig === 'random') {
             aircraftType = Calculations.getRandomInt(1, 6);
-        } else if (planeTypeConfig === 'even') {
+        } else if (planeTypeConfig === 'distribute') {
             lastAircraftType = lastAircraftType + 1;
             if (lastAircraftType === 6) {
                 lastAircraftType = 1;

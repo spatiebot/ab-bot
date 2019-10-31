@@ -26,7 +26,7 @@ You'll need Node v12 or more, and the gulp-cli.
 Parameters:
 
     --num: the number of bots. Default = 1
-    --type: the type of aircraft used. Default = random
+    --type: the type of aircraft used. Default = random. Use type=distribute to select each plane type sequentially. 
     --flag: the flag. Default = random
     --name: name of the bot. Default = random firstname based on the flag, prefixed by [b]_ for bot
     --ws: websocket to connect to. Use the full url or one of the shortcuts:  
@@ -93,7 +93,7 @@ If one of the bots is carrying the flag, this command will make the bot fly towa
 This is the only command that non-team leaders can issue.
 
 **#type**  
-Needs a number or "random" as parameter. Makes the bot switch to a given aircraft type. Example: `#type 2` will make the bots switch to Goliaths. Use `#type random` to make them select a random aircraft. 
+Needs a number or "random" as parameter. Makes the bot switch to a given aircraft type. Example: `#type 2` will make the bots switch to Goliaths. Use `#type random` to make them select a random aircraft, `#type distribute` to sequentially select each type.
 
 **#leader**  
 Needs the playername as parameter. Makes the mentioned player the new leader. You can't make the masterbot the leader, because he will be muted
