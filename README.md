@@ -48,6 +48,10 @@ Parameters:
         - Shy
         - Protective (will listen to '#protect me' commands)
 
+    --noTeamCoordinator: will only listen to an other team coordinator (can be used to hosts bot on different servers)
+    --dev: will log with pretty logging. Default: false.
+    --level: the loglevel. Default: warn.
+
 # CTF behavior and commands
 
 ## Bot behavior
@@ -95,5 +99,6 @@ Needs a number or "random" as parameter. Makes the bot switch to a given aircraf
 Needs the playername as parameter. Makes the mentioned player the new leader. You can't make the masterbot the leader, because he will be muted
 for spamming if you do. Example: `#leader rookie`.
 
-
+**#leader-challenge**  
+This will call for the leader to reply. If (s)he doesn't reply after 30 seconds, a new election is held. This command can only be issued 2.5 minutes after the previous one / an election, and not within 1 minute of an upcoming election. Bots should never reply to the challenge. 
 

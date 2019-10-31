@@ -13,6 +13,7 @@ import { Player } from './Player';
 import { Pos } from '../bot/pos';
 import { Upgrades } from './upgrades';
 import { Logger } from '../helper/logger';
+import { StopWatch } from '../helper/timer';
 
 export class Network {
     private client: WebSocket;
@@ -24,6 +25,8 @@ export class Network {
     private keyCount = 0;
     private token: string;
     private lastChat: string;
+    private spamWarningTimer = new StopWatch();
+    private chatTimeout; 
 
     constructor(private ws: string, private logger: Logger) {
     }
@@ -121,11 +124,23 @@ export class Network {
         this.send(msg);
     }
 
-    chat(type: CHAT_TYPE, text: string, targetPlayerID: number = null) {
+    chat(type: CHAT_TYPE, text: string, isUrgent: boolean, targetPlayerID: number = null): boolean {
         if (this.lastChat === text) {
             // avoid being muted by the server
-            return;
+            return false;
         }
+        if (this.spamWarningTimer.isStarted && this.spamWarningTimer.elapsedSeconds() < 2) {
+            // we're about to get muted
+            if (!isUrgent || this.chatTimeout) {
+                return false;
+            }
+            this.chatTimeout = setTimeout(() => {
+                this.chatTimeout = null;
+                this.chat(type, text, isUrgent, targetPlayerID);
+            }, 1500);
+            return true;
+        }
+
         this.lastChat = text;
 
         let c: number;
@@ -151,6 +166,8 @@ export class Network {
         };
 
         this.send(msg);
+
+        return true;
     }
 
     private onServerMessage(msg: ProtocolPacket, isPrimary: boolean) {
@@ -336,6 +353,13 @@ export class Network {
                     this.game.onCtfGameOver();
                 } else {
                     this.logger.warn("Custom server message", msg);
+                }
+                break;
+
+            case SERVER_PACKETS.COMMAND_REPLY:
+                if (msg.type === 0 && msg.text === "Don't spam!") {
+                    this.logger.warn("Spam warning received!");
+                    this.spamWarningTimer.start();
                 }
                 break;
 

@@ -76,7 +76,7 @@ export class TargetSelection implements ITargetSelection {
                     this.logger.debug('ProtectID: ' + this.protectId);
                     const player = this.env.getPlayer(this.protectId);
                     if (player) {
-                        this.env.sendChat("OK, " + player.name + ", I'm heading your way. Say '#unprotect' to stop me from following you.")
+                        this.env.sendChat("OK, " + player.name + ", I'm heading your way. Say '#unprotect' to stop me from following you.", false)
                     } else {
                         this.logger.debug('ProtectID apparently invalid');
                         this.protectId = null;
@@ -89,7 +89,7 @@ export class TargetSelection implements ITargetSelection {
                 if (this.protectId === msg.id) {
                     this.logger.debug('From protectplayer');
                     const player = this.env.getPlayer(this.protectId);
-                    this.env.sendChat("I'll stop following you, " + player.name);
+                    this.env.sendChat("I'll stop following you, " + player.name, false);
                     this.protectId = null;
                     this.target = null;
                 }

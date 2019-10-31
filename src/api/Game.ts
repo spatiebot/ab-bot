@@ -22,7 +22,7 @@ export class Game {
     private readonly subscribers = {};
     private ping = 30;
     private tickDurations: any = {};
-    
+
     private debugConfig: any;
 
     constructor(private readonly network: Network, private readonly logger: Logger) {

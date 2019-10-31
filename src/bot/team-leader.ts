@@ -122,8 +122,9 @@ export class TeamLeader {
         }
 
         if (this.lastSaid !== shouldSay) {
-            this.env.sendTeam(shouldSay);
-            this.lastSaid = shouldSay;
+            if (this.env.sendTeam(shouldSay, false)) {
+                this.lastSaid = shouldSay;
+            }
         }
     }
 

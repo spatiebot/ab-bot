@@ -13,6 +13,7 @@ import { Logger } from "../helper/logger";
 import { TeamCoordination } from "../teamcoordination/team-coordination";
 import { Slave } from "../teamcoordination/slave";
 import { PlaneTypeSelection } from "./plane-type-selection";
+import { TeamLeaderChatHelper } from "../helper/teamleader-chat-helper";
 
 export class AirmashBot {
 
@@ -31,7 +32,7 @@ export class AirmashBot {
     private slave: Slave; // for executing commands from the teamleader via the teamcoordinator
     private planeTypeSelection: PlaneTypeSelection;
 
-    constructor(private env: IAirmashEnvironment, private logger: Logger, private character: BotCharacter) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, private character: BotCharacter, isSecondaryTeamCoordinator: boolean) {
 
         this.env.on('spawned', (x) => this.onSpawned(x));
         this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
@@ -42,7 +43,7 @@ export class AirmashBot {
         this.env.on('ctfGameOver', () => this.onCtfGameOver());
 
         this.steeringInstallation = new SteeringInstallation(this.env, this.logger);
-        this.teamCoordination = new TeamCoordination(this.env, this.logger);
+        this.teamCoordination = new TeamCoordination(this.env, this.logger, isSecondaryTeamCoordinator);
         this.slave = new Slave(this.env);
         this.teamCoordination.addSlave(this.slave);
         this.planeTypeSelection = new PlaneTypeSelection();
@@ -123,19 +124,10 @@ export class AirmashBot {
         const name = p ? p.name : "unknown";
         this.logger.info(name + ' says: "' + msg.text + '"');
 
-        // ... has been chosen as the new team leader.
-        // ... is still the team leader.
-        //     has made ... the new team leader
-        let teamLeaderMatch = /^(.*)\s(?:has\sbeen\schosen\sas\sthe\snew|is\sstill\sthe)\steam\sleader\./.exec(msg.text);
-        if (!teamLeaderMatch) {
-            teamLeaderMatch = /has\smade\s(.*)\sthe\snew\steam\sleader./.exec(msg.text);
-        }
-        if (teamLeaderMatch) {
-            const newTeamLeader = teamLeaderMatch[1];
-            if (newTeamLeader === this.env.me().name) {
-                if (!this.teamleader) {
-                    this.teamleader = new TeamLeader(this.env);
-                }
+        const newTeamleaderID = TeamLeaderChatHelper.getTeamleaderId(msg.text, this.env);
+        if (newTeamleaderID) {
+            if (newTeamleaderID === this.env.myId()){
+                this.teamleader = new TeamLeader(this.env);
             } else {
                 this.teamleader = null;
             }

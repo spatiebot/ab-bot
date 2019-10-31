@@ -4,22 +4,27 @@ import { PlayerInfo } from "../bot/airmash/player-info";
 import { Election } from "./election";
 import { Slave } from "./slave";
 import { Logger } from "../helper/logger";
+import { TeamLeaderChatHelper } from "../helper/teamleader-chat-helper";
+import { ChallengeLeader } from "./challenge-leader";
 
-let leaderRed: number;
-let leaderBlue: number;
+const ELECTION_TIMEOUT_MINUTES = 10;
+const LEADER_CHALLENGABLE_MINUTES = 2.5;
+
+let teamCoordinatorRed: number;
+let teamCoordinatorBlue: number;
 const slaves: Slave[] = [];
 
 function stopGame() {
-    leaderBlue = null;
-    leaderRed = null;
+    teamCoordinatorBlue = null;
+    teamCoordinatorRed = null;
 }
 
 function startGame(bot: PlayerInfo) {
-    if (bot.team === 1 && !leaderBlue) {
-        leaderBlue = bot.id;
+    if (bot.team === 1 && !teamCoordinatorBlue) {
+        teamCoordinatorBlue = bot.id;
         return true;
-    } else if (bot.team === 2 && !leaderRed) {
-        leaderRed = bot.id;
+    } else if (bot.team === 2 && !teamCoordinatorRed) {
+        teamCoordinatorRed = bot.id;
         return true;
     }
     return false;
@@ -42,12 +47,14 @@ function execAuto(playerId: number, team: number) {
 export class TeamCoordination {
     private nextElectionStopwatch = new StopWatch();
     private tickStopwatch = new StopWatch();
+    private leaderChallengeTimer = new StopWatch();
 
     private teamLeaderId: number;
-    private isBotLeader: boolean;
+    private isTeamCoordinatorBot: boolean;
     private isElectionOngoing: boolean;
+    private lastSaid: string;
 
-    constructor(private env: IAirmashEnvironment, private logger: Logger) {
+    constructor(private env: IAirmashEnvironment, private logger: Logger, private isSecondaryTeamCoordinator: boolean) {
         this.env.on('chat', x => this.onChat(x));
         this.env.on('start', _ => this.onStart());
         this.env.on('ctfGameOver', () => this.onStop());
@@ -60,7 +67,7 @@ export class TeamCoordination {
     }
 
     private onTick() {
-        if (!this.isBotLeader) {
+        if (!this.isTeamCoordinatorBot) {
             return;
         }
         if (this.isElectionOngoing) {
@@ -71,7 +78,7 @@ export class TeamCoordination {
         }
 
         const teamLeader = this.env.getPlayer(this.teamLeaderId);
-        if (!teamLeader || this.nextElectionStopwatch.elapsedMinutes() > 15) {
+        if (!teamLeader || this.nextElectionStopwatch.elapsedMinutes() > ELECTION_TIMEOUT_MINUTES) {
             this.electLeader();
         }
 
@@ -95,8 +102,8 @@ export class TeamCoordination {
     private async initialize() {
         const me = this.env.me();
         const isLeader = startGame(me);
-        this.isBotLeader = isLeader;
-        if (this.isBotLeader) {
+        this.isTeamCoordinatorBot = isLeader;
+        if (this.isTeamCoordinatorBot) {
             await this.electLeader();
             try {
                 execAuto(me.id, me.team);
@@ -108,7 +115,7 @@ export class TeamCoordination {
 
     private onStop() {
         stopGame();
-        this.isBotLeader = false;
+        this.isTeamCoordinatorBot = false;
     }
 
     private onServerMessage(text: string) {
@@ -118,15 +125,37 @@ export class TeamCoordination {
     }
 
     private async electLeader() {
+        if (this.isSecondaryTeamCoordinator) {
+            // this team coordinator is a "silent one", that is, it will listen 
+            // for someone to be appointed the leader, and then silently take over that selection
+            // here. This allows for multiple sets of bots from different IPs, but it's not tamper-proof.
+            return;
+        }
+
         this.isElectionOngoing = true;
         const election = new Election(this.env);
         this.teamLeaderId = await election.doElection(this.teamLeaderId);
         this.nextElectionStopwatch.start();
+        this.leaderChallengeTimer.start();
         this.isElectionOngoing = false;
     }
 
+    private async challengeLeader() {
+        if (this.isSecondaryTeamCoordinator) {
+            return;
+        }
+        this.leaderChallengeTimer.start();
+
+        const challenge = new ChallengeLeader(this.env);
+        const needsNewElection = await challenge.challengeLeader(this.teamLeaderId);
+
+        if (needsNewElection) {
+            this.electLeader();
+        }
+    }
+
     private onChat(ev: any) {
-        if (!this.isBotLeader) {
+        if (!this.isTeamCoordinatorBot) {
             return;
         }
 
@@ -140,9 +169,16 @@ export class TeamCoordination {
             return;
         }
 
+        if (this.isSecondaryTeamCoordinator) {
+            const newTeamleaderID = TeamLeaderChatHelper.getTeamleaderId(ev.text, this.env);
+            if (newTeamleaderID) {
+                this.teamLeaderId = newTeamleaderID;
+            }
+        }
+
         const speakerIsTeamLeader = this.teamLeaderId === playerId;
 
-        const ctfCommandMatch = /^\s*#(\w+)(?:\s(.*))?$/.exec(message);
+        const ctfCommandMatch = /^\s*#([\w\-]+)(?:\s(.*))?$/.exec(message);
         if (ctfCommandMatch) {
             const command = ctfCommandMatch[1];
             const param = ctfCommandMatch[2];
@@ -152,7 +188,7 @@ export class TeamCoordination {
                 // don't allow me to be leader: i will be banned for spam
                 if (victim && victim.team === me.team && victim.id !== me.id) {
                     this.teamLeaderId = victim.id;
-                    this.env.sendTeam(player.name + " has made " + victim.name + " the new team leader.");
+                    this.env.sendTeam(player.name + " has made " + victim.name + " the new team leader.", true);
                 }
             }
 
@@ -162,36 +198,38 @@ export class TeamCoordination {
 
     private execCtfCommand(playerId: number, command: string, param: string, speakerIsTeamLeader: boolean) {
 
-        if (!speakerIsTeamLeader && command !== 'drop') {
-            // the only command non-teamleaders can issue, is 'drop'
+        if (!speakerIsTeamLeader && command !== 'drop' && command !== 'challenge-leader') {
+            // the only command non-teamleaders can issue, is 'drop' and 'challenge-leader'
             return;
         }
 
         const me = this.env.me();
 
+        let shouldSay: string;
+
         switch (command) {
             case 'log':
                 const botName = param;
                 const bot = this.env.getPlayers().find(x => x.name.toLowerCase() === botName.toLowerCase());
-                param = !!bot ? bot.id +'' : '';
-                this.logger.warn("Log", {botName, param});
+                param = !!bot ? bot.id + '' : '';
+                this.logger.warn("Log", { botName, param });
                 break;
 
             case 'defend':
             case 'def':
             case 'recap':
             case 'recover':
-                this.env.sendTeam("defend mode enabled");
+                shouldSay = "defend mode enabled";
                 break;
 
             case 'cap':
             case 'capture':
             case 'escort':
-                this.env.sendTeam("capture mode enabled");
+                shouldSay = "capture mode enabled";
                 break;
 
             case 'auto':
-                this.env.sendTeam("auto mode enabled");
+                shouldSay = "auto mode enabled";
                 break;
 
             case 'assist':
@@ -207,9 +245,24 @@ export class TeamCoordination {
                 }
 
                 if (playerToAssist && playerToAssist.team === me.team) {
-                    this.env.sendTeam("assist mode enabled");
+                    shouldSay = "assist mode enabled";
                     param = playerToAssist.id + '';
                 }
+                break;
+
+            case 'challenge-leader':
+                const canChallenge = this.leaderChallengeTimer.elapsedSeconds() > LEADER_CHALLENGABLE_MINUTES;
+                const isAnElectionInSight = ELECTION_TIMEOUT_MINUTES - this.nextElectionStopwatch.elapsedMinutes() < 1;
+                if (canChallenge && !isAnElectionInSight && this.teamLeaderId) {
+                    this.challengeLeader();
+                }
+                break;
+        }
+
+        if (shouldSay && shouldSay !== this.lastSaid) {
+            if (this.env.sendTeam(shouldSay, false)) {
+                this.lastSaid = shouldSay;
+            }
         }
 
         if (command === 'auto') {

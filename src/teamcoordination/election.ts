@@ -18,7 +18,7 @@ export class Election {
 
     doElection(existingLeaderId: number): Promise<number> {
         this.existingLeaderId = existingLeaderId;
-        this.env.sendTeam("Type #yes in the next 30 seconds if you want to be team leader. Type #vote <name> to vote for someone who is a candidate.");
+        this.env.sendTeam("Type #yes in the next 30 seconds if you want to be team leader. Type #vote <name> to vote for someone who is a candidate.", true);
 
         this.candidates = {};
 
@@ -48,7 +48,7 @@ export class Election {
         if (message === "#yes") {
             if (!this.candidates[playerId + '']) {
                 this.candidates[playerId + ''] = 1;
-                this.env.sendWhisper("Your vote has been counted", playerId);
+                this.env.sendWhisper("Your vote has been counted", false, playerId);
             }
         } else {
             const m = /#vote\s(.+)$/.exec(message);
@@ -58,7 +58,7 @@ export class Election {
                 if (victim && victim.id !== player.id) {
                     if (this.candidates[victim.id + '']) {
                         this.candidates[victim.id + '']++;
-                        this.env.sendWhisper("Your vote for " + victim.name + " has been counted", playerId);
+                        this.env.sendWhisper("Your vote for " + victim.name + " has been counted", false, playerId);
                     }
                 }
             }
@@ -113,9 +113,9 @@ export class Election {
             const winner = this.env.getPlayer(newLeaderId);
             this.electionResultResolver(Number(newLeaderId));
             if (newLeaderId !== this.existingLeaderId) {
-                this.env.sendTeam(winner.name + " has been chosen as the new team leader.");
+                this.env.sendTeam(winner.name + " has been chosen as the new team leader.", true);
             } else {
-                this.env.sendTeam(winner.name + " is still the team leader.");
+                this.env.sendTeam(winner.name + " is still the team leader.", true);
             }
         } else {
             this.electionResultResolver(null);

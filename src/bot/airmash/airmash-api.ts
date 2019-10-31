@@ -243,20 +243,20 @@ export class AirmashApiFacade implements IAirmashEnvironment {
         return this.game.getPing();
     }
 
-    sendChat(msg: string) {
-        this.network.chat(CHAT_TYPE.CHAT, msg);
+    sendChat(msg: string, isUrgent: boolean): boolean {
+        return this.network.chat(CHAT_TYPE.CHAT, msg, isUrgent);
     }
 
-    sendSay(msg: string) {
-        this.network.chat(CHAT_TYPE.SAY, msg);
+    sendSay(msg: string, isUrgent: boolean): boolean {
+        return this.network.chat(CHAT_TYPE.SAY, msg, isUrgent);
     }
 
-    sendTeam(msg: string) {
-        this.network.chat(CHAT_TYPE.TEAM, msg);
+    sendTeam(msg: string, isUrgent: boolean): boolean {
+        return this.network.chat(CHAT_TYPE.TEAM, msg, isUrgent);
     }
 
-    sendWhisper(msg: string, targetPlayerId: number) {
-        this.network.chat(CHAT_TYPE.WHISPER, msg, targetPlayerId);
+    sendWhisper(msg: string, isUrgent: boolean, targetPlayerId: number): boolean {
+        return this.network.chat(CHAT_TYPE.WHISPER, msg, isUrgent, targetPlayerId);
     }
 
     sendCommand(command: string, args: string) {

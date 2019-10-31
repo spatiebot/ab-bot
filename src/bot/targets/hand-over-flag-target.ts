@@ -80,7 +80,7 @@ class HandOverFlagTarget extends BaseTarget {
         const delta = Calculations.getDelta(this.env.me().pos, targetPos);
         if (targetPos.isAccurate && delta.distance < POOP_DISTANCE) {
             // within poopable distance
-            this.env.sendSay("Good luck!");
+            this.env.sendSay("Good luck!", false);
             this.env.sendCommand("drop", "");
 
             this.logger.info("pooped the flag");

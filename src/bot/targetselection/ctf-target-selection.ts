@@ -355,7 +355,6 @@ export class CtfTargetSelection implements ITargetSelection {
         switch (command) {
             case 'log':
                 if (Number(param) === me.id) {
-                    this.logger.warn("Roger");
                     this.logger.levelPlusPlus();
                 }
                 break;
@@ -368,12 +367,12 @@ export class CtfTargetSelection implements ITargetSelection {
                 if (FlagHelpers.isCarryingFlag(this.env)) {
                     const distance = Calculations.getDelta(me.pos, player.pos).distance;
                     if (distance > TOO_FAR_AWAY_FOR_POOPING_FLAG) {
-                        this.env.sendTeam("Too far away!");
+                        this.env.sendTeam("Too far away!", false);
                     } else {
                         const target = new HandOverFlagTarget(this.env, this.logger, playerID);
                         target.isSticky = true;
                         this.targets.push(target);
-                        this.env.sendTeam("I'll try bringing you the flag during 10 seconds.");
+                        this.env.sendTeam("I'll try bringing you the flag during 10 seconds.", false);
                     }
                 }
                 break;

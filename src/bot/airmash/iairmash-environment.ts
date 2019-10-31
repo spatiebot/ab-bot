@@ -32,10 +32,10 @@ export interface IAirmashEnvironment {
 
     getPing(): number;
 
-    sendChat(msg: string);
-    sendSay(msg: string);
-    sendTeam(msg: string);
-    sendWhisper(msg: string, targetPlayerId: number);
+    sendChat(msg: string, isUrgent: boolean): boolean;
+    sendSay(msg: string, isUrgent: boolean ): boolean;
+    sendTeam(msg: string, isUrgent: boolean): boolean;
+    sendWhisper(msg: string, isUrgent: boolean, targetPlayerId: number): boolean;
     sendCommand(command: string, args: string);
 
     getFlagInfo(team: number): FlagInfo;

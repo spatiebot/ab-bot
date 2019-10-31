@@ -15,16 +15,16 @@ const urls = {
     usCtf: "wss://game.airmash.steamroller.tk/ctf"
 };
 
-let ws = <string>argv.ws;
+let ws = argv.ws as string;
 if (ws && !ws.startsWith('ws') && !ws.startsWith('http')) {
     ws = urls[ws];
 }
 ws = ws || urls.euFfa1;
 
-const flagConfig = <string>argv.flag || "random";
-const typeConfig = <string>argv.type || "random";
-
-const numBots = <number>argv.num || 1;
+const flagConfig = argv.flag as string || "random";
+const typeConfig = argv.type as string || "random";
+const isSecondaryTeamCoordinator = !!argv.noTeamCoordinator;
+const numBots = argv.num as number || 1;
 
 for (let i = 0; i < numBots; i++) {
     const identity = BotIdentityGenerator.create(flagConfig, typeConfig);
@@ -47,7 +47,7 @@ for (let i = 0; i < numBots; i++) {
 
     const env = new AirmashApiFacade(ws, logger);
     env.startMainLoop();
-    const bot = new AirmashBot(env, logger, botCharacter);
+    const bot = new AirmashBot(env, logger, botCharacter, isSecondaryTeamCoordinator);
 
     // throttle joining of the bots to prevent spamming the server.
     const timeOutMs = i * 500;

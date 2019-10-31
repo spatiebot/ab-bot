@@ -30,7 +30,7 @@ export class ProtectTarget extends BaseTarget {
 
         const now = Date.now();
         if (!target && now - lastAnnounceTime > ANNOUNCE_TIMEOUT && this.env.getGameType() === 1) {
-            this.env.sendChat("I'm here to protect. Say '#protect me' to get some extra protection.");
+            this.env.sendChat("I'm here to protect. Say '#protect me' to get some extra protection.", false);
             lastAnnounceTime = now;
         }
 
