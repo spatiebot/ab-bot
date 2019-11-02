@@ -19,7 +19,7 @@ export class Game {
     private numUpgrades: number;
     private score: number;
     private previousTickTime: number;
-    private readonly subscribers = {};
+    private subscribers = {};
     private ping = 30;
     private tickDurations: any = {};
 
@@ -116,6 +116,10 @@ export class Game {
 
         this.tickDurations.tick = Date.now() - now;
 
+    }
+
+    stop() {
+        this.subscribers = {};
     }
 
     onPingPong(ping: number) {

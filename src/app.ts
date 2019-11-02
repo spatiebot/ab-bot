@@ -46,7 +46,7 @@ for (let i = 0; i < numBots; i++) {
     });
 
     const env = new AirmashApiFacade(ws, logger);
-    env.startMainLoop();
+    env.start();
     const bot = new AirmashBot(env, logger, botCharacter, isSecondaryTeamCoordinator);
 
     // throttle joining of the bots to prevent spamming the server.

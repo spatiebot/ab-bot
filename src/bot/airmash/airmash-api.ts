@@ -31,12 +31,16 @@ export class AirmashApiFacade implements IAirmashEnvironment {
         this.on('afterTick', () => this.afterTick());
     }
 
-    startMainLoop() {
+    start() {
         this.mainLoop = this.mainLoop || setInterval(() => this.main(), 7);
     }
-    stopMainLoop() {
+
+    stop() {
         clearInterval(this.mainLoop);
+        this.game.stop();
+        this.network.stop();
     }
+
     private main() {
         try {
             this.game.onTick();

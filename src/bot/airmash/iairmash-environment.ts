@@ -5,8 +5,8 @@ import { FlagInfo } from "../../api/flagInfo";
 
 export interface IAirmashEnvironment {
 
-    startMainLoop();
-    stopMainLoop();
+    start();
+    stop();
 
     joinGame(name: string, flag: string);
     selectAircraft(type: number);

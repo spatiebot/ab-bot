@@ -249,7 +249,7 @@ export class AirmashBot {
 
     private onError(data: any) {
         this.logger.error('Error', data);
-        this.env.stopMainLoop();
+        this.env.stop();
         this.steeringInstallation.stop();
     }
 }
