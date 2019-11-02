@@ -44,11 +44,15 @@ export class Game {
     }
 
     private trigger(eventName: string, data: any) {
-        let subs = this.subscribers[eventName];
-        subs = subs || {};
-
-        for (const key of Object.keys(subs)) {
-            subs[key](data);
+        try {
+            let subs = this.subscribers[eventName];
+            subs = subs || {};
+    
+            for (const key of Object.keys(subs)) {
+                subs[key](data);
+            }
+        } catch (error) {
+            this.onError(error);            
         }
     }
 
@@ -120,7 +124,6 @@ export class Game {
 
     onError(error: Error) {
         this.logger.error("error occurred", error.message, error.stack);
-        this.network.stop();
         this.trigger("error", error);
     }
 

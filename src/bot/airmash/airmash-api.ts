@@ -136,7 +136,7 @@ export class AirmashApiFacade implements IAirmashEnvironment {
 
     getMyKeyState(): any {
         const me = this.game.getPlayer(this.game.getMyId());
-        if (!me.keystate) {
+        if (!me || !me.keystate) {
             return {};
         }
         return {
