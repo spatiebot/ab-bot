@@ -225,13 +225,6 @@ export class TeamCoordination {
         let shouldSay: string;
 
         switch (command) {
-            case 'log':
-                const botName = param;
-                const bot = this.env.getPlayers().find(x => x.name.toLowerCase() === botName.toLowerCase());
-                param = !!bot ? bot.id + '' : '';
-                this.logger.warn("Log", { botName, param });
-                break;
-
             case 'defend':
             case 'def':
             case 'recap':
