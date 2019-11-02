@@ -5,6 +5,7 @@ import { FlagInfo } from "./flagInfo";
 import { Pos } from "../bot/pos";
 import { Calculations } from "../bot/calculations";
 import { Logger } from "../helper/logger";
+import { TimeoutManager } from "../helper/timeoutManager";
 
 export class Game {
 
@@ -25,7 +26,7 @@ export class Game {
 
     private debugConfig: any;
 
-    constructor(private readonly network: Network, private readonly logger: Logger) {
+    constructor(private tm: TimeoutManager, private readonly network: Network, private readonly logger: Logger) {
     }
 
     on(eventName: string, subscriber: (x: any) => void): number {
@@ -143,7 +144,7 @@ export class Game {
         this.getPlayer(playerId).reset();
         // delay this trigger, because the message to change player type is later than
         // this message if respawning is done for changing the plane.
-        setTimeout(() => this.trigger("spawned", { id: playerId, respawn: true }), 10);
+        this.tm.setTimeout(() => this.trigger("spawned", { id: playerId, respawn: true }), 10);
     }
 
     onPlayerInfo(player: Player) {

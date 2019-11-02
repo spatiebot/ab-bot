@@ -12,6 +12,7 @@ import { KEY_CODES } from "../../ab-protocol/src/types/client";
 import { CHAT_TYPE } from "../../api/chat-type";
 import { FlagInfo } from "../../api/flagInfo";
 import { Logger } from "../../helper/logger";
+import { TimeoutManager } from "../../helper/timeoutManager";
 
 export class AirmashApiFacade implements IAirmashEnvironment {
 
@@ -24,9 +25,9 @@ export class AirmashApiFacade implements IAirmashEnvironment {
     private cachedCrates: Crate[];
     private cachedMissiles: Missile[];
 
-    constructor(url: string, logger: Logger) {
-        this.network = new Network(url, logger);
-        this.game = new Game(this.network, logger);
+    constructor(url: string, logger: Logger, tm: TimeoutManager) {
+        this.network = new Network(url, logger, tm);
+        this.game = new Game(tm, this.network, logger);
 
         this.on('afterTick', () => this.afterTick());
     }

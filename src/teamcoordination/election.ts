@@ -1,5 +1,6 @@
 import { IAirmashEnvironment } from "../bot/airmash/iairmash-environment";
 import { Calculations } from "../bot/calculations";
+import { BotContext } from "../bot/botContext";
 
 export class Election {
     private existingLeaderId: number;
@@ -7,7 +8,11 @@ export class Election {
     private chatSubscr: number;
     private electionResultResolver: (value?: number | PromiseLike<number>) => void;
 
-    constructor(private env: IAirmashEnvironment) {
+    private get env(): IAirmashEnvironment {
+        return this.context.env;
+    }
+
+    constructor(private context: BotContext) {
         this.chatSubscr = this.env.on('chat', x => this.onChat(x));
     }
 
@@ -26,8 +31,8 @@ export class Election {
         // if (spatie) {
         //     this.candidates[spatie.id + ''] = 1;
         // }
-        
-        setTimeout(() => this.endElection(), 30 * 1000);
+
+        this.context.tm.setTimeout(() => this.endElection(), 30 * 1000);
         return new Promise((resolve) => {
             this.electionResultResolver = resolve;
         })

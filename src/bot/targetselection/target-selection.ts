@@ -10,6 +10,7 @@ import { Pos } from "../pos";
 import { ProtectTarget } from "../targets/protect-target";
 import { ITargetSelection } from "./itarget-selection";
 import { Logger } from "../../helper/logger";
+import { BotContext } from "../botContext";
 
 const TIME_OUT = 60 * 1000; // 1 min
 const PROTECT_TIME_OUT = 5 * TIME_OUT;
@@ -27,7 +28,19 @@ export class TargetSelection implements ITargetSelection {
     private chatSubscription: number;
     private playerKilledSubscription: number;
 
-    constructor(private env: IAirmashEnvironment, private logger: Logger, private character: BotCharacter) {
+    private get env(): IAirmashEnvironment {
+        return this.context.env;
+    }
+    
+    private get logger(): Logger {
+        return this.context.logger;
+    }
+    
+    private get character(): BotCharacter {
+        return this.context.character;
+    }
+
+    constructor(private context: BotContext) {
         this.chatSubscription = this.env.on('chat', msg => this.onChat(msg));
         this.playerKilledSubscription = this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
     }

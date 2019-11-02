@@ -1,6 +1,7 @@
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { SteeringState } from "./steering-state";
 import { PlayerInfo } from "../airmash/player-info";
+import { BotContext } from "../botContext";
 
 export class Speed {
     private boost: SteeringState = new SteeringState('SPECIAL');
@@ -8,7 +9,11 @@ export class Speed {
     private down: SteeringState = new SteeringState('DOWN');
     private currentBoostTimeout: any;
 
-    constructor(private env: IAirmashEnvironment) {
+    private get env(): IAirmashEnvironment {
+        return this.context.env;
+    }
+
+    constructor(private context: BotContext) {
     }
 
     execute(me: PlayerInfo, speed: number, boost: boolean, fire: boolean) {
@@ -38,9 +43,9 @@ export class Speed {
         if (!fire) {// fire goes before boost
             if (isPred && boost && !this.currentBoostTimeout) {
                 this.boost.send(this.env, true);
-                this.currentBoostTimeout = setTimeout(() => {
+                this.currentBoostTimeout = this.context.tm.setTimeout(() => {
                     this.boost.send(this.env, false);
-                    this.currentBoostTimeout = setTimeout(() => this.currentBoostTimeout = null, 1000);
+                    this.currentBoostTimeout = this.context.tm.setTimeout(() => this.currentBoostTimeout = null, 1000);
                 }, 2000);
             }
         }

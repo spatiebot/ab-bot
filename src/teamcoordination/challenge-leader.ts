@@ -1,14 +1,18 @@
 import { IAirmashEnvironment } from "../bot/airmash/iairmash-environment";
 import { Calculations } from "../bot/calculations";
+import { BotContext } from "../bot/botContext";
 
 export class ChallengeLeader {
     private existingLeaderId: number;
-    private candidates: {};
     private chatSubscr: number;
     private challengeResolver: (value?: boolean | PromiseLike<boolean>) => void;
     private timeoutId;
 
-    constructor(private env: IAirmashEnvironment) {
+    private get env(): IAirmashEnvironment {
+        return this.context.env;
+    }
+
+    constructor(private context: BotContext) {
         this.chatSubscr = this.env.on('chat', x => this.onChat(x));
     }
 
@@ -27,7 +31,7 @@ export class ChallengeLeader {
         }
         this.env.sendTeam("Leader challenge! @" + name + ", say 'x' in the chat in the next 30 seconds to keep your leadership.", true);
 
-        this.timeoutId = setTimeout(() => this.endChallenge(true), 30 * 1000);
+        this.timeoutId = this.context.tm.setTimeout(() => this.endChallenge(true), 30 * 1000);
         return new Promise((resolve) => {
             this.challengeResolver = resolve;
         })
@@ -45,7 +49,7 @@ export class ChallengeLeader {
     }
 
     private endChallenge(needsNewLeader: boolean) {
-        clearTimeout(this.timeoutId);
+        this.context.tm.clearTimeout(this.timeoutId);
         this.challengeResolver(needsNewLeader);
         this.dispose();
     }

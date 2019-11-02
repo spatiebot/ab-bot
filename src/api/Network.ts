@@ -14,6 +14,7 @@ import { Pos } from '../bot/pos';
 import { Upgrades } from './upgrades';
 import { Logger } from '../helper/logger';
 import { StopWatch } from '../helper/timer';
+import { TimeoutManager } from '../helper/timeoutManager';
 
 export class Network {
     private client: WebSocket;
@@ -28,7 +29,7 @@ export class Network {
     private spamWarningTimer = new StopWatch();
     private chatTimeout; 
 
-    constructor(private ws: string, private logger: Logger) {
+    constructor(private ws: string, private logger: Logger, private tm: TimeoutManager) {
     }
 
     start(game: Game, name: string, flag: string) {
@@ -96,7 +97,6 @@ export class Network {
         };
         ws.onclose = () => {
             this.logger.warn('socket closed');
-            this.game.onError(new Error((config.isPrimary ? 'primary' : 'backup') + ' socket closed'));
         };
         return ws;
     }
@@ -134,7 +134,7 @@ export class Network {
             if (!isUrgent || this.chatTimeout) {
                 return false;
             }
-            this.chatTimeout = setTimeout(() => {
+            this.chatTimeout = this.tm.setTimeout(() => {
                 this.chatTimeout = null;
                 this.chat(type, text, isUrgent, targetPlayerID);
             }, 1500);

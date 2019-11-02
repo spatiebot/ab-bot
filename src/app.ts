@@ -1,10 +1,9 @@
 
 import { argv } from 'yargs';
-import { AirmashBot } from './bot/airmash-bot';
-import { AirmashApiFacade } from "./bot/airmash/airmash-api";
 import { BotCharacter } from './bot/bot-character';
 import { BotIdentityGenerator } from './bot-identity-generator';
 import { Logger } from './helper/logger';
+import { BotContext } from './bot/botContext';
 
 const urls = {
     local: "ws://127.0.0.1:3501/ffa",
@@ -45,11 +44,6 @@ for (let i = 0; i < numBots; i++) {
         url: ws
     });
 
-    const env = new AirmashApiFacade(ws, logger);
-    env.start();
-    const bot = new AirmashBot(env, logger, botCharacter, isSecondaryTeamCoordinator);
-
-    // throttle joining of the bots to prevent spamming the server.
-    const timeOutMs = i * 500;
-    setTimeout(() => bot.join(name, flag, Number(type)), timeOutMs);
+    const context = new BotContext(logger, ws);
+    context.startBot(i, name, flag, Number(type), botCharacter, isSecondaryTeamCoordinator);
 }

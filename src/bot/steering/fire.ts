@@ -1,6 +1,7 @@
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { SteeringState } from "./steering-state";
 import { PlayerInfo } from "../airmash/player-info";
+import { BotContext } from "../botContext";
 
 export class Fire {
 
@@ -8,7 +9,7 @@ export class Fire {
     private special: SteeringState;
     private fireTimeout: any;
 
-    constructor(private env: IAirmashEnvironment) {
+    constructor(private context: BotContext) {
         this.fire = new SteeringState('FIRE');
         this.special = new SteeringState('SPECIAL');
     }
@@ -31,15 +32,15 @@ export class Fire {
         fire = fire || isMohawk;
 
         if (!fire) {
-            stateToUse.send(this.env, false);
+            stateToUse.send(this.context.env, false);
         } else {
-            stateToUse.send(this.env, true);
+            stateToUse.send(this.context.env, true);
 
             // in case of mohawk, don't turn it off 
             if (!isMohawk) {
-                this.fireTimeout = setTimeout(() => {
-                    stateToUse.send(this.env, false);
-                    this.fireTimeout = setTimeout(() => this.fireTimeout = null, 100);
+                this.fireTimeout = this.context.tm.setTimeout(() => {
+                    stateToUse.send(this.context.env, false);
+                    this.fireTimeout = this.context.tm.setTimeout(() => this.fireTimeout = null, 100);
                 }, 200);
             }
         }

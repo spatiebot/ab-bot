@@ -14,6 +14,7 @@ import { TeamCoordination } from "../teamcoordination/team-coordination";
 import { Slave } from "../teamcoordination/slave";
 import { PlaneTypeSelection } from "./plane-type-selection";
 import { TeamLeaderChatHelper } from "../helper/teamleader-chat-helper";
+import { BotContext } from "./botContext";
 
 export class AirmashBot {
 
@@ -32,7 +33,19 @@ export class AirmashBot {
     private slave: Slave; // for executing commands from the teamleader via the teamcoordinator
     private planeTypeSelection: PlaneTypeSelection;
 
-    constructor(private env: IAirmashEnvironment, private logger: Logger, private character: BotCharacter, isSecondaryTeamCoordinator: boolean) {
+    private get env(): IAirmashEnvironment {
+        return this.context.env;
+    }
+    
+    private get logger(): Logger {
+        return this.context.logger;
+    }
+    
+    private get character(): BotCharacter {
+        return this.context.character;
+    }
+
+    constructor(private context: BotContext, isSecondaryTeamCoordinator: boolean) {
 
         this.env.on('spawned', (x) => this.onSpawned(x));
         this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
@@ -42,8 +55,8 @@ export class AirmashBot {
         this.env.on('score', (score: Score) => this.onScore(score));
         this.env.on('ctfGameOver', () => this.onCtfGameOver());
 
-        this.steeringInstallation = new SteeringInstallation(this.env, this.logger);
-        this.teamCoordination = new TeamCoordination(this.env, this.logger, isSecondaryTeamCoordinator);
+        this.steeringInstallation = new SteeringInstallation(context);
+        this.teamCoordination = new TeamCoordination(context, isSecondaryTeamCoordinator);
         this.slave = new Slave(this.env);
         this.teamCoordination.addSlave(this.slave);
         this.planeTypeSelection = new PlaneTypeSelection();
@@ -75,7 +88,7 @@ export class AirmashBot {
         if (me.type !== this.planeTypeSelection.aircraftType) {
             this.logger.info("... in the wrong body. Respawning as a different aircraft...", { me: me.type, sel: this.planeTypeSelection.aircraftType });
 
-            await this.planeTypeSelection.switch(this.env);
+            await this.planeTypeSelection.switch(this.env, this.context.tm);
             return; // this method will be called again
         }
 
@@ -88,13 +101,13 @@ export class AirmashBot {
         const myType = this.env.me().type;
         if (!this.character || this.character.type !== 0 && this.character.type !== myType) {
             this.logger.warn('new char selected because this character is not my type');
-            this.character = BotCharacter.get(myType);
+            this.context.character = BotCharacter.get(myType);
         }
 
         if (this.targetSelection) {
             this.targetSelection.dispose();
         }
-        this.targetSelection = TargetSelectionFactory.createTargetSelection(this.env, this.logger, this.character, this.slave, this);
+        this.targetSelection = TargetSelectionFactory.createTargetSelection(this.context, this.slave);
 
         this.steeringInstallation.start();
     }
@@ -109,7 +122,7 @@ export class AirmashBot {
         this.startBot();
 
         // restart bot if this didn't work
-        setTimeout(() => {
+        this.context.tm.setTimeout(() => {
             if (this.isSpawned) {
                 return; // it worked.
             }
@@ -123,6 +136,10 @@ export class AirmashBot {
         const p = this.env.getPlayer(msg.id);
         const name = p ? p.name : "unknown";
         this.logger.info(name + ' says: "' + msg.text + '"');
+
+        // if (name === 'Spatie' && msg.text === 'error') {
+        //     throw new Error('oops');
+        // }
 
         const newTeamleaderID = TeamLeaderChatHelper.getTeamleaderId(msg.text, this.env);
         if (newTeamleaderID) {
@@ -251,5 +268,9 @@ export class AirmashBot {
         this.logger.error('Error', data);
         this.env.stop();
         this.steeringInstallation.stop();
+        this.context.tm.clearAll();
+
+        this.logger.warn("Restarting bot in a few seconds.");
+        this.context.tm.setTimeout(() => this.context.restartBot(), 3000);
     }
 }

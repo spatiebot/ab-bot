@@ -6,6 +6,7 @@ import { Slave } from "./slave";
 import { Logger } from "../helper/logger";
 import { TeamLeaderChatHelper } from "../helper/teamleader-chat-helper";
 import { ChallengeLeader } from "./challenge-leader";
+import { BotContext } from "../bot/botContext";
 
 const ELECTION_TIMEOUT_MINUTES = 10;
 const LEADER_CHALLENGABLE_MINUTES = 2.5;
@@ -54,12 +55,26 @@ export class TeamCoordination {
     private isElectionOngoing: boolean;
     private lastSaid: string;
 
-    constructor(private env: IAirmashEnvironment, private logger: Logger, private isSecondaryTeamCoordinator: boolean) {
-        this.env.on('chat', x => this.onChat(x));
-        this.env.on('start', _ => this.onStart());
-        this.env.on('ctfGameOver', () => this.onStop());
-        this.env.on('serverMessage', (x) => this.onServerMessage(x.text as string));
-        this.env.on('tick', () => this.onTick());
+    private chatSubscription: number;
+    private startSubscription: number;
+    private ctgGameOverSubscription: number;
+    private serverMessageSubscription: number;
+    private tickSubscription: number;
+
+    private get env(): IAirmashEnvironment {
+        return this.context.env;
+    }
+
+    private get logger(): Logger {
+        return this.context.logger;
+    }
+
+    constructor(private context: BotContext, private isSecondaryTeamCoordinator: boolean) {
+        this.chatSubscription = this.env.on('chat', x => this.onChat(x));
+        this.startSubscription = this.env.on('start', _ => this.onStart());
+        this.ctgGameOverSubscription = this.env.on('ctfGameOver', () => this.onStop());
+        this.serverMessageSubscription = this.env.on('serverMessage', (x) => this.onServerMessage(x.text as string));
+        this.tickSubscription = this.env.on('tick', () => this.onTick());
     }
 
     addSlave(s: Slave) {
@@ -88,7 +103,7 @@ export class TeamCoordination {
     private onStart() {
         const me = this.env.me();
         if (!me) {
-            setTimeout(() => this.onStart(), 500);
+            this.context.tm.setTimeout(() => this.onStart(), 500);
             return;
         }
 
@@ -120,7 +135,7 @@ export class TeamCoordination {
 
     private onServerMessage(text: string) {
         if (text.indexOf('shuffling teams') > -1) {
-            setTimeout(() => this.initialize(), 1000);
+            this.context.tm.setTimeout(() => this.initialize(), 1000);
         }
     }
 
@@ -133,7 +148,7 @@ export class TeamCoordination {
         }
 
         this.isElectionOngoing = true;
-        const election = new Election(this.env);
+        const election = new Election(this.context);
         this.teamLeaderId = await election.doElection(this.teamLeaderId);
         this.nextElectionStopwatch.start();
         this.leaderChallengeTimer.start();
@@ -146,7 +161,7 @@ export class TeamCoordination {
         }
         this.leaderChallengeTimer.start();
 
-        const challenge = new ChallengeLeader(this.env);
+        const challenge = new ChallengeLeader(this.context);
         const needsNewElection = await challenge.challengeLeader(this.teamLeaderId);
 
         if (needsNewElection) {

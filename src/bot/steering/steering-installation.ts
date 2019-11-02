@@ -7,6 +7,7 @@ import { Fart } from "./fart";
 import { Stealth } from "./stealth";
 import { Logger } from "../../helper/logger";
 import { StopWatch } from "../../helper/timer";
+import { BotContext } from "../botContext";
 
 export const STEERING_INTERVAL = 180;
 export const LONG_STEERING_INTERVAL = 3.5 * STEERING_INTERVAL;
@@ -28,12 +29,20 @@ export class SteeringInstallation {
     private executionTimer = new StopWatch();
     private isExecuting: boolean;
 
-    constructor(private env: IAirmashEnvironment, private logger: Logger) {
-        this.rotation = new Rotate(env);
-        this.speed = new Speed(env);
-        this.fire = new Fire(env);
-        this.fart = new Fart(env);
-        this.stealth = new Stealth(env);
+    private get env(): IAirmashEnvironment {
+        return this.context.env;
+    }
+    
+    private get logger(): Logger {
+        return this.context.logger;
+    }
+    
+    constructor(private context: BotContext) {
+        this.rotation = new Rotate(context);
+        this.speed = new Speed(context);
+        this.fire = new Fire(context);
+        this.fart = new Fart(this.env);
+        this.stealth = new Stealth(context);
     
         this.executionTimer.start();
     }

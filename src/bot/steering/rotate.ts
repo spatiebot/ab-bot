@@ -1,6 +1,7 @@
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { SteeringState } from "./steering-state";
 import { PlayerInfo } from "../airmash/player-info";
+import { BotContext } from "../botContext";
 
 const precision = 0.05;
 
@@ -17,7 +18,11 @@ export class Rotate {
     private right: SteeringState = new SteeringState('RIGHT');
     private currentRotationTimeout: any;
 
-    constructor(private env: IAirmashEnvironment) {
+    private get env(): IAirmashEnvironment {
+        return this.context.env;
+    }
+
+    constructor(private context: BotContext) {
     }
 
     execute(me: PlayerInfo, rotDelta: number) {
@@ -40,7 +45,7 @@ export class Rotate {
         stateToUse.send(this.env, true);
 
         const timeToWait = absDelta / rotationSpeeds[me.type];
-        this.currentRotationTimeout = setTimeout(() => {
+        this.currentRotationTimeout = this.context.tm.setTimeout(() => {
             stateToUse.send(this.env, false);
             this.currentRotationTimeout = null
          }, timeToWait * 100);

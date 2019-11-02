@@ -15,9 +15,9 @@ import { CrateTarget } from "../targets/crate-target";
 import { BringFlagHomeTarget } from "../targets/bring-flag-home-target";
 import { FlagHelpers } from "../../helper/flaghelpers";
 import { Logger } from "../../helper/logger";
-import { AirmashBot } from "../airmash-bot";
 import { Slave } from "../../teamcoordination/slave";
 import { TOO_FAR_AWAY_FOR_POOPING_FLAG, HandOverFlagTarget } from "../targets/hand-over-flag-target";
+import { BotContext } from "../botContext";
 
 enum FlagStates {
     Unknown = "Unkown",
@@ -68,7 +68,20 @@ export class CtfTargetSelection implements ITargetSelection {
     private distanceToOtherFlag: number;
     private playerKilledSubscription: number;
 
-    constructor(private env: IAirmashEnvironment, private logger: Logger, private character: BotCharacter, private bot: AirmashBot, private slave: Slave) {
+    private get env(): IAirmashEnvironment {
+        return this.context.env;
+    }
+    
+    private get logger(): Logger {
+        return this.context.logger;
+    }
+    
+    private get character(): BotCharacter {
+        return this.context.character;
+    }
+
+
+    constructor(private context: BotContext, private slave: Slave) {
         this.reset();
         this.playerKilledSubscription = this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
     }
@@ -355,12 +368,6 @@ export class CtfTargetSelection implements ITargetSelection {
         }
 
         switch (command) {
-            case 'log':
-                if (Number(param) === me.id) {
-                    this.logger.levelPlusPlus();
-                }
-                break;
-
             case 'drop':
                 const currentTarget = this.peek();
                 if (currentTarget && currentTarget.goal === 'handoverflag') {
@@ -431,7 +438,7 @@ export class CtfTargetSelection implements ITargetSelection {
     }
 
     switchPlane(newPlaneType: number) {
-        this.bot.switchTo(newPlaneType);
+        this.context.bot.switchTo(newPlaneType);
     }
 
 }
