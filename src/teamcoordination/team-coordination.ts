@@ -248,15 +248,17 @@ export class TeamCoordination {
 
                 const targetPlayerName = param;
                 let playerToAssist: PlayerInfo;
-                if (targetPlayerName === 'me') {
-                    playerToAssist = speaker;
-                } else {
-                    playerToAssist = this.env.getPlayers().find(x => x.name.toLowerCase() === targetPlayerName.toLowerCase());
-                }
+                if (targetPlayerName) {
+                    if (targetPlayerName === 'me') {
+                        playerToAssist = speaker;
+                    } else {
+                        playerToAssist = this.env.getPlayers().find(x => x.name && x.name.toLowerCase() === targetPlayerName.toLowerCase());
+                    }
 
-                if (playerToAssist && playerToAssist.team === me.team) {
-                    shouldSay = "assist mode enabled";
-                    param = playerToAssist.id + '';
+                    if (playerToAssist && playerToAssist.team === me.team) {
+                        shouldSay = "assist mode enabled";
+                        param = playerToAssist.id + '';
+                    }
                 }
                 break;
 
