@@ -70,6 +70,12 @@ export class AirmashBot {
     private onSpawned(data: any) {
         const me = this.env.me();
 
+        if (!me) {
+            // environment not ready yet
+            this.context.tm.setTimeout(() => this.onSpawned(data), 100);
+            return;
+        }
+
         if (me.id !== data.id) {
             // another player (re)spawned
             return;
