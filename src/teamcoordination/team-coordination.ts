@@ -13,14 +13,17 @@ const LEADER_CHALLENGABLE_MINUTES = 2.5;
 
 let teamCoordinatorRed: number;
 let teamCoordinatorBlue: number;
-const slaves: Slave[] = [];
+let slaves: Slave[] = [];
+let isAnyTeamCoordinatorActive = false;
 
-function stopGame() {
+function stopCoordination() {
     teamCoordinatorBlue = null;
     teamCoordinatorRed = null;
+    isAnyTeamCoordinatorActive = false;
 }
 
-function startGame(bot: PlayerInfo) {
+function chooseTeamCoordinator(bot: PlayerInfo) {
+    isAnyTeamCoordinatorActive = true;
     if (bot.team === 1 && !teamCoordinatorBlue) {
         teamCoordinatorBlue = bot.id;
         return true;
@@ -64,11 +67,7 @@ export class TeamCoordination {
     }
 
     constructor(private context: BotContext, private isSecondaryTeamCoordinator: boolean) {
-        this.env.on('chat', x => this.onChat(x));
         this.env.on('start', _ => this.onStart());
-        this.env.on('ctfGameOver', () => this.onStop());
-        this.env.on('serverMessage', (x) => this.onServerMessage(x.text as string));
-        this.env.on('tick', () => this.onTick());
     }
 
     addSlave(s: Slave) {
@@ -76,6 +75,12 @@ export class TeamCoordination {
     }
 
     private onTick() {
+        if (!isAnyTeamCoordinatorActive) {
+            // the teamcoordinator quit because of an error
+            const me = this.env.me();
+            this.isTeamCoordinatorBot = chooseTeamCoordinator(me);
+        }
+
         if (!this.isTeamCoordinatorBot) {
             return;
         }
@@ -109,8 +114,13 @@ export class TeamCoordination {
     }
 
     private async initialize() {
+        this.env.on('chat', x => this.onChat(x));
+        this.env.on('ctfGameOver', () => this.onGameOver());
+        this.env.on('serverMessage', (x) => this.onServerMessage(x.text as string));
+        this.env.on('tick', () => this.onTick());
+
         const me = this.env.me();
-        const isLeader = startGame(me);
+        const isLeader = chooseTeamCoordinator(me);
         this.isTeamCoordinatorBot = isLeader;
         if (this.isTeamCoordinatorBot) {
             await this.electLeader();
@@ -122,9 +132,16 @@ export class TeamCoordination {
         }
     }
 
-    private onStop() {
-        stopGame();
+    private onGameOver() {
+        stopCoordination();
         this.isTeamCoordinatorBot = false;
+    }
+
+    stop() {
+        if (this.isTeamCoordinatorBot) {
+            // will be noticed by other bots, so the first one will take over leadership
+            stopCoordination();
+        }
     }
 
     private onServerMessage(text: string) {

@@ -269,6 +269,7 @@ export class AirmashBot {
         this.env.stop();
         this.steeringInstallation.stop();
         this.context.tm.clearAll();
+        this.teamCoordination.stop();
 
         this.logger.warn("Restarting bot in a few seconds.");
         this.context.restartBot();

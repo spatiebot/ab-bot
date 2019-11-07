@@ -7,6 +7,7 @@ const redFlagPos = new Pos({ x: 8600, y: -940 });
 const blueAssistLine = 6000;
 const redAssistLine = -7000;
 const centerLine = 500;
+const LEAD_INTERVAL_SECONDS = 5;
 
 export class TeamLeader {
     private leadTimer = new StopWatch();
@@ -19,7 +20,7 @@ export class TeamLeader {
 
     lead() {
 
-        if (this.leadTimer.elapsedMs() < 1000) {
+        if (this.leadTimer.elapsedSeconds() < LEAD_INTERVAL_SECONDS) {
             return;
         }
 
@@ -92,7 +93,7 @@ export class TeamLeader {
                 // to prevent switching back and forth in case of nearby players
                 let aX = a.pos.x;
                 let bX = b.pos.x;
-                let advantage = 500;
+                let advantage = 800;
                 if (me.team === 2) {
                     advantage = -advantage;
                 }
