@@ -76,7 +76,7 @@ Commands are issued in the team chat (or public chat, or whispering, whatever yo
 
 Commands are always prefixed by a # sign.
 
-**#def, #defend, #recap, #recover, #r, #d** 
+**#def, #defend, #recap, #recover, #r, #d**  
 Any of these commands will switch all bots to "D"-mode, defending the base and recapturing the flag.
 
 **#cap, #capture, #escort, #c, #e**  
