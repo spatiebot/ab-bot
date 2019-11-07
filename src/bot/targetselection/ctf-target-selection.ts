@@ -387,7 +387,6 @@ export class CtfTargetSelection implements ITargetSelection {
                 break;
 
             case 'assist':
-            case 'protect':
                 const playerToAssist = this.env.getPlayer(Number(param));
 
                 this.clearAllTargets();
@@ -399,16 +398,11 @@ export class CtfTargetSelection implements ITargetSelection {
                 break;
 
             case 'defend':
-            case 'def':
-            case 'recap':
-            case 'recover':
                 this.clearAllTargets();
                 this.myRole = "D";
                 break;
 
-            case 'cap':
             case 'capture':
-            case 'escort':
                 this.clearAllTargets();
                 this.myRole = "A";
                 break;

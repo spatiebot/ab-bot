@@ -76,21 +76,21 @@ Commands are issued in the team chat (or public chat, or whispering, whatever yo
 
 Commands are always prefixed by a # sign.
 
-**#def, #defend, #recap, #recover**  
+**#def, #defend, #recap, #recover, #r, #d** 
 Any of these commands will switch all bots to "D"-mode, defending the base and recapturing the flag.
 
-**#cap, #capture, #escort**  
+**#cap, #capture, #escort, #c, #e**  
 Any of these commands will switch all bots to "A"-mode; they will try to grab the enemy flag and escort the flag carrier.
 
 **#auto**  
 The default mode will be activated: bots will be split up between A and D mode.  
 
-**#assist, #protect**  
+**#assist, #protect**, **#a**, **#p**  
 Needs the playername as parameter, or "me" as a shortcut for the speaker.  
 Example: `#assist Spatie`  
 Will go to the player requesting assistance and defend him: in case of "me" the team leader, otherwise the mentioned player. 
 
-**#drop**  
+**#drop, #f**  
 If one of the bots is carrying the flag, this command will make the bot fly towards you and drop the flag at your feet. It will only do so if you're within reach, and it will only try to do so for 10 seconds.  
 This is one of the commands that non-team leaders can issue.
 

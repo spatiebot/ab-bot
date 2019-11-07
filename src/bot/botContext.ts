@@ -4,6 +4,9 @@ import { Logger } from "../helper/logger";
 import { AirmashBot } from "./airmash-bot";
 import { TimeoutManager } from "../helper/timeoutManager";
 import { AirmashApiFacade } from "./airmash/airmash-api";
+import { StopWatch } from "../helper/timer";
+
+const MAX_RESTART_TRIES = 3;
 
 export class BotContext {
     env: IAirmashEnvironment;
@@ -18,6 +21,9 @@ export class BotContext {
     private type: number;
     private isSecondaryTeamCoordinator: boolean;
 
+    private lastRestartTimer = new StopWatch();
+    private restartCount = 0;
+
     constructor(public logger: Logger, websocketUrl: string) {
         this.websocketUrl = websocketUrl;
     }
@@ -31,14 +37,27 @@ export class BotContext {
         this.flag = flag;
         this.type = type;
 
-        this.restartBot();
+        this.restartBotInner();
     }
 
     restartBot() {
+        if (this.lastRestartTimer.elapsedMinutes() < 1) {
+            this.restartCount++;
+            if (this.restartCount > MAX_RESTART_TRIES) {
+                // give up
+                this.logger.error("Too many restart tries; giving up.")
+                return;
+            }
+        } else {
+            this.restartCount = 0;
+        }
+
         this.tm.setTimeout(() => this.restartBotInner(), 4000);
     }
 
     private restartBotInner() {
+        this.lastRestartTimer.start();
+
         this.env = new AirmashApiFacade(this.websocketUrl, this.logger, this.tm);
         this.env.start();
 

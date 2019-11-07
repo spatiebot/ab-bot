@@ -55,12 +55,6 @@ export class TeamCoordination {
     private isElectionOngoing: boolean;
     private lastSaid: string;
 
-    private chatSubscription: number;
-    private startSubscription: number;
-    private ctgGameOverSubscription: number;
-    private serverMessageSubscription: number;
-    private tickSubscription: number;
-
     private get env(): IAirmashEnvironment {
         return this.context.env;
     }
@@ -70,11 +64,11 @@ export class TeamCoordination {
     }
 
     constructor(private context: BotContext, private isSecondaryTeamCoordinator: boolean) {
-        this.chatSubscription = this.env.on('chat', x => this.onChat(x));
-        this.startSubscription = this.env.on('start', _ => this.onStart());
-        this.ctgGameOverSubscription = this.env.on('ctfGameOver', () => this.onStop());
-        this.serverMessageSubscription = this.env.on('serverMessage', (x) => this.onServerMessage(x.text as string));
-        this.tickSubscription = this.env.on('tick', () => this.onTick());
+        this.env.on('chat', x => this.onChat(x));
+        this.env.on('start', _ => this.onStart());
+        this.env.on('ctfGameOver', () => this.onStop());
+        this.env.on('serverMessage', (x) => this.onServerMessage(x.text as string));
+        this.env.on('tick', () => this.onTick());
     }
 
     addSlave(s: Slave) {
@@ -180,7 +174,7 @@ export class TeamCoordination {
 
         const me = this.env.me();
 
-        if (player.team !== me.team) {
+        if (!player || player.team !== me.team) {
             return;
         }
 
@@ -188,6 +182,7 @@ export class TeamCoordination {
             const newTeamleaderID = TeamLeaderChatHelper.getTeamleaderId(ev.text, this.env);
             if (newTeamleaderID) {
                 this.teamLeaderId = newTeamleaderID;
+                return;
             }
         }
 
@@ -198,25 +193,14 @@ export class TeamCoordination {
             const command = ctfCommandMatch[1];
             const param = ctfCommandMatch[2];
 
-            if (command === 'leader' && speakerIsTeamLeader) {
-                const victim = this.env.getPlayers().find(x => x.name === param);
-                // don't allow me to be leader: i will be banned for spam
-                if (victim && victim.team === me.team && victim.id !== me.id) {
-                    this.teamLeaderId = victim.id;
-                    if (!this.isSecondaryTeamCoordinator) {
-                        this.env.sendTeam(player.name + " has made " + victim.name + " the new team leader.", true);
-                    }
-                }
-            }
-
-            this.execCtfCommand(playerId, command, param, speakerIsTeamLeader);
+            this.execCtfCommand(player, command, param, speakerIsTeamLeader);
         }
     }
 
-    private execCtfCommand(playerId: number, command: string, param: string, speakerIsTeamLeader: boolean) {
+    private execCtfCommand(speaker: PlayerInfo, command: string, param: string, speakerIsTeamLeader: boolean) {
 
-        if (!speakerIsTeamLeader && command !== 'drop' && command !== 'challenge-leader') {
-            // the only command non-teamleaders can issue, is 'drop' and 'challenge-leader'
+        if (!speakerIsTeamLeader && command !== 'drop' && command !== 'f' && command !== 'challenge-leader') {
+            // the only command non-teamleaders can issue, is 'drop' (f) and 'challenge-leader'
             return;
         }
 
@@ -229,13 +213,19 @@ export class TeamCoordination {
             case 'def':
             case 'recap':
             case 'recover':
+            case 'd':
+            case 'r':
                 shouldSay = "defend mode enabled";
+                command = 'defend';
                 break;
 
             case 'cap':
             case 'capture':
             case 'escort':
+            case 'c':
+            case 'e':
                 shouldSay = "capture mode enabled";
+                command = 'capture';
                 break;
 
             case 'auto':
@@ -244,8 +234,9 @@ export class TeamCoordination {
 
             case 'assist':
             case 'protect':
-                const speaker = this.env.getPlayer(playerId);
-
+            case 'a':
+            case 'p':
+                command = 'assist';
                 const targetPlayerName = param;
                 let playerToAssist: PlayerInfo;
                 if (targetPlayerName) {
@@ -258,6 +249,26 @@ export class TeamCoordination {
                     if (playerToAssist && playerToAssist.team === me.team) {
                         shouldSay = "assist mode enabled";
                         param = playerToAssist.id + '';
+                    }
+                }
+                break;
+
+            case 'drop':
+            case 'f':
+                command = 'drop';
+                break;
+
+            case 'help':
+                shouldSay = "https://github.com/spatiebot/ab-bot#commands";
+                break;
+
+            case 'leader':
+                const victim = this.env.getPlayers().find(x => x.name === param);
+                // don't allow me to be leader: i will be banned for spam
+                if (victim && victim.team === me.team && victim.id !== me.id) {
+                    this.teamLeaderId = victim.id;
+                    if (!this.isSecondaryTeamCoordinator) {
+                        this.env.sendTeam(speaker.name + " has made " + victim.name + " the new team leader.", true);
                     }
                 }
                 break;
@@ -278,9 +289,9 @@ export class TeamCoordination {
         }
 
         if (command === 'auto') {
-            execAuto(playerId, me.team);
+            execAuto(speaker.id, me.team);
         } else {
-            teamSlaves(me.team).forEach(x => x.execCtfCommand(playerId, command, param));
+            teamSlaves(me.team).forEach(x => x.execCtfCommand(speaker.id, command, param));
         }
     }
 }
