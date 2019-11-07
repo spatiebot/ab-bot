@@ -8,7 +8,6 @@ import { Logger } from "../helper/logger";
 import { TimeoutManager } from "../helper/timeoutManager";
 
 export class Game {
-
     public type: number;
     public readonly blueFlag = new FlagInfo(1);
     public readonly redFlag = new FlagInfo(2);
@@ -127,8 +126,11 @@ export class Game {
         this.ping = ping;
     }
 
+    onDisconnect() {
+        this.onError(new Error("Disconnected"));
+    }
+
     onError(error: Error) {
-        this.logger.error("error occurred", error.message, error.stack);
         this.trigger("error", error);
     }
 

@@ -137,10 +137,6 @@ export class AirmashBot {
         const name = p ? p.name : "unknown";
         this.logger.info(name + ' says: "' + msg.text + '"');
 
-        // if (name === 'Spatie' && msg.text === 'error') {
-        //     throw new Error('oops');
-        // }
-
         const newTeamleaderID = TeamLeaderChatHelper.getTeamleaderId(msg.text, this.env);
         if (newTeamleaderID) {
             if (newTeamleaderID === this.env.myId()){
@@ -265,12 +261,16 @@ export class AirmashBot {
     }
 
     private onError(data: any) {
-        this.logger.error('Error', data);
+        this.logger.error('Error', data ? JSON.stringify(data, Object.getOwnPropertyNames(data)) : "unknown error");
+        this.restart();
+    }
+
+    restart() {
         this.env.stop();
         this.steeringInstallation.stop();
         this.context.tm.clearAll();
 
         this.logger.warn("Restarting bot in a few seconds.");
-        this.context.tm.setTimeout(() => this.context.restartBot(), 3000);
+        this.context.restartBot();
     }
 }

@@ -35,6 +35,10 @@ export class BotContext {
     }
 
     restartBot() {
+        this.tm.setTimeout(() => this.restartBotInner(), 4000);
+    }
+
+    private restartBotInner() {
         this.env = new AirmashApiFacade(this.websocketUrl, this.logger, this.tm);
         this.env.start();
 

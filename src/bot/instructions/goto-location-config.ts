@@ -2,7 +2,7 @@ import { Pos } from "../pos";
 import { StopWatch } from "../../helper/timer";
 import { Calculations } from "../calculations";
 
-const PATH_FINDING_LOWER_LIMIT_MS = 100;
+const PATH_FINDING_LOWER_LIMIT_MS = 250;
 const PATH_FINDING_UPPER_LIMIT_MS = 800;
 const MAX_SPEED_PER_MS = 1;
 

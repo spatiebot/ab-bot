@@ -28,11 +28,13 @@ export class Network {
     private lastChat: string;
     private spamWarningTimer = new StopWatch();
     private chatTimeout; 
+    private isStopping: boolean;
 
     constructor(private ws: string, private logger: Logger, private tm: TimeoutManager) {
     }
 
     start(game: Game, name: string, flag: string) {
+        this.isStopping = false;
         this.game = game;
         this.client = this.initWebSocket({
             isPrimary: true,
@@ -42,6 +44,7 @@ export class Network {
     }
 
     stop() {
+        this.isStopping = true;
         clearInterval(this.ackInterval);
         if (!this.client.closed) {
             this.client.close();
@@ -97,6 +100,9 @@ export class Network {
         };
         ws.onclose = () => {
             this.logger.warn('socket closed');
+            if (config.isPrimary && !this.isStopping) {
+                this.game.onDisconnect();
+            }
         };
         return ws;
     }
