@@ -354,7 +354,7 @@ export class TeamCoordination {
 
             case 'type':
                 let type = 0;
-                slaves.forEach(s => {
+                teamSlaves(me.team).forEach(s => {
                     let planeType = Number(param);
                     if (!planeType) {
                         if (param === 'distribute' || param === 'd') {
