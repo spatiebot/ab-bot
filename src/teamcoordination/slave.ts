@@ -1,11 +1,13 @@
 import { CtfTargetSelection } from "../bot/targetselection/ctf-target-selection";
 import { IAirmashEnvironment } from "../bot/airmash/iairmash-environment";
+import { Calculations } from "../bot/calculations";
 
 export class Slave {
     private targetSelection: CtfTargetSelection;
     private lastCommand: string;
     private lastParam: string;
     private lastPlayerId: number;
+    private myDefaultRole: string;
 
     constructor(private env: IAirmashEnvironment) {
     }
@@ -16,6 +18,21 @@ export class Slave {
             return 0;
         }
         return me.team;
+    }
+
+    getDefaultRole(): string {
+        if (this.myDefaultRole) {
+            return this.myDefaultRole;
+        }
+        const dieCast = Calculations.getRandomInt(1, 3);
+        this.myDefaultRole = dieCast === 1 ? "A" : "D";
+    }
+
+    setDefaultRole(value: string) {
+        this.myDefaultRole = value;
+        if (this.targetSelection) {
+            this.targetSelection.selectRole();
+        }
     }
 
     setCtfTargetSelection(ts: CtfTargetSelection) {

@@ -38,13 +38,13 @@ function teamSlaves(team: number): Slave[] {
     return slaves.filter(x => x.getTeam() === team);
 }
 
-function execAuto(playerId: number, team: number) {
+function execAuto(team: number) {
     const ts = teamSlaves(team);
     const slavesCount = ts.length;
     const attackers = slavesCount / 2 + 1; // try to have more attackers than defense
 
     for (let i = 0; i < slavesCount; i++) {
-        ts[i].execCtfCommand(playerId, "auto", i < attackers ? "A" : "D");
+        ts[i].setDefaultRole(i < attackers ? "A" : "D");
     }
 }
 
@@ -125,7 +125,7 @@ export class TeamCoordination {
         if (this.isTeamCoordinatorBot) {
             await this.electLeader();
             try {
-                execAuto(me.id, me.team);
+                execAuto(me.team);
             } catch (error) {
                 this.logger.error("error #auto-ing", error);
             }
@@ -306,7 +306,7 @@ export class TeamCoordination {
         }
 
         if (command === 'auto') {
-            execAuto(speaker.id, me.team);
+            execAuto(me.team);
         } else {
             teamSlaves(me.team).forEach(x => x.execCtfCommand(speaker.id, command, param));
         }

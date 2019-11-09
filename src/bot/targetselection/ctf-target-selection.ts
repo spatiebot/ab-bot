@@ -271,9 +271,8 @@ export class CtfTargetSelection implements ITargetSelection {
         }
     }
 
-    private selectRole(newRole: string = null) {
-        const dieCast = Calculations.getRandomInt(1, 3);
-        this.myRole = newRole || (dieCast === 1 ? "A" : "D");
+    public selectRole() {
+        this.myRole = this.slave.getDefaultRole();
         this.logger.info("My role is " + this.myRole);
     }
 
@@ -426,7 +425,7 @@ export class CtfTargetSelection implements ITargetSelection {
 
             case 'auto':
                 this.clearAllTargets();
-                this.selectRole(param);
+                this.selectRole();
                 break;
         }
     }
