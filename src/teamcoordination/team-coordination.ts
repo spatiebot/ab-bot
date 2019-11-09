@@ -332,7 +332,7 @@ export class TeamCoordination {
                 const redLeader = this.env.getPlayer(teamLeaderRedId);
                 const blueLeader = this.env.getPlayer(teamLeaderBlueId);
 
-                const allPlayers = this.env.getPlayers().filter(x => slaveIds.indexOf(x.id) > -1);
+                const allPlayers = this.env.getPlayers().filter(x => slaveIds.indexOf(x.id) === -1);
                 const redPlayers = allPlayers.filter(x => x.team === 2);
                 const bluePlayers = allPlayers.filter(x => x.team === 1);
                 const inactiveRedPlayers = redPlayers.filter(x => x.isHidden);
