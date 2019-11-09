@@ -143,14 +143,15 @@ export class AirmashBot {
         const name = p ? p.name : "unknown";
         this.logger.info(name + ' says: "' + msg.text + '"');
 
-        const newTeamleaderID = TeamLeaderChatHelper.getTeamleaderId(msg.text, this.env);
-        if (newTeamleaderID) {
-            if (newTeamleaderID === this.env.myId()){
-                this.teamleader = new TeamLeader(this.env);
-            } else {
-                this.teamleader = null;
-            }
-        }
+        // don't let bots lead ... it does not spark joy
+        // const newTeamleaderID = TeamLeaderChatHelper.getTeamleaderId(msg.text, this.env);
+        // if (newTeamleaderID) {
+        //     if (newTeamleaderID === this.env.myId()){
+        //         this.teamleader = new TeamLeader(this.env);
+        //     } else {
+        //         this.teamleader = null;
+        //     }
+        // }
     }
 
     private logState() {
