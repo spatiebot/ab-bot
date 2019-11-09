@@ -6,12 +6,15 @@ import { Slave } from "./slave";
 import { TeamLeaderChatHelper } from "../helper/teamleader-chat-helper";
 import { ChallengeLeader } from "./challenge-leader";
 import { BotContext } from "../bot/botContext";
+import { Calculations } from "../bot/calculations";
 
 const ELECTION_TIMEOUT_MINUTES = 10;
 const LEADER_CHALLENGABLE_MINUTES = 2.5;
 
 let teamCoordinatorRed: number;
 let teamCoordinatorBlue: number;
+let teamLeaderRedId: number;
+let teamLeaderBlueId: number;
 let slaves: Slave[] = [];
 
 function stopCoordination() {
@@ -89,7 +92,7 @@ export class TeamCoordination {
             // scores not yet known
             return;
         }
-        
+
         if ((ctfScores[1] === 3 || ctfScores[2] === 3) && !this.gameIsAboutToStart) {
             // game has not started yet, and is not about to start yet
             return;
@@ -120,6 +123,17 @@ export class TeamCoordination {
         }
 
         this.tickStopwatch.start();
+    }
+
+    private setTeamLeader(teamLeaderId: number) {
+        this.teamLeaderId = teamLeaderId;
+
+        const me = this.env.me();
+        if (me.team === 1) {
+            teamLeaderBlueId = this.teamLeaderId;
+        } else {
+            teamLeaderRedId = this.teamLeaderId;
+        }
     }
 
     private onStart() {
@@ -164,7 +178,9 @@ export class TeamCoordination {
 
         this.isElectionOngoing = true;
         const election = new Election(this.context);
-        this.teamLeaderId = await election.doElection(this.teamLeaderId);
+        const teamLeaderId = await election.doElection(this.teamLeaderId);
+        this.setTeamLeader(teamLeaderId);
+
         this.nextElectionStopwatch.start();
         this.leaderChallengeTimer.start();
         this.isElectionOngoing = false;
@@ -202,25 +218,24 @@ export class TeamCoordination {
         if (this.isSecondaryTeamCoordinator) {
             const newTeamleaderID = TeamLeaderChatHelper.getTeamleaderId(ev.text, this.env);
             if (newTeamleaderID) {
-                this.teamLeaderId = newTeamleaderID;
+                this.setTeamLeader(newTeamleaderID)
                 return;
             }
         }
-
-        const speakerIsTeamLeader = this.teamLeaderId === playerId;
 
         const ctfCommandMatch = /^\s*#([\w\-]+)(?:\s(.*))?$/.exec(message);
         if (ctfCommandMatch) {
             const command = ctfCommandMatch[1];
             const param = ctfCommandMatch[2];
 
-            this.execCtfCommand(player, command, param, speakerIsTeamLeader);
+            this.execCtfCommand(player, command, param);
         }
     }
 
-    private execCtfCommand(speaker: PlayerInfo, command: string, param: string, speakerIsTeamLeader: boolean) {
+    private execCtfCommand(speaker: PlayerInfo, command: string, param: string) {
 
-        const nonTeamLeaderCommands = ['drop', 'f', 'challenge-leader', 'leader-challenge'];
+        const speakerIsTeamLeader = this.teamLeaderId === speaker.id;
+        const nonTeamLeaderCommands = ['drop', 'f', 'challenge-leader', 'leader-challenge', 'status'];
         const isNonTeamLeaderCommand = nonTeamLeaderCommands.indexOf(command) > -1;
         if (!speakerIsTeamLeader && !isNonTeamLeaderCommand) {
             // the only command non-teamleaders can issue, is 'drop' (f) and 'challenge-leader'
@@ -292,7 +307,7 @@ export class TeamCoordination {
                 const victim = this.env.getPlayers().find(x => x.name === param);
                 // don't allow me to be leader: i will be banned for spam
                 if (victim && victim.team === me.team && victim.id !== me.id) {
-                    this.teamLeaderId = victim.id;
+                    this.setTeamLeader(victim.id);
                     if (!this.isSecondaryTeamCoordinator) {
                         this.env.sendTeam(speaker.name + " has made " + victim.name + " the new team leader.", true);
                     }
@@ -309,14 +324,52 @@ export class TeamCoordination {
                 break;
 
             case 'status':
-                const numSlaves = teamSlaves(me.team).length;
-                const teamLeader = this.env.getPlayer(this.teamLeaderId);
-                let leaderName = "";
-                if (!teamLeader) {
-                    leaderName = teamLeader.name;
-                }
-                shouldSay = (me.team === 1 ? "Blue" : "Red") + " has " + numSlaves + " bots " +
-                    (leaderName ? "with " + leaderName + " as their leader." : "without leader");
+                const blueSlaves = teamSlaves(1);
+                const redSlaves = teamSlaves(2);
+
+                const slaveIds = slaves.map(x => x.id);
+
+                const redLeader = this.env.getPlayer(teamLeaderRedId);
+                const blueLeader = this.env.getPlayer(teamLeaderBlueId);
+
+                const allPlayers = this.env.getPlayers().filter(x => slaveIds.indexOf(x.id) > -1);
+                const redPlayers = allPlayers.filter(x => x.team === 2);
+                const bluePlayers = allPlayers.filter(x => x.team === 1);
+                const inactiveRedPlayers = redPlayers.filter(x => !x.isHidden);
+                const inactiveBluePlayers = bluePlayers.filter(x => !x.isHidden);
+
+                const blueInactiveText = inactiveBluePlayers.length > 0 ? ` (of which ${inactiveBluePlayers.length} not active)` : "";
+                const blueText = `Blue has ${bluePlayers.length} players${blueInactiveText}, and ${blueSlaves.length} bots
+                     managed by ${blueLeader ? blueLeader.name : 'no one'}.`;
+                const redInactiveText = inactiveRedPlayers.length > 0 ? ` (of which ${inactiveRedPlayers.length} not active)` : "";
+                const redText = `Red has ${redPlayers.length} players${redInactiveText}, and ${redSlaves.length} bots
+                          managed by ${redLeader ? redLeader.name : 'no one'}.`;
+
+                const firstText = me.team === 1 ? blueText : redText;
+                const secondText = me.team === 1 ? redText : blueText;
+                this.env.sendChat(firstText, false);
+                this.context.tm.setTimeout(() => this.env.sendChat(secondText, false), 1200);
+                break;
+
+
+            case 'type':
+                let type = 0;
+                slaves.forEach(s => {
+                    let planeType = Number(param);
+                    if (!planeType) {
+                        if (param === 'distribute' || param === 'd') {
+                            type++;
+                            if (type > 5) {
+                                type = 1;
+                            }
+                            planeType = type;
+                        } else {
+                            planeType = Calculations.getRandomInt(1, 6);
+                        }
+                    }
+                    s.switchTo(planeType);
+                });
+
                 break;
         }
 

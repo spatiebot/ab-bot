@@ -10,6 +10,10 @@ export class Slave {
     private lastPlayerId: number;
     private myDefaultRole: string;
 
+    public get id(): number {
+        return this.context.env.myId();
+    }
+
     constructor(private context: BotContext) {
     }
 
@@ -57,6 +61,10 @@ export class Slave {
 
     restart(): void {
         this.context.bot.restart();
+    }
+
+    switchTo(aircraftType: number): void {
+        this.context.bot.switchTo(aircraftType);
     }
 
 }

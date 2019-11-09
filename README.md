@@ -101,7 +101,9 @@ Needs a number or "random" as parameter. Makes the bot switch to a given aircraf
 Needs the playername as parameter. Makes the mentioned player the new leader. You can't make the masterbot the leader, because he will be muted
 for spamming if you do. Example: `#leader rookie`.
 
-**#leader-challenge**  
+**#leader-challenge, #challenge-leader**  
 This will call for the leader to reply. If (s)he doesn't reply after 30 seconds, a new election is held. This command can only be issued 2.5 minutes after the previous one / an election, and not within 1 minute of an upcoming election. Bots should never reply to the challenge.  
 This is one of the commands that non-team leaders can issue.
 
+**#status**  
+Shows stats.
