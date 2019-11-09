@@ -14,22 +14,23 @@ const LEADER_CHALLENGABLE_MINUTES = 2.5;
 let teamCoordinatorRed: number;
 let teamCoordinatorBlue: number;
 let slaves: Slave[] = [];
-let isAnyTeamCoordinatorActive = false;
 
 function stopCoordination() {
     teamCoordinatorBlue = null;
     teamCoordinatorRed = null;
-    isAnyTeamCoordinatorActive = false;
 }
 
 function chooseTeamCoordinator(bot: PlayerInfo) {
-    isAnyTeamCoordinatorActive = true;
-    if (bot.team === 1 && !teamCoordinatorBlue) {
-        teamCoordinatorBlue = bot.id;
-        return true;
-    } else if (bot.team === 2 && !teamCoordinatorRed) {
-        teamCoordinatorRed = bot.id;
-        return true;
+    if (bot.team === 1) {
+        if (!teamCoordinatorBlue) {
+            teamCoordinatorBlue = bot.id;
+        }
+        return teamCoordinatorBlue === bot.id;
+    } else if (bot.team === 2) {
+        if (!teamCoordinatorRed) {
+            teamCoordinatorRed = bot.id;
+        }
+        return teamCoordinatorRed === bot.id;
     }
     return false;
 }
@@ -68,6 +69,10 @@ export class TeamCoordination {
 
     constructor(private context: BotContext, private isSecondaryTeamCoordinator: boolean) {
         this.env.on('start', _ => this.onStart());
+        this.env.on('chat', x => this.onChat(x));
+        this.env.on('ctfGameOver', () => this.onGameOver());
+        this.env.on('serverMessage', (x) => this.onServerMessage(x.text as string));
+        this.env.on('tick', () => this.onTick());
     }
 
     addSlave(s: Slave) {
@@ -75,11 +80,15 @@ export class TeamCoordination {
     }
 
     private onTick() {
-        if (!isAnyTeamCoordinatorActive) {
-            // the teamcoordinator quit because of an error
-            const me = this.env.me();
-            this.isTeamCoordinatorBot = chooseTeamCoordinator(me);
+        // alway reconsider being the teamcoordinator, because the teamcoordinator 
+        // may have quit because of an error
+        const me = this.env.me();
+
+        if (!me) {
+            return;
         }
+
+        this.isTeamCoordinatorBot = chooseTeamCoordinator(me);
 
         if (!this.isTeamCoordinatorBot) {
             return;
@@ -92,7 +101,7 @@ export class TeamCoordination {
         }
 
         const teamLeader = this.env.getPlayer(this.teamLeaderId);
-        if (!teamLeader || this.nextElectionStopwatch.elapsedMinutes() > ELECTION_TIMEOUT_MINUTES) {
+        if (!teamLeader || teamLeader.team !== me.team || this.nextElectionStopwatch.elapsedMinutes() > ELECTION_TIMEOUT_MINUTES) {
             this.electLeader();
         }
 
@@ -114,11 +123,6 @@ export class TeamCoordination {
     }
 
     private async initialize() {
-        this.env.on('chat', x => this.onChat(x));
-        this.env.on('ctfGameOver', () => this.onGameOver());
-        this.env.on('serverMessage', (x) => this.onServerMessage(x.text as string));
-        this.env.on('tick', () => this.onTick());
-
         const me = this.env.me();
         const isLeader = chooseTeamCoordinator(me);
         this.isTeamCoordinatorBot = isLeader;
