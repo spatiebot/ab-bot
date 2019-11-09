@@ -103,6 +103,8 @@ export class TeamCoordination {
         if (!wasTeamCoordinator && this.isTeamCoordinatorBot) {
             // reset bots to auto when i'm the new bot coordinator
             execAuto(me.team);
+            // also reset bot types to random
+            this.selectAircraftTypes(me.team, 'random')
         }
 
         this.gameIsAboutToStart = false;
@@ -324,51 +326,12 @@ export class TeamCoordination {
                 break;
 
             case 'status':
-                const blueSlaves = teamSlaves(1);
-                const redSlaves = teamSlaves(2);
-
-                const slaveIds = slaves.map(x => x.id);
-
-                const redLeader = this.env.getPlayer(teamLeaderRedId);
-                const blueLeader = this.env.getPlayer(teamLeaderBlueId);
-
-                const allPlayers = this.env.getPlayers().filter(x => slaveIds.indexOf(x.id) === -1);
-                const redPlayers = allPlayers.filter(x => x.team === 2);
-                const bluePlayers = allPlayers.filter(x => x.team === 1);
-                const inactiveRedPlayers = redPlayers.filter(x => x.isHidden);
-                const inactiveBluePlayers = bluePlayers.filter(x => x.isHidden);
-
-                const blueInactiveText = inactiveBluePlayers.length > 0 ? ` (of which ${inactiveBluePlayers.length} not active)` : "";
-                const blueText = `Blue has ${bluePlayers.length} players${blueInactiveText}, and ${blueSlaves.length} bots
-                     managed by ${blueLeader ? blueLeader.name : 'no one'}.`;
-                const redInactiveText = inactiveRedPlayers.length > 0 ? ` (of which ${inactiveRedPlayers.length} not active)` : "";
-                const redText = `Red has ${redPlayers.length} players${redInactiveText}, and ${redSlaves.length} bots
-                          managed by ${redLeader ? redLeader.name : 'no one'}.`;
-
-                const firstText = me.team === 1 ? blueText : redText;
-                const secondText = me.team === 1 ? redText : blueText;
-                this.env.sendChat(firstText, false);
-                this.context.tm.setTimeout(() => this.env.sendChat(secondText, false), 1200);
+                this.showStatus(me.team);
                 break;
 
 
             case 'type':
-                let type = 0;
-                teamSlaves(me.team).forEach(s => {
-                    let planeType = Number(param);
-                    if (!planeType) {
-                        if (param === 'distribute' || param === 'd') {
-                            type++;
-                            if (type > 5) {
-                                type = 1;
-                            }
-                            planeType = type;
-                        } else {
-                            planeType = Calculations.getRandomInt(1, 6);
-                        }
-                    }
-                    s.switchTo(planeType);
-                });
+                this.selectAircraftTypes(me.team, param);
 
                 break;
         }
@@ -384,5 +347,48 @@ export class TeamCoordination {
         } else {
             teamSlaves(me.team).forEach(x => x.execCtfCommand(speaker.id, command, param));
         }
+    }
+
+    private showStatus(myTeam: number) {
+        const blueSlaves = teamSlaves(1);
+        const redSlaves = teamSlaves(2);
+        const slaveIds = slaves.map(x => x.id);
+        const redLeader = this.env.getPlayer(teamLeaderRedId);
+        const blueLeader = this.env.getPlayer(teamLeaderBlueId);
+        const allPlayers = this.env.getPlayers().filter(x => slaveIds.indexOf(x.id) === -1);
+        const redPlayers = allPlayers.filter(x => x.team === 2);
+        const bluePlayers = allPlayers.filter(x => x.team === 1);
+        const inactiveRedPlayers = redPlayers.filter(x => x.isHidden);
+        const inactiveBluePlayers = bluePlayers.filter(x => x.isHidden);
+        const blueInactiveText = inactiveBluePlayers.length > 0 ? ` (of which ${inactiveBluePlayers.length} not active)` : "";
+        const blueText = `Blue has ${bluePlayers.length} players${blueInactiveText}, and ${blueSlaves.length} bots
+                     managed by ${blueLeader ? blueLeader.name : 'no one'}.`;
+        const redInactiveText = inactiveRedPlayers.length > 0 ? ` (of which ${inactiveRedPlayers.length} not active)` : "";
+        const redText = `Red has ${redPlayers.length} players${redInactiveText}, and ${redSlaves.length} bots
+                          managed by ${redLeader ? redLeader.name : 'no one'}.`;
+        const firstText = myTeam === 1 ? blueText : redText;
+        const secondText = myTeam === 1 ? redText : blueText;
+        this.env.sendChat(firstText, false);
+        this.context.tm.setTimeout(() => this.env.sendChat(secondText, false), 1200);
+    }
+
+    private selectAircraftTypes(team: number, typeSpec: string) {
+        let type = 0;
+        teamSlaves(team).forEach(s => {
+            let planeType = Number(typeSpec);
+            if (!planeType) {
+                if (typeSpec === 'distribute' || typeSpec === 'd') {
+                    type++;
+                    if (type > 5) {
+                        type = 1;
+                    }
+                    planeType = type;
+                }
+                else {
+                    planeType = Calculations.getRandomInt(1, 6);
+                }
+            }
+            s.switchTo(planeType);
+        });
     }
 }
