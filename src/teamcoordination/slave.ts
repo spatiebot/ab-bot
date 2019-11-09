@@ -1,6 +1,7 @@
 import { CtfTargetSelection } from "../bot/targetselection/ctf-target-selection";
 import { IAirmashEnvironment } from "../bot/airmash/iairmash-environment";
 import { Calculations } from "../bot/calculations";
+import { BotContext } from "../bot/botContext";
 
 export class Slave {
     private targetSelection: CtfTargetSelection;
@@ -9,11 +10,11 @@ export class Slave {
     private lastPlayerId: number;
     private myDefaultRole: string;
 
-    constructor(private env: IAirmashEnvironment) {
+    constructor(private context: BotContext) {
     }
 
     getTeam(): number {
-        const me = this.env.me();
+        const me = this.context.env.me();
         if (!me) {
             return 0;
         }
@@ -53,4 +54,9 @@ export class Slave {
             this.execCtfCommand(this.lastPlayerId, this.lastCommand, this.lastParam);
         }
     }
+
+    restart(): void {
+        this.context.bot.restart();
+    }
+
 }

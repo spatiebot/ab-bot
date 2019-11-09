@@ -135,6 +135,8 @@ export class TeamCoordination {
     private onGameOver() {
         stopCoordination();
         this.isTeamCoordinatorBot = false;
+        slaves.forEach(x => x.restart());
+        slaves = [];
     }
 
     stop() {

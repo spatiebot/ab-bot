@@ -57,7 +57,7 @@ export class AirmashBot {
 
         this.steeringInstallation = new SteeringInstallation(context);
         this.teamCoordination = new TeamCoordination(context, isSecondaryTeamCoordinator);
-        this.slave = new Slave(this.env);
+        this.slave = new Slave(this.context);
         this.teamCoordination.addSlave(this.slave);
         this.planeTypeSelection = new PlaneTypeSelection();
     }
