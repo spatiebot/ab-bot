@@ -11,7 +11,7 @@ export class Game {
     public type: number;
     public readonly blueFlag = new FlagInfo(1);
     public readonly redFlag = new FlagInfo(2);
-    public readonly ctfScores = { 1: 0, 2: 0 };
+    public readonly ctfScores = { 1: null, 2: null };
 
     private myID: number;
     private players = {};

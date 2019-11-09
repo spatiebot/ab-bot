@@ -3,7 +3,6 @@ import { StopWatch } from "../helper/timer";
 import { PlayerInfo } from "../bot/airmash/player-info";
 import { Election } from "./election";
 import { Slave } from "./slave";
-import { Logger } from "../helper/logger";
 import { TeamLeaderChatHelper } from "../helper/teamleader-chat-helper";
 import { ChallengeLeader } from "./challenge-leader";
 import { BotContext } from "../bot/botContext";
@@ -58,13 +57,10 @@ export class TeamCoordination {
     private isTeamCoordinatorBot: boolean;
     private isElectionOngoing: boolean;
     private lastSaid: string;
+    private gameIsAboutToStart: boolean;
 
     private get env(): IAirmashEnvironment {
         return this.context.env;
-    }
-
-    private get logger(): Logger {
-        return this.context.logger;
     }
 
     constructor(private context: BotContext, private isSecondaryTeamCoordinator: boolean) {
@@ -88,7 +84,25 @@ export class TeamCoordination {
             return;
         }
 
+        const ctfScores = this.env.getCtfScores();
+        if (!ctfScores[1] && ctfScores[1] !== 0) {
+            // scores not yet known
+            return;
+        }
+        
+        if ((ctfScores[1] === 3 || ctfScores[2] === 3) && !this.gameIsAboutToStart) {
+            // game has not started yet, and is not about to start yet
+            return;
+        }
+
+        const wasTeamCoordinator = this.isTeamCoordinatorBot;
         this.isTeamCoordinatorBot = chooseTeamCoordinator(me);
+        if (!wasTeamCoordinator && this.isTeamCoordinatorBot) {
+            // reset bots to auto when i'm the new bot coordinator
+            execAuto(me.team);
+        }
+
+        this.gameIsAboutToStart = false;
 
         if (!this.isTeamCoordinatorBot) {
             return;
@@ -118,22 +132,6 @@ export class TeamCoordination {
         if (this.env.getGameType() !== 2) {
             return;
         }
-
-        this.initialize();
-    }
-
-    private async initialize() {
-        const me = this.env.me();
-        const isLeader = chooseTeamCoordinator(me);
-        this.isTeamCoordinatorBot = isLeader;
-        if (this.isTeamCoordinatorBot) {
-            await this.electLeader();
-            try {
-                execAuto(me.team);
-            } catch (error) {
-                this.logger.error("error #auto-ing", error);
-            }
-        }
     }
 
     private onGameOver() {
@@ -152,7 +150,7 @@ export class TeamCoordination {
 
     private onServerMessage(text: string) {
         if (text.indexOf('shuffling teams') > -1) {
-            this.context.tm.setTimeout(() => this.initialize(), 1000);
+            this.context.tm.setTimeout(() => this.gameIsAboutToStart = true, 1000);
         }
     }
 
@@ -222,10 +220,15 @@ export class TeamCoordination {
 
     private execCtfCommand(speaker: PlayerInfo, command: string, param: string, speakerIsTeamLeader: boolean) {
 
-        if (!speakerIsTeamLeader && command !== 'drop' && command !== 'f' && command !== 'challenge-leader') {
+        const nonTeamLeaderCommands = ['drop', 'f', 'challenge-leader', 'leader-challenge'];
+        const isNonTeamLeaderCommand = nonTeamLeaderCommands.indexOf(command) > -1;
+        if (!speakerIsTeamLeader && !isNonTeamLeaderCommand) {
             // the only command non-teamleaders can issue, is 'drop' (f) and 'challenge-leader'
+            this.context.logger.warn("ignoring command " + command);
             return;
         }
+
+        this.context.logger.warn("received command " + command);
 
         const me = this.env.me();
 
@@ -296,12 +299,24 @@ export class TeamCoordination {
                 }
                 break;
 
+            case 'leader-challenge':
             case 'challenge-leader':
                 const canChallenge = this.leaderChallengeTimer.elapsedSeconds() > LEADER_CHALLENGABLE_MINUTES;
                 const isAnElectionInSight = ELECTION_TIMEOUT_MINUTES - this.nextElectionStopwatch.elapsedMinutes() < 1;
                 if (canChallenge && !isAnElectionInSight && this.teamLeaderId) {
                     this.challengeLeader();
                 }
+                break;
+
+            case 'status':
+                const numSlaves = teamSlaves(me.team).length;
+                const teamLeader = this.env.getPlayer(this.teamLeaderId);
+                let leaderName = "";
+                if (!teamLeader) {
+                    leaderName = teamLeader.name;
+                }
+                shouldSay = (me.team === 1 ? "Blue" : "Red") + " has " + numSlaves + " bots " +
+                    (leaderName ? "with " + leaderName + " as their leader." : "without leader");
                 break;
         }
 
