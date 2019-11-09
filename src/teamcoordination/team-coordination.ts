@@ -335,8 +335,8 @@ export class TeamCoordination {
                 const allPlayers = this.env.getPlayers().filter(x => slaveIds.indexOf(x.id) > -1);
                 const redPlayers = allPlayers.filter(x => x.team === 2);
                 const bluePlayers = allPlayers.filter(x => x.team === 1);
-                const inactiveRedPlayers = redPlayers.filter(x => !x.isHidden);
-                const inactiveBluePlayers = bluePlayers.filter(x => !x.isHidden);
+                const inactiveRedPlayers = redPlayers.filter(x => x.isHidden);
+                const inactiveBluePlayers = bluePlayers.filter(x => x.isHidden);
 
                 const blueInactiveText = inactiveBluePlayers.length > 0 ? ` (of which ${inactiveBluePlayers.length} not active)` : "";
                 const blueText = `Blue has ${bluePlayers.length} players${blueInactiveText}, and ${blueSlaves.length} bots
