@@ -241,11 +241,11 @@ export class TeamCoordination {
         const isNonTeamLeaderCommand = nonTeamLeaderCommands.indexOf(command) > -1;
         if (!speakerIsTeamLeader && !isNonTeamLeaderCommand) {
             // the only command non-teamleaders can issue, is 'drop' (f) and 'challenge-leader'
-            this.context.logger.warn("ignoring command " + command);
+            this.context.logger.debug("ignoring command " + command);
             return;
         }
 
-        this.context.logger.warn("received command " + command);
+        this.context.logger.info("received command " + command);
 
         const me = this.env.me();
 

@@ -5,38 +5,31 @@ import { AirmashBot } from "./airmash-bot";
 import { TimeoutManager } from "../helper/timeoutManager";
 import { AirmashApiFacade } from "./airmash/airmash-api";
 import { StopWatch } from "../helper/timer";
+import { BotIdentityGenerator } from "../bot-identity-generator";
 
 const MAX_RESTART_TRIES = 3;
 
 export class BotContext {
     env: IAirmashEnvironment;
-    character: BotCharacter;
     bot: AirmashBot;
     tm = new TimeoutManager();
-
-    private websocketUrl: string;
-    private botIndex: number;
-    private name: string;
-    private flag: string;
-    private type: number;
-    private isSecondaryTeamCoordinator: boolean;
+    logger: Logger;
+    character: BotCharacter;
 
     private lastRestartTimer = new StopWatch();
     private restartCount = 0;
-
-    constructor(public logger: Logger, websocketUrl: string) {
-        this.websocketUrl = websocketUrl;
+    
+    constructor(
+        private botIndex: number,
+        private websocketUrl: string,
+        private identityGenerator: BotIdentityGenerator,
+        private characterConfig: string,
+        private isSecondaryTeamCoordinator: boolean,
+        private isDevelopment: boolean,
+        private logLevel: string) {
     }
 
-    startBot(i: number, name: string, flag: string, type: number, botCharacter: any, isSecondaryTeamCoordinator: boolean) {
-
-        this.character = botCharacter;
-        this.botIndex = i;
-        this.isSecondaryTeamCoordinator = isSecondaryTeamCoordinator;
-        this.name = name;
-        this.flag = flag;
-        this.type = type;
-
+    startBot() {
         this.restartBotInner();
     }
 
@@ -45,7 +38,9 @@ export class BotContext {
             this.restartCount++;
             if (this.restartCount > MAX_RESTART_TRIES) {
                 // give up
-                this.logger.error("Too many restart tries; giving up.")
+                if (this.logger) {
+                    this.logger.error("Too many restart tries; giving up.")
+                }
                 return;
             }
         } else {
@@ -56,6 +51,17 @@ export class BotContext {
     }
 
     private restartBotInner() {
+        const identity = this.identityGenerator.generateIdentity();
+        this.character = BotCharacter[this.characterConfig] || BotCharacter.get(identity.aircraftType);
+        this.logger = new Logger(this.botIndex, identity.name, this.isDevelopment, this.logLevel);
+
+        this.logger.info('Starting:', {
+            type: identity.aircraftType,
+            flag: identity.flag,
+            character: this.character.name,
+            url: this.websocketUrl,
+        });
+
         this.lastRestartTimer.start();
 
         this.env = new AirmashApiFacade(this.websocketUrl, this.logger, this.tm);
@@ -64,7 +70,7 @@ export class BotContext {
         // throttle joining of the bots to prevent spamming the server.
         this.bot = new AirmashBot(this, this.isSecondaryTeamCoordinator);
         const timeOutMs = this.botIndex * 500;
-        this.tm.setTimeout(() => this.bot.join(this.name, this.flag, this.type), timeOutMs);
+        this.tm.setTimeout(() => this.bot.join(identity.name, identity.flag, identity.aircraftType), timeOutMs);
     }
 
 }

@@ -106,7 +106,7 @@ export class AirmashBot {
 
         const myType = this.env.me().type;
         if (!this.character || this.character.type !== 0 && this.character.type !== myType) {
-            this.logger.warn('new char selected because this character is not my type');
+            this.logger.info('new char selected because this character is not my type');
             this.context.character = BotCharacter.get(myType);
         }
 
@@ -278,7 +278,7 @@ export class AirmashBot {
         this.context.tm.clearAll();
         this.teamCoordination.stop();
 
-        this.logger.warn("Restarting bot in a few seconds.");
+        this.logger.info("Restarting bot in a few seconds.");
         this.context.restartBot();
     }
 }

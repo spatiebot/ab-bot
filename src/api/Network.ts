@@ -99,8 +99,8 @@ export class Network {
             this.game.onError(ev);
         };
         ws.onclose = () => {
-            this.logger.warn('socket closed');
             if (config.isPrimary && !this.isStopping) {
+                this.logger.warn('socket closed');
                 this.game.onDisconnect();
             }
         };

@@ -1,8 +1,6 @@
 
 import { argv } from 'yargs';
-import { BotCharacter } from './bot/bot-character';
 import { BotIdentityGenerator } from './bot-identity-generator';
-import { Logger } from './helper/logger';
 import { BotContext } from './bot/botContext';
 
 const urls = {
@@ -23,28 +21,15 @@ ws = ws || urls.euFfa1;
 
 const flagConfig = argv.flag as string || "random";
 const typeConfig = argv.type as string || "random";
+const characterConfig = argv.character as string;
 const isSecondaryTeamCoordinator = !!argv.noTeamCoordinator;
 const numBots = argv.num as number || 1;
+const isDevelopment = !!argv.dev;
+const logLevel = argv.level as string || "warn";
 
 for (let i = 0; i < numBots; i++) {
-    const identity = BotIdentityGenerator.create(flagConfig, typeConfig);
+    const identityGenerator = new BotIdentityGenerator(flagConfig, typeConfig, argv.name as string);
 
-    const type = identity.aircraftType;
-    const flag = identity.flag;
-    const name = argv.name as string || identity.name;
-    const character = argv.character as string;
-    const botCharacter = BotCharacter[character] || BotCharacter.get(Number(type));
-
-    const logger = new Logger(i, name, !!argv.dev, (argv.level as string) || "warn");
-
-    logger.info('Starting bot no ' + i + ' with the following configuration:', {
-        name,
-        type,
-        flag,
-        character: botCharacter.name,
-        url: ws
-    });
-
-    const context = new BotContext(logger, ws);
-    context.startBot(i, name, flag, Number(type), botCharacter, isSecondaryTeamCoordinator);
+    const context = new BotContext(i, ws, identityGenerator, characterConfig, isSecondaryTeamCoordinator, isDevelopment, logLevel);
+    context.startBot();
 }
