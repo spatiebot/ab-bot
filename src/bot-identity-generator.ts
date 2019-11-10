@@ -62,7 +62,7 @@ export class BotIdentityGenerator {
         }
 
         const x = require('faker/locale/' + lang);
-        name = '[b]_' + x.name.firstName();
+        name = x.name.firstName() + "_";
 
         return {
             name,

@@ -11,7 +11,8 @@ const urls = {
     euFfa2: "wss://eu.airmash.online/ffa2",
     euCtf: "wss://lags.win/ctf",
     usFfa: "wss://game.airmash.steamroller.tk/ffa",
-    usCtf: "wss://game.airmash.steamroller.tk/ctf"
+    usCtf1: "wss://game.airmash.steamroller.tk/ctf",
+    usCtf2: "wss://airmash.xyz/ctf1"
 };
 
 let ws = argv.ws as string;
