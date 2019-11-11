@@ -1,7 +1,6 @@
 import { CtfTargetSelection } from "../bot/targetselection/ctf-target-selection";
-import { IAirmashEnvironment } from "../bot/airmash/iairmash-environment";
 import { Calculations } from "../bot/calculations";
-import { BotContext } from "../bot/botContext";
+import { BotContext } from "../botContext";
 
 export class Slave {
     private targetSelection: CtfTargetSelection;
@@ -9,6 +8,7 @@ export class Slave {
     private lastParam: string;
     private lastPlayerId: number;
     private myDefaultRole: string;
+    private isDeactivated: boolean;
 
     public get id(): number {
         return this.context.env.myId();
@@ -23,6 +23,18 @@ export class Slave {
             return 0;
         }
         return me.team;
+    }
+
+    stop() {
+        this.isDeactivated = true;
+    }
+
+    isActive(): boolean {
+        if (this.isDeactivated) {
+            return false;
+        }
+        const me = this.context.env.me();
+        return !!me;
     }
 
     getDefaultRole(): string {
@@ -60,7 +72,7 @@ export class Slave {
     }
 
     restart(): void {
-        this.context.bot.restart();
+        this.context.rebootBot();
     }
 
     switchTo(aircraftType: number): void {

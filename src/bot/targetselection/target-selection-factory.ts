@@ -2,7 +2,7 @@ import { ITargetSelection } from "./itarget-selection";
 import { CtfTargetSelection } from "./ctf-target-selection";
 import { TargetSelection } from "./target-selection";
 import { Slave } from "../../teamcoordination/slave";
-import { BotContext } from "../botContext";
+import { BotContext } from "../../botContext";
 
 export class TargetSelectionFactory {
     static createTargetSelection(context: BotContext, slave: Slave): ITargetSelection {

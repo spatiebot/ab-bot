@@ -14,7 +14,7 @@ import { TeamCoordination } from "../teamcoordination/team-coordination";
 import { Slave } from "../teamcoordination/slave";
 import { PlaneTypeSelection } from "./plane-type-selection";
 import { TeamLeaderChatHelper } from "../helper/teamleader-chat-helper";
-import { BotContext } from "./botContext";
+import { BotContext } from "../botContext";
 
 export class AirmashBot {
 
@@ -123,7 +123,7 @@ export class AirmashBot {
             return;
         }
 
-        this.stop();
+        this.pause();
         this.planeTypeSelection.aircraftType = aircraftType;
         this.startBot();
 
@@ -172,14 +172,14 @@ export class AirmashBot {
         this.targetSelection.reset();
     }
 
-    private stop() {
+    private pause() {
         this.isSpawned = false;
         this.steeringInstallation.stopAllSteering();
         this.targetSelection.reset();
     }
 
     private onCtfGameOver() {
-        this.stop();
+        this.pause();
         this.teamleader = null;
         this.logger.info("CTF game over");
     }
@@ -269,16 +269,13 @@ export class AirmashBot {
 
     private onError(data: any) {
         this.logger.error('Error', data ? JSON.stringify(data, Object.getOwnPropertyNames(data)) : "unknown error");
-        this.restart();
+        this.context.rebootBot();
     }
 
-    restart() {
-        this.env.stop();
+    stop() {
         this.steeringInstallation.stop();
-        this.context.tm.clearAll();
         this.teamCoordination.stop();
-
-        this.logger.info("Restarting bot in a few seconds.");
-        this.context.restartBot();
+        this.slave.stop();
+        this.isSpawned = false;
     }
 }

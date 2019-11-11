@@ -7,7 +7,7 @@ import { Fart } from "./fart";
 import { Stealth } from "./stealth";
 import { Logger } from "../../helper/logger";
 import { StopWatch } from "../../helper/timer";
-import { BotContext } from "../botContext";
+import { BotContext } from "../../botContext";
 
 export const STEERING_INTERVAL = 180;
 export const LONG_STEERING_INTERVAL = 3.5 * STEERING_INTERVAL;

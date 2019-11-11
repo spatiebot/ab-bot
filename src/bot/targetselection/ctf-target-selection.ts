@@ -17,7 +17,7 @@ import { FlagHelpers } from "../../helper/flaghelpers";
 import { Logger } from "../../helper/logger";
 import { Slave } from "../../teamcoordination/slave";
 import { TOO_FAR_AWAY_FOR_POOPING_FLAG, HandOverFlagTarget } from "../targets/hand-over-flag-target";
-import { BotContext } from "../botContext";
+import { BotContext } from "../../botContext";
 
 enum FlagStates {
     Unknown = "Unkown",

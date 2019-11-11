@@ -10,7 +10,7 @@ import { Pos } from "../pos";
 import { ProtectTarget } from "../targets/protect-target";
 import { ITargetSelection } from "./itarget-selection";
 import { Logger } from "../../helper/logger";
-import { BotContext } from "../botContext";
+import { BotContext } from "../../botContext";
 
 const TIME_OUT = 60 * 1000; // 1 min
 const PROTECT_TIME_OUT = 5 * TIME_OUT;

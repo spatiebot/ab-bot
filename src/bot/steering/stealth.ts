@@ -1,6 +1,6 @@
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { SteeringState } from "./steering-state";
-import { BotContext } from "../botContext";
+import { BotContext } from "../../botContext";
 
 export class Stealth {
 

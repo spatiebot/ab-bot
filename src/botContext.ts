@@ -1,11 +1,12 @@
-import { IAirmashEnvironment } from "./airmash/iairmash-environment";
-import { BotCharacter } from "./bot-character";
-import { Logger } from "../helper/logger";
-import { AirmashBot } from "./airmash-bot";
-import { TimeoutManager } from "../helper/timeoutManager";
-import { AirmashApiFacade } from "./airmash/airmash-api";
-import { StopWatch } from "../helper/timer";
-import { BotIdentityGenerator } from "../bot-identity-generator";
+import { IAirmashEnvironment } from "./bot/airmash/iairmash-environment";
+import { BotCharacter } from "./bot/bot-character";
+import { Logger } from "./helper/logger";
+import { AirmashBot } from "./bot/airmash-bot";
+import { TimeoutManager } from "./helper/timeoutManager";
+import { AirmashApiFacade } from "./bot/airmash/airmash-api";
+import { StopWatch } from "./helper/timer";
+import { BotIdentityGenerator } from "./bot-identity-generator";
+import { BotSpawner } from "./bot-spawner";
 
 const MAX_RESTART_TRIES = 3;
 
@@ -18,22 +19,38 @@ export class BotContext {
 
     private lastRestartTimer = new StopWatch();
     private restartCount = 0;
-    
+    private spawner: BotSpawner;
+
     constructor(
-        private botIndex: number,
         private websocketUrl: string,
         private identityGenerator: BotIdentityGenerator,
         private characterConfig: string,
         private isSecondaryTeamCoordinator: boolean,
         private isDevelopment: boolean,
-        private logLevel: string) {
+        private logLevel: string,
+        public botIndex: number,
+        numBots: number = null) {
+
+        if (botIndex === 0) {
+            // this is the first bot, which should manage the number of bots
+            this.spawner = new BotSpawner(this, numBots);
+        }
     }
 
     startBot() {
-        this.restartBotInner();
+        this.startBotInner();
     }
 
-    restartBot() {
+    killBot() {
+        this.env.stop();
+        this.tm.clearAll();
+        this.bot.stop();
+    }
+
+    rebootBot() {
+        this.killBot();
+        this.logger.info("Restarting bot in a few seconds.");
+
         if (this.lastRestartTimer.elapsedMinutes() < 1) {
             this.restartCount++;
             if (this.restartCount > MAX_RESTART_TRIES) {
@@ -47,10 +64,10 @@ export class BotContext {
             this.restartCount = 0;
         }
 
-        this.tm.setTimeout(() => this.restartBotInner(), 4000);
+        this.tm.setTimeout(() => this.startBotInner(), 4000);
     }
 
-    private restartBotInner() {
+    private startBotInner() {
         const identity = this.identityGenerator.generateIdentity();
         this.character = BotCharacter[this.characterConfig] || BotCharacter.get(identity.aircraftType);
         this.logger = new Logger(this.botIndex, identity.name, this.isDevelopment, this.logLevel);
@@ -71,6 +88,19 @@ export class BotContext {
         this.bot = new AirmashBot(this, this.isSecondaryTeamCoordinator);
         const timeOutMs = this.botIndex * 500;
         this.tm.setTimeout(() => this.bot.join(identity.name, identity.flag, identity.aircraftType), timeOutMs);
+
+        if (this.spawner) {
+            // this is the first bot: it should keep track of the number of bots
+            this.spawner.start();
+        }
     }
+
+    spawnNewChildBot(botIndex: number): BotContext {
+        const context = new BotContext(this.websocketUrl, this.identityGenerator, this.characterConfig,
+            this.isSecondaryTeamCoordinator, this.isDevelopment, this.logLevel, botIndex);
+        context.startBot();
+        return context;
+    }
+
 
 }

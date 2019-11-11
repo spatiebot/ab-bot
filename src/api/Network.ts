@@ -46,7 +46,7 @@ export class Network {
     stop() {
         this.isStopping = true;
         clearInterval(this.ackInterval);
-        if (!this.client.closed) {
+        if (this.client && !this.client.closed) {
             this.client.close();
         }
         if (this.backupClientIsConnected) {

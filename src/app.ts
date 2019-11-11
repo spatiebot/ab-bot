@@ -1,7 +1,7 @@
 
 import { argv } from 'yargs';
 import { BotIdentityGenerator } from './bot-identity-generator';
-import { BotContext } from './bot/botContext';
+import { BotContext } from './botContext';
 
 const urls = {
     local: "ws://127.0.0.1:3501/ffa",
@@ -27,9 +27,8 @@ const numBots = argv.num as number || 1;
 const isDevelopment = !!argv.dev;
 const logLevel = argv.level as string || "warn";
 
-for (let i = 0; i < numBots; i++) {
-    const identityGenerator = new BotIdentityGenerator(flagConfig, typeConfig, argv.name as string);
+const identityGenerator = new BotIdentityGenerator(flagConfig, typeConfig, argv.name as string);
 
-    const context = new BotContext(i, ws, identityGenerator, characterConfig, isSecondaryTeamCoordinator, isDevelopment, logLevel);
-    context.startBot();
-}
+// start with one bot, it will spawn new bots as needed.
+const context = new BotContext(ws, identityGenerator, characterConfig, isSecondaryTeamCoordinator, isDevelopment, logLevel, 0, numBots);
+context.startBot();

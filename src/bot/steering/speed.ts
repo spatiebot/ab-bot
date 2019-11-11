@@ -1,7 +1,7 @@
 import { IAirmashEnvironment } from "../airmash/iairmash-environment";
 import { SteeringState } from "./steering-state";
 import { PlayerInfo } from "../airmash/player-info";
-import { BotContext } from "../botContext";
+import { BotContext } from "../../botContext";
 
 export class Speed {
     private boost: SteeringState = new SteeringState('SPECIAL');

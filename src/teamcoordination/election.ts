@@ -1,6 +1,6 @@
 import { IAirmashEnvironment } from "../bot/airmash/iairmash-environment";
 import { Calculations } from "../bot/calculations";
-import { BotContext } from "../bot/botContext";
+import { BotContext } from "../botContext";
 
 export class Election {
     private existingLeaderId: number;

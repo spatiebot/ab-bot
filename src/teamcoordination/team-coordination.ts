@@ -5,7 +5,7 @@ import { Election } from "./election";
 import { Slave } from "./slave";
 import { TeamLeaderChatHelper } from "../helper/teamleader-chat-helper";
 import { ChallengeLeader } from "./challenge-leader";
-import { BotContext } from "../bot/botContext";
+import { BotContext } from "../botContext";
 import { Calculations } from "../bot/calculations";
 
 const ELECTION_TIMEOUT_MINUTES = 10;
@@ -38,7 +38,7 @@ function chooseTeamCoordinator(bot: PlayerInfo) {
 }
 
 function teamSlaves(team: number): Slave[] {
-    return slaves.filter(x => x.getTeam() === team);
+    return slaves.filter(x => x.getTeam() === team && x.isActive());
 }
 
 function execAuto(team: number) {
@@ -67,7 +67,6 @@ export class TeamCoordination {
     }
 
     constructor(private context: BotContext, private isSecondaryTeamCoordinator: boolean) {
-        this.env.on('start', _ => this.onStart());
         this.env.on('chat', x => this.onChat(x));
         this.env.on('ctfGameOver', () => this.onGameOver());
         this.env.on('serverMessage', (x) => this.onServerMessage(x.text as string));
@@ -119,6 +118,11 @@ export class TeamCoordination {
             return;
         }
 
+        if (teamSlaves(me.team).length < 2) {
+            // it makes not sense to lead
+            return;
+        }
+
         const teamLeader = this.env.getPlayer(this.teamLeaderId);
         if (!teamLeader || teamLeader.team !== me.team || this.nextElectionStopwatch.elapsedMinutes() > ELECTION_TIMEOUT_MINUTES) {
             this.electLeader();
@@ -138,22 +142,14 @@ export class TeamCoordination {
         }
     }
 
-    private onStart() {
-        const me = this.env.me();
-        if (!me) {
-            this.context.tm.setTimeout(() => this.onStart(), 500);
-            return;
-        }
-
-        if (this.env.getGameType() !== 2) {
-            return;
-        }
-    }
-
     private onGameOver() {
         stopCoordination();
         this.isTeamCoordinatorBot = false;
-        slaves.forEach(x => x.restart());
+        slaves.forEach(x => {
+            if (x.isActive()) {
+                x.restart();
+            }
+        });
         slaves = [];
     }
 
