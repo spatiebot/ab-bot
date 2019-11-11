@@ -1,7 +1,7 @@
 import { BotContext } from "./botContext";
 import { StopWatch } from "./helper/timer";
 
-const EVALUATION_INTERVAL_MINUTES = 0.1;
+const EVALUATION_INTERVAL_MINUTES = 0.5;
 
 export class BotSpawner {
     private children: BotContext[] = [];
