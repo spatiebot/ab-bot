@@ -2,11 +2,15 @@ import { Pos } from "../pos";
 import { StopWatch } from "../../helper/timer";
 import { Calculations } from "../calculations";
 
+const ABSOLUTE_THROTTLE_MS = 50;
 const PATH_FINDING_LOWER_LIMIT_MS = 250;
 const PATH_FINDING_UPPER_LIMIT_MS = 800;
 const MAX_SPEED_PER_MS = 1;
 
 const caches = {};
+
+const absoluteThrottleTimer = new StopWatch();
+absoluteThrottleTimer.start();
 
 export class GotoLocationConfig {
     private readonly id: number;
@@ -40,6 +44,7 @@ export class GotoLocationConfig {
 
     setLastPath(path: Pos[]) {
         this.myThrottleTimer.start();
+        absoluteThrottleTimer.start();
         this.lastPath = path;
 
         if (path && path.length > 1) {
@@ -54,6 +59,10 @@ export class GotoLocationConfig {
     }
 
     shouldCalculatePath(): boolean {
+        if (absoluteThrottleTimer.elapsedMs() < ABSOLUTE_THROTTLE_MS) {
+            return false;
+        }
+
         if (!this.lastPath || this.lastPath.length < 2) {
             return true;
         }

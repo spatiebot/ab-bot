@@ -155,6 +155,7 @@ export class GotoLocationInstruction implements IInstruction {
             }
 
             const angleDiff = Calculations.getAngleDiff(myInfo.rot, desiredRotation);
+
             result.rotDelta = angleDiff;
 
             // if very close, but angle is steep, slow down for a while
