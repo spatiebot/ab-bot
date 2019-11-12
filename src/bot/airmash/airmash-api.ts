@@ -116,14 +116,13 @@ export class AirmashApiFacade implements IAirmashEnvironment {
             return null;
         }
 
-        const isSuspiciouslyCentered = !p.posX && !p.posY && !p.rot;
         const isStale = p.isStale() || p.leftHorizon;
 
         return {
             energy: p.energy,
             health: p.health,
             id: p.id,
-            isHidden: p.dead || p.hidden || isSuspiciouslyCentered,
+            isHidden: p.dead || p.hidden,
             isInView: !isStale,
             isStealthed: p.stealth,
             lowResPos: p.lowResPos,
