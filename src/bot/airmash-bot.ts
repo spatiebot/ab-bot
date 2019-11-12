@@ -21,6 +21,7 @@ export class AirmashBot {
     private readonly steeringInstallation: SteeringInstallation;
     private targetSelection: ITargetSelection;
     private isSpawned: boolean;
+    private isPaused: boolean;
     private score: Score;
     private isPreparingSteeringInstructions = false;
 
@@ -34,10 +35,13 @@ export class AirmashBot {
     private planeTypeSelection: PlaneTypeSelection;
     
     set canPause(value: boolean) {
-        const isPaused = !this.isSpawned;
-        if (isPaused && !value) {
+        if (!this.isSpawned) {
+            return;
+        }
+
+        if (this.isPaused && !value) {
             this.startBot();
-        } else if (!isPaused && value) {
+        } else if (this.isPaused && value) {
             this.pause();
         }
     }
@@ -108,6 +112,7 @@ export class AirmashBot {
         }
 
         this.isSpawned = true;
+        this.isPaused = false;
 
         this.tickStopwatch.start();
         this.upgradesStopwatch.start();
@@ -182,7 +187,7 @@ export class AirmashBot {
     }
 
     private pause() {
-        this.isSpawned = false;
+        this.isPaused = true;
         this.steeringInstallation.stopAllSteering();
         this.targetSelection.reset();
     }
@@ -208,6 +213,9 @@ export class AirmashBot {
         }
 
         if (!this.isSpawned) {
+            return;
+        }
+        if (this.isPaused) {
             return;
         }
 
