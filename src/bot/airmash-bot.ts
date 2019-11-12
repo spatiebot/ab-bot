@@ -32,6 +32,15 @@ export class AirmashBot {
     private teamCoordination: TeamCoordination; // for coordinating the ctf bots
     private slave: Slave; // for executing commands from the teamleader via the teamcoordinator
     private planeTypeSelection: PlaneTypeSelection;
+    
+    set canPause(value: boolean) {
+        const isPaused = !this.isSpawned;
+        if (isPaused && !value) {
+            this.startBot();
+        } else if (!isPaused && value) {
+            this.pause();
+        }
+    }
 
     private get env(): IAirmashEnvironment {
         return this.context.env;

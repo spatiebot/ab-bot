@@ -1,11 +1,13 @@
 import { BotContext } from "./botContext";
 import { StopWatch } from "./helper/timer";
 
-const EVALUATION_INTERVAL_MINUTES = 0.5;
+const NUM_BOTS_EVALUATION_INTERVAL_MINUTES = 0.5;
+const NEED_FOR_BOTS_EVALUATION_INTERVAL_SECONDS = 1;
 
 export class BotSpawner {
     private children: BotContext[] = [];
-    private evaluateTimer = new StopWatch();
+    private evaluateNumBotsTimer = new StopWatch();
+    private evaluateNeedForBotsTimer = new StopWatch();
     private maxNumChildren: number;
     private isFirstTime: boolean;
 
@@ -16,15 +18,34 @@ export class BotSpawner {
 
     start() {
         this.context.env.on("tick", () => this.onTick());
-        this.evaluateTimer.start();
+        this.evaluateNumBotsTimer.start();
+        this.evaluateNeedForBotsTimer.start();
     }
 
     onTick(): any {
-        if (!this.isFirstTime && this.evaluateTimer.elapsedMinutes() < EVALUATION_INTERVAL_MINUTES) {
+        this.evaluateNumBots();
+        this.evaluateNeedForBots();
+    }
+
+    private evaluateNeedForBots() {
+        if (this.evaluateNeedForBotsTimer.elapsedSeconds() < NEED_FOR_BOTS_EVALUATION_INTERVAL_SECONDS) {
             return;
         }
-        
-        this.evaluateTimer.start();
+
+        const numActivePlayers = this.context.env.getPlayers().filter(x => !x.isHidden).length;
+        const numBots = this.children.length + 1; // including me
+
+        const canPause = numActivePlayers <= numBots;
+        this.children.forEach(x => x.bot.canPause = canPause);
+        this.context.bot.canPause = canPause; // i can pause (or resume) too 
+    }
+
+    private evaluateNumBots() {
+        if (!this.isFirstTime && this.evaluateNumBotsTimer.elapsedMinutes() < NUM_BOTS_EVALUATION_INTERVAL_MINUTES) {
+            return;
+        }
+
+        this.evaluateNumBotsTimer.start();
 
         this.isFirstTime = false;
 
