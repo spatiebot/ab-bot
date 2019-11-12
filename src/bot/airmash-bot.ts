@@ -41,7 +41,7 @@ export class AirmashBot {
 
         if (this.isPaused && !value) {
             this.startBot();
-        } else if (this.isPaused && value) {
+        } else if (!this.isPaused && value) {
             this.pause();
         }
     }
