@@ -11,6 +11,7 @@ export class PlayerInfo {
     name: string;
     rot: number;
     type: number;
+    isDead: boolean;
     isHidden: boolean;
     isStealthed: boolean;
     energy: number;

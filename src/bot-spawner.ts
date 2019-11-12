@@ -32,7 +32,8 @@ export class BotSpawner {
             return;
         }
 
-        const numActivePlayers = this.context.env.getPlayers().filter(x => !x.isHidden).length;
+        // explicitly include dead players, b/c those are marked hidden too
+        const numActivePlayers = this.context.env.getPlayers().filter(x => !x.isHidden || x.isDead).length;
         const numBots = this.children.length + 1; // including me
 
         const canPause = numActivePlayers <= numBots;

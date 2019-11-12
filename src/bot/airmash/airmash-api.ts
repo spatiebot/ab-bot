@@ -122,6 +122,7 @@ export class AirmashApiFacade implements IAirmashEnvironment {
             energy: p.energy,
             health: p.health,
             id: p.id,
+            isDead: p.dead,
             isHidden: p.dead || p.hidden,
             isInView: !isStale,
             isStealthed: p.stealth,
