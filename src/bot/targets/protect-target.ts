@@ -92,7 +92,7 @@ export class ProtectTarget extends BaseTarget {
         } else {
             otherPlayer = this.env.getPlayer(this.target);
             if (otherPlayer) {
-                pos = otherPlayer.pos;
+                pos = PlayerInfo.getMostReliablePos(otherPlayer);
             } else {
                 this.isInvalid = true;
                 this.innerTarget = null;
@@ -108,7 +108,7 @@ export class ProtectTarget extends BaseTarget {
             .filter(x => !x.player.isHidden && x.player.isInView);
 
         const enemy = enemies[0];
-        if (enemy && enemy.delta.distance < this.distance * 3) {
+        if (enemy && enemy.delta.distance < Math.min(Math.max(this.distance * 3, 300), 800)) {
             const newTarget = new OtherPlayerTarget(this.env, this.logger, this.character, [], enemy.player.id);
             if (!newTarget.equals(this.innerTarget)) {
                 log(logPrefix + " has new attack otherplayer target: " + newTarget.getInfo().info);

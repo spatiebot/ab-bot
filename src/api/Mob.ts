@@ -4,7 +4,7 @@ const STALENESS_TIMEOUT_SECONDS = 2;
 
 export class Mob {
 
-    private stalenessTimer = new StopWatch();
+    protected lastMovedTimer = new StopWatch();
 
     constructor(m: Mob) {
         if (m != null) {
@@ -27,11 +27,11 @@ export class Mob {
     maxSpeed: number;
 
     isStale(): boolean {
-        return this.stalenessTimer.elapsedSeconds() > STALENESS_TIMEOUT_SECONDS;
+        return this.lastMovedTimer.elapsedSeconds() > STALENESS_TIMEOUT_SECONDS;
     }
 
     get msSinceLastActive(): number {
-        return this.stalenessTimer.elapsedMs();
+        return this.lastMovedTimer.elapsedMs();
     }
 
     update(timefrac: number): void {
@@ -77,7 +77,7 @@ export class Mob {
     copyFrom(m: Mob) {
         this.id = m.id;
 
-        let isUpdateSignificant = false;
+        let hasMoved = false;
 
         if (m.stationary != null) {
             this.stationary = m.stationary;
@@ -93,29 +93,23 @@ export class Mob {
 
         if (m.posX != null) {
             if (this.posX !== m.posX || this.posY !== m.posY) {
-                isUpdateSignificant = true;
+                hasMoved = true;
             }
             this.posX = m.posX;
             this.posY = m.posY;
         }
 
         if (m.speedX != null) {
-            if (this.speedX !== m.speedX || this.speedY !== m.speedY) {
-                isUpdateSignificant = true;
-            }
             this.speedX = m.speedX;
             this.speedY = m.speedY;
         }
         if (m.rot != null) {
             if (this.rot !== m.rot) {
-                isUpdateSignificant = true;
+                hasMoved = true;
             }
             this.rot = m.rot;
         }
         if (m.accelX != null) {
-            if (this.accelY !== m.accelY || this.accelX !== m.accelX) {
-                isUpdateSignificant = true;
-            }
             this.accelX = m.accelX;
             this.accelY = m.accelY;
         }
@@ -123,8 +117,8 @@ export class Mob {
             this.maxSpeed = m.maxSpeed;
         }
 
-        if (isUpdateSignificant) {
-            this.stalenessTimer.start();
+        if (hasMoved) {
+            this.lastMovedTimer.start();
         }
     }
 }

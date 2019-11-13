@@ -1,6 +1,7 @@
 import { IAirmashEnvironment } from "./airmash/iairmash-environment";
 import { Pos } from "./pos";
 import { StopWatch } from "../helper/timer";
+import { PlayerInfo } from "./airmash/player-info";
 
 const blueFlagPos = new Pos({ x: -9670, y: -1470 });
 const redFlagPos = new Pos({ x: 8600, y: -940 });
@@ -76,7 +77,7 @@ export class TeamLeader {
             if (this.assistID) {
                 const assistPlayer = this.env.getPlayer(this.assistID);
                 if (assistPlayer) {
-                    if (isOverAssistLine(assistPlayer.pos)) {
+                    if (isOverAssistLine(PlayerInfo.getMostReliablePos(assistPlayer))) {
                         // no action needed
                         return;
                     }
@@ -86,13 +87,13 @@ export class TeamLeader {
             const allPlayers = this.env.getPlayers();
             const attackingPlayers = allPlayers
                 .filter(x => !x.isStealthed && !x.isHidden)
-                .filter(x => x.team === me.team && isAttacking(x.pos));
+                .filter(x => x.team === me.team && isAttacking(PlayerInfo.getMostReliablePos(x)));
 
             attackingPlayers.sort((a, b) => {
                 // give the already assisted player an advantage, 
                 // to prevent switching back and forth in case of nearby players
-                let aX = a.pos.x;
-                let bX = b.pos.x;
+                let aX = PlayerInfo.getMostReliablePos(a).x;
+                let bX = PlayerInfo.getMostReliablePos(b).x;
                 let advantage = 800;
                 if (me.team === 2) {
                     advantage = -advantage;

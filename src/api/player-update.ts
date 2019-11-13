@@ -5,7 +5,6 @@ import { PowerUps } from "./powerups";
 import { StopWatch } from "../helper/timer";
 
 export class PlayerUpdate {
-    private stalenessLogTimer = new StopWatch();
 
     constructor(private player: Player) {
     }

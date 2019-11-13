@@ -75,7 +75,7 @@ export class OtherPlayerTarget extends BaseTarget {
         return {
             info: (this.manualInfo || "") + (this.peaceful ? ' goto ' : ' attack ') + enemy.name,
             id: this.targetID,
-            pos: enemy.pos
+            pos: PlayerInfo.getMostReliablePos(enemy)
         };
     }
 
@@ -157,7 +157,7 @@ export class OtherPlayerTarget extends BaseTarget {
         }
 
         if (this.maxDistance) {
-            const distance = Calculations.getDelta(this.env.me().pos, target.pos).distance;
+            const distance = Calculations.getDelta(this.env.me().pos, PlayerInfo.getMostReliablePos(target)).distance;
             return distance < this.maxDistance;
         }
 

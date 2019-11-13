@@ -35,7 +35,7 @@ export class DodgeEnemiesTarget extends BaseTarget {
         for (let i = 0; i < otherAircrafts.length; i++) {
             const p = otherAircrafts[i];
 
-            const delta = Calculations.getDelta(myPos, p.pos);
+            const delta = Calculations.getDelta(myPos, PlayerInfo.getMostReliablePos(p));
             if (!closestAircraft || delta.distance < closestAircraft.distance) {
                 closestAircraft = {
                     player: p,
@@ -72,7 +72,7 @@ export class DodgeEnemiesTarget extends BaseTarget {
             return false;
         }
 
-        const delta = Calculations.getDelta(this.env.me().pos, enemy.pos);
+        const delta = Calculations.getDelta(this.env.me().pos, PlayerInfo.getMostReliablePos(enemy));
         return delta.distance < this.getDistanceToKeep();
     }
 
@@ -111,7 +111,7 @@ export class DodgeEnemiesTarget extends BaseTarget {
         return {
             info: 'avoid enemy ' + enemy.name,
             id: this.playerToAvoidID,
-            pos: enemy.pos
+            pos: PlayerInfo.getMostReliablePos(enemy)
         };
     }
 

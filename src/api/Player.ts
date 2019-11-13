@@ -65,6 +65,9 @@ export class Player extends Mob {
 
     copyFrom(p: Player) {
         super.copyFrom(p);
+
+        let hasMoved = false;
+
         if (p.name != null) {
             this.name = p.name;
         }
@@ -89,7 +92,9 @@ export class Player extends Mob {
             this.energyRegen = p.energyRegen;
         }
         if (p.lowResPos != null) {
-            
+            if (!this.lowResPos || this.lowResPos.x !== p.lowResPos.x || this.lowResPos.y !== p.lowResPos.y) {
+                hasMoved = true;
+            }
             this.lowResPos = p.lowResPos;
         }
 
@@ -100,6 +105,7 @@ export class Player extends Mob {
         if (p.boost != null) {
             this.boost = p.boost;
         }
+
         if (p.strafe != null) {
             this.strafe = p.strafe;
         }
@@ -118,6 +124,10 @@ export class Player extends Mob {
 
         if (p.appliedUpgrades != null) {
             this.appliedUpgrades = p.appliedUpgrades;
+        }
+
+        if (hasMoved) {
+            this.lastMovedTimer.start();
         }
     }
 }

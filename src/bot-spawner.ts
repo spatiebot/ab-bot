@@ -55,7 +55,7 @@ export class BotSpawner {
         const maxNumPlayersWithBots = this.maxNumChildren * 2;
 
         const totalBotsRequired = Math.min(maxNumPlayersWithBots - numPlayers, this.maxNumChildren);
-        const numBots = this.children.length + 1;
+        const numBots = this.children.length + 1; // including me
 
         if (totalBotsRequired > 0) {
             const botsToAdd = totalBotsRequired - numBots;
@@ -69,9 +69,9 @@ export class BotSpawner {
                 }
             }
         } else if (totalBotsRequired < 0) {
-            const botsToRemove = Math.min(Math.abs(totalBotsRequired), numBots);
+            const botsToRemove = Math.min(Math.abs(totalBotsRequired), numBots - 1); // can't remove myself
 
-            if (botsToRemove > 0) {
+            if (botsToRemove > 1) {
                 this.context.logger.warn("Removing " + botsToRemove + " bots");
 
                 const killedBots = [];

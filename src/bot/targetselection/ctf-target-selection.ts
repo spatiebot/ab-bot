@@ -18,6 +18,7 @@ import { Logger } from "../../helper/logger";
 import { Slave } from "../../teamcoordination/slave";
 import { TOO_FAR_AWAY_FOR_POOPING_FLAG, HandOverFlagTarget } from "../targets/hand-over-flag-target";
 import { BotContext } from "../../botContext";
+import { PlayerInfo } from "../airmash/player-info";
 
 enum FlagStates {
     Unknown = "Unkown",
@@ -43,7 +44,7 @@ const REEVALUATION_TIME_MS = 1500;
 const CRATE_DISTANCE_THRESHOLD = 500;
 const FIGHT_DISTANCE_THRESHOLD = 300;
 const PROTECT_FLAG_DISTANCE = 700;
-const PROTECT_PLAYER_DISTANCE = 100;
+const PROTECT_PLAYER_DISTANCE = 10;
 
 export class CtfTargetSelection implements ITargetSelection {
 
@@ -303,7 +304,7 @@ export class CtfTargetSelection implements ITargetSelection {
         if (this.myFlagInfo.carrierId) {
             const carrier = this.env.getPlayer(this.myFlagInfo.carrierId);
             if (carrier) {
-                const deltaToCarrier = Calculations.getDelta(carrier.pos, this.env.me().pos);
+                const deltaToCarrier = Calculations.getDelta(PlayerInfo.getMostReliablePos(carrier), this.env.me().pos);
                 if (deltaToCarrier) {
                     currentFlagStates.push({
                         state: FlagStates.MyFlagTaken,
@@ -326,7 +327,7 @@ export class CtfTargetSelection implements ITargetSelection {
         if (this.otherFlagInfo.carrierId) {
             const carrier = this.env.getPlayer(this.otherFlagInfo.carrierId);
             if (carrier) {
-                const deltaToCarrier = Calculations.getDelta(carrier.pos, this.env.me().pos);
+                const deltaToCarrier = Calculations.getDelta(PlayerInfo.getMostReliablePos(carrier), this.env.me().pos);
                 if (deltaToCarrier) {
                     currentFlagStates.push({
                         state: FlagStates.OtherFlagTaken,
@@ -371,7 +372,7 @@ export class CtfTargetSelection implements ITargetSelection {
                     return;
                 }
                 if (FlagHelpers.isCarryingFlag(this.env)) {
-                    const distance = Calculations.getDelta(me.pos, player.pos).distance;
+                    const distance = Calculations.getDelta(me.pos, PlayerInfo.getMostReliablePos(player)).distance;
                     if (distance > TOO_FAR_AWAY_FOR_POOPING_FLAG) {
                         this.env.sendTeam("Too far away!", false);
                     } else {
