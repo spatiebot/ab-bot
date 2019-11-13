@@ -29,11 +29,12 @@ export class BotContext {
         private isDevelopment: boolean,
         private logLevel: string,
         public botIndex: number,
-        numBots: number = null) {
+        numBots: number = null,
+        keepBots: boolean = false) {
 
         if (botIndex === 0) {
             // this is the first bot, which should manage the number of bots
-            this.spawner = new BotSpawner(this, numBots);
+            this.spawner = new BotSpawner(this, numBots, keepBots);
         }
     }
 

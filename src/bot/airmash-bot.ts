@@ -244,6 +244,7 @@ export class AirmashBot {
 
         try {
             const target = this.targetSelection.exec();
+
             const instructions = target.getInstructions();
             try {
                 for (const i of instructions) {

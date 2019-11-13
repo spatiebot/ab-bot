@@ -1,8 +1,8 @@
 import { ITargetSelection } from "./itarget-selection";
 import { CtfTargetSelection } from "./ctf-target-selection";
-import { TargetSelection } from "./target-selection";
 import { Slave } from "../../teamcoordination/slave";
 import { BotContext } from "../../botContext";
+import { FfaTargetSelection } from "./ffa-target-selection";
 
 export class TargetSelectionFactory {
     static createTargetSelection(context: BotContext, slave: Slave): ITargetSelection {
@@ -12,6 +12,6 @@ export class TargetSelectionFactory {
             return ts;
         }
 
-        return new TargetSelection(context);
+        return new FfaTargetSelection(context);
     }
 }

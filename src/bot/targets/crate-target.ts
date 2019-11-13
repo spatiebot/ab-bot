@@ -87,7 +87,7 @@ export class CrateTarget extends BaseTarget {
         const instruction = new GotoLocationInstruction(this.env, this.logger, null, this.targetID);
         instruction.configure(this.gotoLocationConfig);
         result.push(instruction);
-
+        
         return result;
     }
 

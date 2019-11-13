@@ -17,6 +17,7 @@ const blacklist: any = {};
 const banThreshold = 4;
 const ANNOUNCE_TIMEOUT = 1000 * 60 * 10;
 let lastAnnounceTime = 0;
+let protectors = [];
 
 export class ProtectTarget extends BaseTarget {
 
@@ -38,6 +39,12 @@ export class ProtectTarget extends BaseTarget {
             this.target = target;
         } else {
             this.target = new Pos(target);
+        }
+
+        // bond
+        const myId = env.myId();
+        if (protectors.indexOf(myId) === -1) {
+            protectors.push(myId);
         }
 
         this.determineInnerTarget();
@@ -103,7 +110,7 @@ export class ProtectTarget extends BaseTarget {
 
         // find enemies, even prowlers
         const enemies = getPlayersSortedByDistance(this.env, true, pos)
-            .filter(x => x.player.id !== this.target)
+            .filter(x => x.player.id !== this.target && protectors.indexOf(x.player.id) === -1)
             .filter(x => x.player.team !== me.team)
             .filter(x => !x.player.isHidden && x.player.isInView);
 

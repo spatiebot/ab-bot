@@ -24,11 +24,12 @@ const typeConfig = argv.type as string || "random";
 const characterConfig = argv.character as string;
 const isSecondaryTeamCoordinator = !!argv.noTeamCoordinator;
 const numBots = argv.num as number || 1;
+const keepBots = !!argv.keep;
 const isDevelopment = !!argv.dev;
 const logLevel = argv.level as string || "warn";
 
 const identityGenerator = new BotIdentityGenerator(flagConfig, typeConfig, argv.name as string);
 
 // start with one bot, it will spawn new bots as needed.
-const context = new BotContext(ws, identityGenerator, characterConfig, isSecondaryTeamCoordinator, isDevelopment, logLevel, 0, numBots);
+const context = new BotContext(ws, identityGenerator, characterConfig, isSecondaryTeamCoordinator, isDevelopment, logLevel, 0, numBots, keepBots);
 context.startBot();

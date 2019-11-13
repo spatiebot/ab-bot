@@ -12,7 +12,7 @@ export class BotSpawner {
     private maxNumBots: number;
     private isFirstTime: boolean;
 
-    constructor(private context: BotContext, numBots: number) {
+    constructor(private context: BotContext, numBots: number, private keepBots) {
         this.maxNumBots = numBots;
         this.isFirstTime = true;
     }
@@ -51,6 +51,7 @@ export class BotSpawner {
     }
 
     private evaluateNumBots() {
+
         if (!this.isFirstTime && this.evaluateNumBotsTimer.elapsedMinutes() < NUM_BOTS_EVALUATION_INTERVAL_MINUTES) {
             return;
         }
@@ -79,7 +80,7 @@ export class BotSpawner {
         } else if (totalBotsRequired < 0) {
             const botsToRemove = Math.min(Math.abs(totalBotsRequired), numBots - 1); // can't remove myself
 
-            if (botsToRemove > 0) {
+            if (botsToRemove > 0 && !this.keepBots) {
                 this.context.logger.warn("Removing " + botsToRemove + " bots");
 
                 const killedBots = [];
