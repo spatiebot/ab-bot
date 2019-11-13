@@ -33,11 +33,19 @@ export class BotSpawner {
             return;
         }
 
-        // explicitly include dead players, b/c those are marked hidden too
-        const numActivePlayers = this.context.env.getPlayers().filter(x => (!x.isHidden || x.isDead) && PlayerInfo.isActive(x)).length;
-        const numBots = this.children.length + 1; // including me
+        this.evaluateNeedForBotsTimer.start();
 
-        const canPause = numActivePlayers <= numBots;
+        const botIds = this.children.map(x => x.env.myId());
+        botIds.push(this.context.env.myId());
+
+        // explicitly include dead players, b/c those are marked hidden too
+        const numActivePlayers = this.context.env.getPlayers().filter(x =>
+            botIds.indexOf(x.id) === -1 
+            && (!x.isHidden || x.isDead)
+            && PlayerInfo.isActive(x)
+        ).length;
+
+        const canPause = numActivePlayers === 0;
         this.children.forEach(x => x.bot.canPause = canPause);
         this.context.bot.canPause = canPause; // i can pause (or resume) too 
     }
