@@ -2,16 +2,16 @@ import { Player } from "./Player";
 import { ships } from "./ships";
 import { upgradeConstants } from "./upgrades-constants";
 import { PowerUps } from "./powerups";
+import { StopWatch } from "../helper/timer";
 
 export class PlayerUpdate {
+    private stalenessLogTimer = new StopWatch();
+
     constructor(private player: Player) {
     }
 
-    /**
-     * 
-     * @param timeFrac 
-     */
     exec(timeFrac: number) {
+
         if (!this.player.keystate || !ships[this.player.type]) {
             return;
         }
@@ -33,7 +33,7 @@ export class PlayerUpdate {
         const limit = timeFrac > .51 ? Math.round(timeFrac) : 1;
         const timeFactor = timeFrac / limit;
 
-        
+
         for (let times = 0; times < limit; times++) {
             this.player.energy += timeFactor * this.player.energyRegen;
             this.player.energy = Math.min(1, this.player.energy);
@@ -79,7 +79,7 @@ export class PlayerUpdate {
                 this.player.speedY -= Math.cos(currentRot) * ships[this.player.type].accelFactor * timeFactor * delta;
             }
 
-            const range =  Math.sqrt(Math.pow(this.player.speedX,2) + Math.pow(this.player.speedY,2));
+            const range = Math.sqrt(Math.pow(this.player.speedX, 2) + Math.pow(this.player.speedY, 2));
             let pathWidth = ships[this.player.type].maxSpeed * delta * upgradeConstants.speed.factor[this.player.powerUps.speed || 0];
             const maxX = ships[this.player.type].minSpeed;
             if (this.player.powerUps.inferno) {

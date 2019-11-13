@@ -1,6 +1,8 @@
 import { Pos } from "../pos";
 import { Upgrades } from "../../api/upgrades";
 
+const INACTIVE_TIMEOUT_MS = 10000;
+
 export class PlayerInfo {
 
     pos: Pos;
@@ -20,6 +22,7 @@ export class PlayerInfo {
     hasInferno: boolean;
     hasShield: boolean;
     upgrades: Upgrades;
+    msSinceLastActive: number;
 
     static getMostReliablePos(p: PlayerInfo) {
         if (p.isInView) {
@@ -28,4 +31,8 @@ export class PlayerInfo {
             return p.lowResPos;
         }
     } 
+
+    static isActive(p: PlayerInfo): boolean {
+        return p.msSinceLastActive < INACTIVE_TIMEOUT_MS;
+    }
 }

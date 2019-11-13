@@ -89,6 +89,7 @@ export class Player extends Mob {
             this.energyRegen = p.energyRegen;
         }
         if (p.lowResPos != null) {
+            
             this.lowResPos = p.lowResPos;
         }
 

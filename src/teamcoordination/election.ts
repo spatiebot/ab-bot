@@ -1,6 +1,7 @@
 import { IAirmashEnvironment } from "../bot/airmash/iairmash-environment";
 import { Calculations } from "../bot/calculations";
 import { BotContext } from "../botContext";
+import { PlayerInfo } from "../bot/airmash/player-info";
 
 export class Election {
     private existingLeaderId: number;
@@ -82,11 +83,11 @@ export class Election {
         // remove inactive players
         ids = ids.filter(x => {
             const player = this.env.getPlayer(Number(x));
-            return player && !player.isHidden && player.team === me.team;
+            return player && !player.isHidden && player.team === me.team && PlayerInfo.isActive(player);
         });
 
         if (ids.length === 0) {
-            const allTeamPlayers = this.env.getPlayers().filter(x => x.team === me.team && !x.isHidden);
+            const allTeamPlayers = this.env.getPlayers().filter(x => x.team === me.team && !x.isHidden && PlayerInfo.isActive(x));
             ids = allTeamPlayers
                 .filter(x => x.id !== me.id) // don't choose myself, because server frowns upon my spamming if i'm both instructing and answering.
                 .map(x => '' + x.id);

@@ -135,7 +135,8 @@ export class AirmashApiFacade implements IAirmashEnvironment {
             type: p.type,
             hasInferno: p.powerUps && p.powerUps.inferno,
             hasShield: p.powerUps && p.powerUps.shield,
-            upgrades: p.appliedUpgrades
+            upgrades: p.appliedUpgrades,
+            msSinceLastActive: p.msSinceLastActive,
         }
     }
 

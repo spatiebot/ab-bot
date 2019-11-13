@@ -1,4 +1,10 @@
+import { StopWatch } from "../helper/timer";
+
+const STALENESS_TIMEOUT_SECONDS = 2;
+
 export class Mob {
+
+    private stalenessTimer = new StopWatch();
 
     constructor(m: Mob) {
         if (m != null) {
@@ -21,7 +27,11 @@ export class Mob {
     maxSpeed: number;
 
     isStale(): boolean {
-        return Date.now() - this.lastUpdate > 2000;
+        return this.stalenessTimer.elapsedSeconds() > STALENESS_TIMEOUT_SECONDS;
+    }
+
+    get msSinceLastActive(): number {
+        return this.stalenessTimer.elapsedMs();
     }
 
     update(timefrac: number): void {
@@ -33,33 +43,41 @@ export class Mob {
         if (!this.accelX && this.accelX !== 0) {
             return;
         }
-        
-        for (let times = 0; times < limit; times++) {
-            oldSpeedX = this.speedX;
-            oldSpeedY = this.speedY;
-            this.speedX += this.accelX * timeFactor;
-            this.speedY += this.accelY * timeFactor;
+
+        if (this.accelX || this.accelY) {
+            for (let times = 0; times < limit; times++) {
+                oldSpeedX = this.speedX;
+                oldSpeedY = this.speedY;
+                this.speedX += this.accelX * timeFactor;
+                this.speedY += this.accelY * timeFactor;
+            }
         }
 
-        const length = Math.sqrt(Math.pow(this.speedX, 2) + Math.pow(this.speedY, 2));
-        if (length > this.maxSpeed) { 
-            const factor = this.maxSpeed / length;
-            this.speedX *= factor;
-            this.speedY *= factor;
+        if (this.speedX || this.speedY) {
+            const length = Math.sqrt(Math.pow(this.speedX, 2) + Math.pow(this.speedY, 2));
+            if (length > this.maxSpeed) {
+                const factor = this.maxSpeed / length;
+                this.speedX *= factor;
+                this.speedY *= factor;
+            }
+
+            if (this.isStale()) {
+                const factor = 1 - .03 * timeFactor;
+                this.speedX *= factor;
+                this.speedY *= factor;
+            }
         }
 
-        if (this.isStale()) {
-            const factor = 1 - .03 * timeFactor;
-            this.speedX *= factor;
-            this.speedY *= factor;
+        if (oldSpeedX || oldSpeedY || this.speedX || this.speedY) {
+            this.posX += timeFactor * oldSpeedX + .5 * (this.speedX - oldSpeedX) * timeFactor;
+            this.posY += timeFactor * oldSpeedY + .5 * (this.speedY - oldSpeedY) * timeFactor;
         }
-
-        this.posX += timeFactor * oldSpeedX + .5 * (this.speedX - oldSpeedX) * timeFactor;
-        this.posY += timeFactor * oldSpeedY + .5 * (this.speedY - oldSpeedY) * timeFactor;        
     }
 
     copyFrom(m: Mob) {
         this.id = m.id;
+
+        let isUpdateSignificant = false;
 
         if (m.stationary != null) {
             this.stationary = m.stationary;
@@ -74,17 +92,30 @@ export class Mob {
         }
 
         if (m.posX != null) {
+            if (this.posX !== m.posX || this.posY !== m.posY) {
+                isUpdateSignificant = true;
+            }
             this.posX = m.posX;
             this.posY = m.posY;
         }
+
         if (m.speedX != null) {
+            if (this.speedX !== m.speedX || this.speedY !== m.speedY) {
+                isUpdateSignificant = true;
+            }
             this.speedX = m.speedX;
             this.speedY = m.speedY;
         }
         if (m.rot != null) {
+            if (this.rot !== m.rot) {
+                isUpdateSignificant = true;
+            }
             this.rot = m.rot;
         }
         if (m.accelX != null) {
+            if (this.accelY !== m.accelY || this.accelX !== m.accelX) {
+                isUpdateSignificant = true;
+            }
             this.accelX = m.accelX;
             this.accelY = m.accelY;
         }
@@ -92,6 +123,8 @@ export class Mob {
             this.maxSpeed = m.maxSpeed;
         }
 
-        this.lastUpdate = Date.now();
+        if (isUpdateSignificant) {
+            this.stalenessTimer.start();
+        }
     }
 }

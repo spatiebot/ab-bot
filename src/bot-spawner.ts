@@ -1,5 +1,6 @@
 import { BotContext } from "./botContext";
 import { StopWatch } from "./helper/timer";
+import { PlayerInfo } from "./bot/airmash/player-info";
 
 const NUM_BOTS_EVALUATION_INTERVAL_MINUTES = 0.5;
 const NEED_FOR_BOTS_EVALUATION_INTERVAL_SECONDS = 1;
@@ -33,7 +34,7 @@ export class BotSpawner {
         }
 
         // explicitly include dead players, b/c those are marked hidden too
-        const numActivePlayers = this.context.env.getPlayers().filter(x => !x.isHidden || x.isDead).length;
+        const numActivePlayers = this.context.env.getPlayers().filter(x => (!x.isHidden || x.isDead) && PlayerInfo.isActive(x)).length;
         const numBots = this.children.length + 1; // including me
 
         const canPause = numActivePlayers <= numBots;
@@ -54,7 +55,7 @@ export class BotSpawner {
         const maxNumPlayersWithBots = this.maxNumChildren * 2;
 
         const totalBotsRequired = Math.min(maxNumPlayersWithBots - numPlayers, this.maxNumChildren);
-        const numBots = this.children.length;
+        const numBots = this.children.length + 1;
 
         if (totalBotsRequired > 0) {
             const botsToAdd = totalBotsRequired - numBots;
