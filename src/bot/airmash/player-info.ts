@@ -33,6 +33,7 @@ export class PlayerInfo {
     } 
 
     static isActive(p: PlayerInfo): boolean {
-        return p.msSinceLastActive < INACTIVE_TIMEOUT_MS;
+        return true;
+//        return p.msSinceLastActive < INACTIVE_TIMEOUT_MS;
     }
 }
