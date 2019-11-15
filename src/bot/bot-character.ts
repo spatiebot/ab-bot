@@ -91,6 +91,13 @@ export class BotCharacter {
         type: 1
     };
 
+    static Australia: BotCharacter = {
+        ...BotCharacter.Aggressive,
+        name: 'Australia',
+        goal: 'australia',
+        type: 1
+    };
+
     static get(type: number): BotCharacter {
         switch (type) {
             case 2:

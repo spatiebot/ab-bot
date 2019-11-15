@@ -25,6 +25,7 @@ export class FfaTargetSelection implements ITargetSelection {
     private lastLog: string;
     private reevaluationTimer = new StopWatch();
     private playerKilledSubscription: number;
+    private chatSubscription: number;
     private protectID: number;
 
     private targetTimeoutTimer = new StopWatch();
@@ -44,6 +45,7 @@ export class FfaTargetSelection implements ITargetSelection {
     constructor(private context: BotContext) {
         this.reset();
         this.playerKilledSubscription = this.env.on('playerkilled', (x) => this.onPlayerKilled(x));
+        this.chatSubscription = this.env.on('chat', msg => this.onChat(msg));
     }
 
     reset(): void {
@@ -51,10 +53,12 @@ export class FfaTargetSelection implements ITargetSelection {
         this.lastLog = null;
         this.reevaluationTimer.start();
         this.targetTimeoutTimer.start();
+        this.protectID = null;
     }
 
     dispose(): void {
         this.env.off('playerkilled', this.playerKilledSubscription);
+        this.env.off('chat', this.chatSubscription);
     }
 
     exec(): ITarget {
@@ -153,7 +157,6 @@ export class FfaTargetSelection implements ITargetSelection {
 
     private determineTarget(): ITarget {
 
-        this.logger.info(this.character.goal);
         const crateTarget = new CrateTarget(this.env, this.logger, []);
         if (crateTarget.isValid()) {
             return crateTarget;
@@ -173,6 +176,7 @@ export class FfaTargetSelection implements ITargetSelection {
 
         if (this.character.goal === "protect") {
             const protectTarget = new ProtectTarget(this.env, this.logger, this.character, this.protectID, 300);
+            protectTarget.isActive = true;
             if (protectTarget.isValid()) {
                 protectTarget.isSticky = true;
                 return protectTarget;
@@ -197,6 +201,16 @@ export class FfaTargetSelection implements ITargetSelection {
             return greenland;
         }
 
+        
+        if (this.character.goal === "australia") {
+            const australia = new ProtectTarget(this.env, this.logger, this.character, new Pos({
+                x: 11898, y: 4522 // Australia
+            }), 400);
+            australia.goal = "australia";
+            australia.isSticky = true;
+            return australia;
+        }
+
         // there is still no target selected,
         // so take the default target then
         const defaultTarget = new OtherPlayerTarget(this.env, this.logger, this.character, []);
@@ -207,5 +221,39 @@ export class FfaTargetSelection implements ITargetSelection {
 
         // even the default target failed. We're out of ideas.
         return new DoNothingTarget();
+    }
+
+    private onChat(msg) {
+        if (msg.id === this.env.myId()) {
+            return;
+        }
+
+        if (this.character.goal === 'protect') {
+            if (msg.text.indexOf('#protect me') !== -1) {
+                this.logger.debug('Protect me instruction received');
+                if (!this.protectID) {
+                    this.protectID = msg.id;
+                    this.logger.info('ProtectID: ' + this.protectID);
+                    const player = this.env.getPlayer(this.protectID);
+                    if (player) {
+                        // this.env.sendChat("OK, " + player.name + ", I'm heading your way. Say '#unprotect' to stop me from following you.", false)
+                    } else {
+                        this.logger.info('ProtectID apparently invalid');
+                        this.protectID = null;
+                    }
+                } else {
+                    this.logger.info("ignoring: already on another target");
+                }
+            } else if (msg.text.indexOf('#unprotect') !== -1) {
+                this.logger.debug('Unprotect message');
+                if (this.protectID === msg.id) {
+                    this.logger.debug('From protectplayer');
+                    const player = this.env.getPlayer(this.protectID);
+                    // this.env.sendChat("I'll stop following you, " + player.name, false);
+                    this.protectID = null;
+                    this.clearAllTargets();
+                }
+            }
+        }
     }
 }

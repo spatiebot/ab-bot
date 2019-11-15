@@ -73,6 +73,7 @@ export class AirmashBot {
         this.slave = new Slave(this.context);
         this.teamCoordination.addSlave(this.slave);
         this.planeTypeSelection = new PlaneTypeSelection();
+        this.targetSelection = TargetSelectionFactory.createTargetSelection(this.context, this.slave);
     }
 
     join(name: string, flag: string, aircraftType: number) {
@@ -123,11 +124,6 @@ export class AirmashBot {
             this.logger.info('new char selected because this character is not my type');
             this.context.character = BotCharacter.get(myType);
         }
-
-        if (this.targetSelection) {
-            this.targetSelection.dispose();
-        }
-        this.targetSelection = TargetSelectionFactory.createTargetSelection(this.context, this.slave);
 
         this.steeringInstallation.start();
     }
