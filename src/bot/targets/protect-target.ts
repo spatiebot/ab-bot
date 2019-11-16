@@ -31,13 +31,8 @@ export class ProtectTarget extends BaseTarget {
 
         const now = Date.now();
         if (!target && now - lastAnnounceTime > ANNOUNCE_TIMEOUT && this.env.getGameType() === 1) {
-            // this.env.sendChat("I'm here to protect. Say '#protect me' to get some extra protection.", false);
+            this.env.sendChat("I'm here to protect. Say '#protect me' to get some extra protection.", false);
             lastAnnounceTime = now;
-        }
-
-        if (!target) {
-            this.isInvalid = true;
-            return;
         }
 
         if (typeof target === 'number') {
@@ -77,6 +72,7 @@ export class ProtectTarget extends BaseTarget {
         }
 
         if (FlagHelpers.isCarryingFlag(this.env)) {
+
             return false;
         }
 
@@ -123,7 +119,7 @@ export class ProtectTarget extends BaseTarget {
             const newTarget = new OtherPlayerTarget(this.env, this.logger, this.character, [], enemy.player.id);
             if (!newTarget.equals(this.innerTarget)) {
                 log(logPrefix + " has new attack otherplayer target: " + newTarget.getInfo().info);
-                this.logger.info("attack otherplayer target");
+
                 this.innerTarget = newTarget;
             }
             return;
@@ -144,7 +140,6 @@ export class ProtectTarget extends BaseTarget {
             } else {
                 const newTarget = new GotoLocationTarget(this.env, this.logger, pos);
                 if (!newTarget.equals(this.innerTarget)) {
-                    this.logger.info("goto location target");
                     log(logPrefix + " has new goto location target: " + newTarget.getInfo().info);
                     this.innerTarget = newTarget;
                 }

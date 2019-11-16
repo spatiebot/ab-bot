@@ -73,7 +73,14 @@ export class TargetSelection implements ITargetSelection {
         if (msg.id === this.env.myId()) {
             return;
         }
-
+        if (msg.text.indexOf('#drop') !== -1) {
+            const player = this.env.getPlayer(msg.id);
+            if (player.team === this.env.me().team) {
+                this.env.sendCommand("drop", "");
+                this.tempTarget = new ProtectTarget(this.env, this.logger, this.character, msg.id, 300);
+                this.timeout = Date.now() + 10000; // wait a few sec before next target
+            }
+        }
         if (this.character.goal === 'protect') {
             if (msg.text.indexOf('#protect me') !== -1) {
                 this.logger.debug('Protect me instruction received');
