@@ -6,9 +6,9 @@ The bots can do FFA and CTF.
 
 In CTF one bot will appoint one player as the leader, who can issue commands to manage the bots, mostly compatible with the commands of the existing CTF bots.
 
-A CTF bot can be #leader of the other bots  
-
 In FFA it can also run as a protecting bot, sticking to a player and defending the player from enemies.  
+
+The bots will detect if there are no active players, and stop playing to prevent eating unnecessary CPU usage.
 
 # Building
 You'll need Node v12 or more, and the gulp-cli.
@@ -25,7 +25,7 @@ You'll need Node v12 or more, and the gulp-cli.
 
 Parameters:
 
-    --num: the number of bots. Default = 1
+    --num: the number of bots. Default = 1. If this number is more than 1, the bots will be balanced against the total number of players. If there are more players than bots, the total number of bots will be reduced. To prevent this, add --keep to the commandline.
     --type: the type of aircraft used. Default = random. Use type=distribute to select each plane type sequentially. 
     --flag: the flag. Default = random
     --name: name of the bot. Default = random firstname based on the flag, prefixed by [b]_ for bot
@@ -51,6 +51,7 @@ Parameters:
     --noTeamCoordinator: will only listen to an other team coordinator (can be used to hosts bot on different servers)
     --dev: will log with pretty logging. Default: false.
     --level: the loglevel. Default: warn.
+    --keep: don't balance number of bots, see 'num'
 
 # CTF behavior and commands
 
